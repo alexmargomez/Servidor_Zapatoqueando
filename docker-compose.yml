@@ -3,7 +3,7 @@ version: '3.8'
 services:
   zapatoqueando-server:
     build: 
-      context: ./Servidor_Zapatoqueando
+      context: .
       dockerfile: Dockerfile
     image: zapatoqueando-server:latest
     container_name: zapatoqueando-server
@@ -15,4 +15,4 @@ services:
       - PORT=3000
     volumes:
       # Mount SQLite database file to persist data across container restarts
-      - ./Servidor_Zapatoqueando/zapatoqueando.sqlite:/usr/src/app/zapatoqueando.sqlite
+      - ./zapatoqueando.sqlite:/usr/src/app/zapatoqueando.sqlite
