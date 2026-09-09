@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col min-h-screen">
-    <Navbar />
+    <Navbar v-if="!isAdminRoute" />
     
     <main class="flex-1 relative w-full h-screen overflow-hidden">
       <router-view v-slot="{ Component }">
@@ -18,6 +18,7 @@ import { useRoute } from 'vue-router'
 import Navbar from './components/Navbar.vue'
 
 const route = useRoute()
+const isAdminRoute = computed(() => route.path.startsWith('/admin'))
 </script>
 
 <style scoped>

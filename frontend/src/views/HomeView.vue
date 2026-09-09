@@ -17,14 +17,14 @@
 
       <!-- Chips de Filtros Rápidos -->
       <div class="flex items-center gap-2 overflow-x-auto hide-scrollbar pointer-events-auto pb-1 px-1">
-        <button class="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-full shadow-md text-xs font-bold text-gray-700 hover:bg-green-50 hover:text-green-800 hover:border-green-200 border border-gray-100 transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer">
-          🏨 Hospedajes
-        </button>
-        <button class="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-full shadow-md text-xs font-bold text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 hover:border-yellow-200 border border-gray-100 transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer">
-          🍽️ Restaurantes
-        </button>
-        <button class="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-full shadow-md text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 border border-gray-100 transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer">
-          🏞️ Naturaleza
+        <button v-for="cat in categories" :key="cat.name" @click="toggleCategory(cat.name)"
+          :class="[
+            'px-4 py-2 rounded-full shadow-md text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer border',
+            activeCategories.includes(cat.name) 
+              ? 'bg-green-600 text-white border-green-700' 
+              : 'bg-white/95 backdrop-blur-sm text-gray-700 hover:bg-gray-50 border-gray-100'
+          ]">
+          {{ cat.icon }} {{ cat.name }}
         </button>
       </div>
     </div>
@@ -154,11 +154,6 @@
       <!-- Contenido Detallado -->
       <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-4 hide-scrollbar bg-slate-50">
         <h2 class="text-2xl font-black text-green-950 leading-tight">{{ selectedPlace.name }}</h2>
-        
-        <div class="flex items-center text-sm font-bold text-gray-700">
-          <span class="text-yellow-500 mr-1 text-lg">★</span> {{ selectedPlace.rating || 'N/A' }} 
-          <span class="text-gray-400 font-medium ml-1">({{ selectedPlace.user_ratings_total || 0 }} reseñas)</span>
-        </div>
 
         <p class="text-gray-600 text-sm flex items-start">
           <svg class="w-4 h-4 mr-2 shrink-0 text-gray-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
@@ -204,12 +199,19 @@ window.L = L
 import 'leaflet-textpath'
 
 // Fix for default marker icons in Vite/Vue
+// Using a minimalist modern design instead of default markers
 delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
+
+// Helper to create a minimal colored dot icon
+const createMinimalDot = (colorHex) => {
+  return L.divIcon({
+    className: 'minimal-marker',
+    html: `<div style="background-color: ${colorHex}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.4); cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></div>`,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+    popupAnchor: [0, -10]
+  });
+};
 
 const places = ref([])
 const posters = ref([])
@@ -229,24 +231,85 @@ watch(() => route.path, (newPath, oldPath) => {
   }
 })
 
-const featuredPlaces = computed(() => {
-  return places.value.filter(p => p.featured)
-})
+const activeCategories = ref([])
+const categories = [
+  { name: 'Hospedajes', icon: '🏨', color: '#3b82f6' },
+  { name: 'Restaurantes', icon: '🍽️', color: '#f97316' },
+  { name: 'CafeBar', icon: '☕', color: '#8b5cf6' },
+  { name: 'Fuentes de soda', icon: '🥤', color: '#06b6d4' },
+  { name: 'Lugares turísticos', icon: '📸', color: '#ec4899' },
+  { name: 'Puntos de interés', icon: '📍', color: '#64748b' }
+]
+
+const toggleCategory = (category) => {
+  const index = activeCategories.value.indexOf(category)
+  if (index === -1) {
+    activeCategories.value.push(category)
+  } else {
+    activeCategories.value.splice(index, 1)
+  }
+  updateMarkers() // Redibujar marcadores
+}
+
+const getCategoryColor = (category) => {
+  const cat = categories.find(c => c.name === category)
+  return cat ? cat.color : '#eab308'
+}
 
 window.openPlaceSidebar = (placeId) => {
   const found = places.value.find(p => String(p.place_id) === String(placeId))
   if (found) {
     selectedPlace.value = found
     selectedPoster.value = null
-    // Centrar el mapa al seleccionar
-    // Usamos setView en lugar de flyTo porque la animación parabólica de flyTo 
-    // laguea fuertemente cuando hay muchos vectores SVG (las calles) en pantalla.
+    // Centrar suavemente el mapa sin modificar el nivel de zoom actual
     if (map && found.location) {
-      map.setView([found.location.lat, found.location.lng], 17, { animate: false })
+      map.panTo([found.location.lat, found.location.lng], { animate: true, duration: 1 })
     }
   }
 }
 
+// Función para actualizar y dibujar los marcadores
+const updateMarkers = () => {
+  if (markersLayer) {
+    markersLayer.clearLayers()
+  }
+
+  const filteredPlaces = activeCategories.value.length === 0 
+    ? places.value 
+    : places.value.filter(p => activeCategories.value.includes(p.category))
+
+  // Agregar marcadores
+  filteredPlaces.forEach(place => {
+    if (place.location && place.location.lat && place.location.lng) {
+      const markerColor = getCategoryColor(place.category)
+      const marker = L.marker([place.location.lat, place.location.lng], { icon: createMinimalDot(markerColor) }).addTo(markersLayer)
+
+      // Popup estilizado sin estrellas, con imagen pequeña y clickable
+      const popupContent = `
+        <div onclick="window.openPlaceSidebar('${place.place_id}')" style="text-align: center; font-family: sans-serif; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+          <img src="${place.image_url || 'https://via.placeholder.com/150'}" alt="${place.name}" style="width: 120px; height: 80px; object-fit: cover; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" />
+          <h4 style="margin: 0; color: #052e16; font-weight: bold; font-size: 14px;">${place.name}</h4>
+        </div>
+      `
+      marker.bindPopup(popupContent)
+
+      // Abrir popup al pasar el cursor (hover)
+      marker.on('mouseover', function () {
+        this.openPopup()
+      })
+      // Cerrar popup al quitar el cursor
+      marker.on('mouseout', function () {
+        this.closePopup()
+      })
+      // Abrir sidebar al hacer clic en el marcador
+      marker.on('click', () => {
+        window.openPlaceSidebar(place.place_id)
+      })
+    }
+  })
+}
+
+// Inicializar y Centrar Mapa (Versión Moderna Sin Textos y Sin Iconos default)
 const initMap = () => {
   if (map) {
     map.remove()
@@ -287,11 +350,11 @@ const initMap = () => {
   const customIcon = L.divIcon({
     className: 'zapatoca-main-marker',
     html: `<div style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
-             <div style="background-color: #eab308; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.5);"></div>
-             <div style="background-color: rgba(255,255,255,0.95); color: #052e16; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 12px; margin-top: 4px; white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">📍 Zapatoca</div>
+             <div style="font-size: 28px; line-height: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">📍</div>
+             <div style="background-color: rgba(255,255,255,0.95); color: #052e16; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 12px; margin-top: 2px; white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">Zapatoca</div>
            </div>`,
-    iconSize: [80, 50], 
-    iconAnchor: [40, 9] // Centro del punto
+    iconSize: [80, 60], 
+    iconAnchor: [40, 30] // Ajustado para centrar el icono y texto
   })
   zapatocaMarker = L.marker([6.816801, -73.268689], { icon: customIcon })
   
@@ -309,11 +372,11 @@ const initMap = () => {
   const laFuenteIcon = L.divIcon({
     className: 'la-fuente-main-marker',
     html: `<div style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
-             <div style="background-color: #22c55e; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.5);"></div>
-             <div style="background-color: rgba(255,255,255,0.95); color: #064e3b; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 12px; margin-top: 4px; white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">📍 La Fuente</div>
+             <div style="font-size: 28px; line-height: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">📍</div>
+             <div style="background-color: rgba(255,255,255,0.95); color: #064e3b; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 12px; margin-top: 2px; white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">La Fuente</div>
            </div>`,
-    iconSize: [80, 50],
-    iconAnchor: [40, 9] // Centro del punto
+    iconSize: [80, 60],
+    iconAnchor: [40, 30] // Ajustado para centrar el icono y texto
   })
   laFuenteMarker = L.marker([6.7075, -73.2804], { icon: laFuenteIcon })
   
@@ -381,22 +444,8 @@ const initMap = () => {
 const addMarkers = () => {
   if (!map || !markersLayer) return
 
-  // Solo agregar marcadores para los lugares que son destacados (los que tienen tarjeta en el slider)
-  featuredPlaces.value.forEach(place => {
-    if (place.location && place.location.lat && place.location.lng) {
-      const marker = L.marker([place.location.lat, place.location.lng]).addTo(markersLayer)
-
-      // Popup estilizado sin estrellas, con imagen pequeña y clickable
-      const popupContent = `
-        <div onclick="window.openPlaceSidebar('${place.place_id}')" style="text-align: center; font-family: sans-serif; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-          <img src="${place.image_url || 'https://via.placeholder.com/150'}" alt="${place.name}" style="width: 120px; height: 80px; object-fit: cover; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" />
-          <h4 style="margin: 0; color: #052e16; font-weight: bold; font-size: 14px;">${place.name}</h4>
-          <span style="font-size: 11px; color: #3b82f6; font-weight: 600;">Ver Detalles &rarr;</span>
-        </div>
-      `
-      marker.bindPopup(popupContent)
-    }
-  })
+  // Llamar la funcion que dibuja los marcadores
+  updateMarkers()
 }
 
 const focusPlace = (place) => {
