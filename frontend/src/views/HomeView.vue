@@ -30,7 +30,8 @@
     </div>
 
     <!-- Slider Flotante de Publicidad (Posters) -->
-    <div v-show="route.path !== '/rutas'" class="absolute bottom-0 left-0 w-full z-[1000] pointer-events-none pb-6 md:pb-8">
+    <transition name="slide-up">
+      <div v-show="route.path !== '/rutas'" class="absolute bottom-0 left-0 w-full z-[1000] pointer-events-none pb-6 md:pb-8">
       
       <!-- Fondo oscuro opcional para resaltar las tarjetas -->
       <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent -z-10 pointer-events-none h-64 bottom-0 top-auto"></div>
@@ -93,7 +94,8 @@
         </div>
         </div>
       </div>
-    </div>
+      </div>
+    </transition>
   </div>
 
   <!-- Panel Lateral Derecho (Detalles del Cartel / Publicidad) -->
@@ -176,14 +178,14 @@
 
   <!-- Portal para Modales y Paneles Flotantes (Eventos, Rutas, Descargar) -->
   <router-view v-slot="{ Component }">
-    <transition name="fade" mode="out-in">
+    <transition name="slide-up" mode="out-in">
       <component :is="Component" />
     </transition>
   </router-view>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, nextTick, onBeforeUnmount, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -219,6 +221,13 @@ const route = useRoute()
 const isHoveringSlider = ref(false)
 const isSliderCompact = ref(false)
 let map = null
+
+// Al cerrar las rutas (salir de /rutas), hacer que el slider reaparezca en estado minimizado
+watch(() => route.path, (newPath, oldPath) => {
+  if (oldPath === '/rutas' && newPath !== '/rutas') {
+    isSliderCompact.value = true
+  }
+})
 
 const featuredPlaces = computed(() => {
   return places.value.filter(p => p.featured)
@@ -651,6 +660,18 @@ onBeforeUnmount(() => {
 .slide-fade-enter-from,
 .slide-fade-leave-to {
   transform: translateX(100%);
+}
+
+/* Transición Desplazamiento Inferior (Para Slider y Rutas) */
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s;
+  will-change: transform, opacity;
+}
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(100%);
+  opacity: 0;
 }
 
 /* Ajuste de controles de zoom de Leaflet */

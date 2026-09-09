@@ -5,19 +5,18 @@
     <div 
       class="relative w-full bg-white/95 backdrop-blur-md shadow-[0_-10px_40px_rgba(0,0,0,0.1)] flex flex-col pointer-events-auto border-t border-gray-100 transition-transform pb-4 md:pb-6"
     >
-      <!-- Cabecera -->
-      <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center sticky top-0 z-10">
-        <div class="flex items-center gap-3">
-          <span class="text-yellow-500 font-bold tracking-widest uppercase text-[10px] hidden md:block">Aventura Viva</span>
-          <h2 class="text-lg md:text-xl font-black text-green-950 tracking-tighter">Rutas Naturales</h2>
-        </div>
-        <button @click="close" class="bg-gray-100 hover:bg-red-50 hover:text-red-500 text-gray-500 p-1.5 rounded-full transition-colors focus:outline-none">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      <!-- Botón Flotante Central para Cerrar -->
+      <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 z-30">
+        <button @click="close" class="bg-black/70 backdrop-blur-md text-white/90 py-1.5 px-5 rounded-full hover:bg-black/90 transition-colors shadow-lg flex items-center gap-2 text-xs font-medium border border-white/10" title="Cerrar panel">
+          Cerrar
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
         </button>
       </div>
 
       <!-- Contenido Scrollable Horizontal -->
-      <div class="w-full overflow-x-auto p-4 hide-scrollbar flex flex-row gap-4 items-center">
+      <div class="w-full overflow-x-auto p-4 hide-scrollbar flex flex-row gap-4 items-center mt-2">
         
         <div v-if="loading" class="flex justify-center w-full py-4">
           <div class="w-8 h-8 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
