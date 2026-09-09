@@ -1,11 +1,8 @@
 const fs = require('fs');
 const osmtogeojson = require('osmtogeojson');
-const { Pool } = require('pg');
 const path = require('path');
-
-const pool = new Pool({
-    connectionString: 'postgres://admin:password123@localhost:5432/zapatoqueando',
-});
+require('dotenv').config({ path: path.join(__dirname, '../../.env') });
+const pool = require('../../src/config/db');
 
 async function seedStreets() {
     try {

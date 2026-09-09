@@ -1,8 +1,6 @@
-const { Pool } = require('pg');
-
-const pool = new Pool({
-    connectionString: 'postgres://admin:password123@localhost:5432/zapatoqueando',
-});
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../../.env') });
+const pool = require('../../src/config/db');
 
 async function seed() {
     try {
