@@ -252,18 +252,19 @@ const initMap = () => {
     map.remove()
   }
 
-  // Expandir los límites para abarcar rutas, caminatas, cuevas y cañones cercanos a Zapatoca
-  const southWest = L.latLng(6.7000, -73.4000)
-  const northEast = L.latLng(6.9000, -73.1500)
-  const bounds = L.latLngBounds(southWest, northEast)
+  // Límites de movimiento (maxBounds) restaurados pero muy amplios para evitar que se pierdan en el mundo
+  const bounds = L.latLngBounds(
+    [6.50, -73.60], // Suroeste (mucho margen hacia abajo y la izquierda)
+    [7.10, -72.90]  // Noreste (mucho margen hacia arriba y la derecha)
+  )
 
-  // Inicializar mapa centrado exactamente en el Parque Principal de Zapatoca
+  // Inicializar mapa centrado en Zapatoca
   map = L.map('osm-map', {
     zoomControl: false,
     maxBounds: bounds,
-    maxBoundsViscosity: 1.0,
-    minZoom: 12, // Permitimos alejar más el zoom para ver grandes extensiones de senderos
-    maxZoom: 18
+    maxBoundsViscosity: 0.8, // 0.8 permite un ligero rebote suave en los bordes
+    minZoom: 10, // Permitimos alejar el zoom para ver grandes extensiones
+    maxZoom: 22
   }).setView([6.816801, -73.268689], 15)
 
   // Añadir controles de zoom en la parte superior derecha para no solapar los widgets
