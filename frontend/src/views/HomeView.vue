@@ -30,7 +30,7 @@
     </div>
 
     <!-- Slider Flotante de Publicidad (Posters) -->
-    <div class="absolute bottom-0 left-0 w-full z-[1000] pointer-events-none pb-6 md:pb-8">
+    <div v-show="route.path !== '/rutas'" class="absolute bottom-0 left-0 w-full z-[1000] pointer-events-none pb-6 md:pb-8">
       
       <!-- Fondo oscuro opcional para resaltar las tarjetas -->
       <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent -z-10 pointer-events-none h-64 bottom-0 top-auto"></div>
@@ -184,6 +184,7 @@
 
 <script setup>
 import { ref, computed, onMounted, nextTick, onBeforeUnmount } from 'vue'
+import { useRoute } from 'vue-router'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -214,6 +215,7 @@ const loading = ref(true)
 const error = ref(null)
 const selectedPlace = ref(null)
 const selectedPoster = ref(null)
+const route = useRoute()
 const isHoveringSlider = ref(false)
 const isSliderCompact = ref(false)
 let map = null
@@ -258,9 +260,13 @@ const initMap = () => {
   // Añadir controles de zoom en la parte superior derecha para no solapar los widgets
   L.control.zoom({ position: 'topright' }).addTo(map)
 
-  // CAPA ÚNICA: Satélite Puro (Imágenes reales de satélite sin nombres ni calles)
-  L.tileLayer('http://mt0.google.com/vt/lyrs=s&hl=es&x={x}&y={y}&z={z}', {
-    attribution: '&copy; Google Maps'
+  L.tileLayer('http://{s}.google.com/vt/lyrs=s&hl=es&x={x}&y={y}&z={z}', {
+    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+    attribution: '&copy; Google Maps',
+    keepBuffer: 2, // Reducido a 2 para no saturar la red de descargas en segundo plano
+    updateWhenZooming: false,
+    updateWhenIdle: true,
+    tileSize: 256,
   }).addTo(map)
 
   // Capa para marcadores (NO se añade al mapa de inmediato si el zoom es lejano)
@@ -281,9 +287,14 @@ const initMap = () => {
   })
   zapatocaMarker = L.marker([6.816801, -73.268689], { icon: customIcon })
   
-  // Al hacer clic en el marcador general, hacer zoom hacia el casco urbano
   zapatocaMarker.on('click', () => {
     map.setView([6.816801, -73.268689], 16, { animate: true, duration: 1 })
+  })
+
+  // Evento para deseleccionar ruta al hacer clic en el mapa vacío
+  map.on('click', () => {
+    const event = new CustomEvent('route-unselected');
+    window.dispatchEvent(event);
   })
 
   // Marcador principal de La Fuente para el zoom lejano (Punto pequeño con texto discreto)
