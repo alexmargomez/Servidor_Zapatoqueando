@@ -44,28 +44,53 @@
           <p class="text-red-500 font-bold">{{ error }}</p>
         </div>
 
-        <div v-else class="relative w-full overflow-hidden py-4" @mouseenter="isHoveringSlider = true" @mouseleave="isHoveringSlider = false">
+        <div v-else class="relative w-full flex flex-col items-center justify-end pointer-events-none">
+          <!-- Contenedor del Slider -->
+          <div class="relative w-full overflow-hidden py-4 pointer-events-auto" @mouseenter="isHoveringSlider = true" @mouseleave="isHoveringSlider = false">
+          
+          <!-- Botón Alternar Vista Centrado -->
+          <div class="absolute top-0 left-1/2 transform -translate-x-1/2 z-30">
+            <button @click="isSliderCompact = !isSliderCompact" class="bg-black/30 backdrop-blur-md text-white/90 py-1.5 px-5 rounded-full hover:bg-black/50 transition-colors shadow flex items-center gap-2 text-xs font-medium" title="Cambiar tamaño">
+              {{ isSliderCompact ? 'Ampliar' : 'Reducir' }}
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- Flecha arriba si está compacto -->
+                <path v-if="isSliderCompact" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                <!-- Flecha abajo si está grande -->
+                <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+          </div>
+
           <!-- Marquee Container -->
-          <div class="flex">
+          <div class="flex mt-2">
             <div class="marquee-content flex gap-6 px-3" :class="{ 'paused': isHoveringSlider }">
               <!-- Set 1 -->
-              <div v-for="poster in posters" :key="'a-'+poster.id" @click="selectedPoster = poster" class="shrink-0 w-72 md:w-[450px] aspect-video bg-white rounded-2xl overflow-hidden shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 border border-white/40 cursor-pointer group hover:-translate-y-2">
+              <div v-for="poster in posters" :key="'a-'+poster.id" @click="selectedPoster = poster; selectedPlace = null" 
+                   class="shrink-0 aspect-video bg-white rounded-2xl overflow-hidden shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 border border-white/40 cursor-pointer group hover:-translate-y-2"
+                   :class="isSliderCompact ? 'w-32 md:w-48' : 'w-72 md:w-[450px]'">
                 <img v-if="poster.imageurl" :src="poster.imageurl" :alt="poster.title" class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" />
               </div>
               <!-- Set 2 -->
-              <div v-for="poster in posters" :key="'b-'+poster.id" @click="selectedPoster = poster" class="shrink-0 w-72 md:w-[450px] aspect-video bg-white rounded-2xl overflow-hidden shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 border border-white/40 cursor-pointer group hover:-translate-y-2">
+              <div v-for="poster in posters" :key="'b-'+poster.id" @click="selectedPoster = poster; selectedPlace = null" 
+                   class="shrink-0 aspect-video bg-white rounded-2xl overflow-hidden shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 border border-white/40 cursor-pointer group hover:-translate-y-2"
+                   :class="isSliderCompact ? 'w-32 md:w-48' : 'w-72 md:w-[450px]'">
                 <img v-if="poster.imageurl" :src="poster.imageurl" :alt="poster.title" class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" />
               </div>
               <!-- Set 3 (para asegurar que cubra pantallas ultra anchas) -->
-              <div v-for="poster in posters" :key="'c-'+poster.id" @click="selectedPoster = poster" class="shrink-0 w-72 md:w-[450px] aspect-video bg-white rounded-2xl overflow-hidden shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 border border-white/40 cursor-pointer group hover:-translate-y-2">
+              <div v-for="poster in posters" :key="'c-'+poster.id" @click="selectedPoster = poster; selectedPlace = null" 
+                   class="shrink-0 aspect-video bg-white rounded-2xl overflow-hidden shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 border border-white/40 cursor-pointer group hover:-translate-y-2"
+                   :class="isSliderCompact ? 'w-32 md:w-48' : 'w-72 md:w-[450px]'">
                 <img v-if="poster.imageurl" :src="poster.imageurl" :alt="poster.title" class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" />
               </div>
               <!-- Set 4 -->
-              <div v-for="poster in posters" :key="'d-'+poster.id" @click="selectedPoster = poster" class="shrink-0 w-72 md:w-[450px] aspect-video bg-white rounded-2xl overflow-hidden shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 border border-white/40 cursor-pointer group hover:-translate-y-2">
+              <div v-for="poster in posters" :key="'d-'+poster.id" @click="selectedPoster = poster; selectedPlace = null" 
+                   class="shrink-0 aspect-video bg-white rounded-2xl overflow-hidden shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 border border-white/40 cursor-pointer group hover:-translate-y-2"
+                   :class="isSliderCompact ? 'w-32 md:w-48' : 'w-72 md:w-[450px]'">
                 <img v-if="poster.imageurl" :src="poster.imageurl" :alt="poster.title" class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" />
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>
@@ -73,15 +98,15 @@
 
   <!-- Panel Lateral Derecho (Detalles del Cartel / Publicidad) -->
   <transition name="slide-fade">
-    <div v-if="selectedPoster" class="fixed inset-y-0 right-0 w-full md:w-96 bg-white shadow-2xl z-[9999] flex flex-col border-l border-gray-100">
+    <div v-if="selectedPoster" class="fixed inset-y-0 right-0 w-full md:w-[420px] bg-white shadow-2xl z-[9999] flex flex-col border-l border-gray-100">
       <!-- Botón Cerrar -->
       <button @click="selectedPoster = null" class="absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white p-2 rounded-full shadow-md hover:bg-black/70 transition-colors z-10">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
 
       <!-- Imagen Destacada del Cartel -->
-      <div class="w-full aspect-[3/4] relative shrink-0 bg-black">
-        <img :src="selectedPoster.imageurl || 'https://via.placeholder.com/400'" :alt="selectedPoster.title" class="w-full h-full object-contain" />
+      <div class="w-full aspect-video relative shrink-0 bg-slate-100 border-b border-gray-200">
+        <img :src="selectedPoster.imageurl || 'https://via.placeholder.com/400'" :alt="selectedPoster.title" class="w-full h-full object-cover" />
       </div>
 
       <!-- Contenido Detallado -->
@@ -106,6 +131,44 @@
             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.012c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
             WhatsApp
           </a>
+        </div>
+      </div>
+    </div>
+  </transition>
+
+  <!-- Panel Lateral Derecho (Detalles del Lugar del Mapa) -->
+  <transition name="slide-fade">
+    <div v-if="selectedPlace" class="fixed inset-y-0 right-0 w-full md:w-[420px] bg-white shadow-2xl z-[9999] flex flex-col border-l border-gray-100">
+      <!-- Botón Cerrar -->
+      <button @click="selectedPlace = null" class="absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white p-2 rounded-full shadow-md hover:bg-black/70 transition-colors z-10">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+
+      <!-- Imagen Destacada del Lugar -->
+      <div class="w-full aspect-video relative shrink-0 bg-slate-100 border-b border-gray-200">
+        <img :src="selectedPlace.image_url || 'https://via.placeholder.com/400'" :alt="selectedPlace.name" class="w-full h-full object-cover" />
+      </div>
+
+      <!-- Contenido Detallado -->
+      <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-4 hide-scrollbar bg-slate-50">
+        <h2 class="text-2xl font-black text-green-950 leading-tight">{{ selectedPlace.name }}</h2>
+        
+        <div class="flex items-center text-sm font-bold text-gray-700">
+          <span class="text-yellow-500 mr-1 text-lg">★</span> {{ selectedPlace.rating || 'N/A' }} 
+          <span class="text-gray-400 font-medium ml-1">({{ selectedPlace.user_ratings_total || 0 }} reseñas)</span>
+        </div>
+
+        <p class="text-gray-600 text-sm flex items-start">
+          <svg class="w-4 h-4 mr-2 shrink-0 text-gray-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+          {{ selectedPlace.formatted_address }}
+        </p>
+
+        <!-- Botones de Acción -->
+        <div class="mt-auto pt-6 flex flex-col sm:flex-row gap-3">
+          <button class="flex-1 bg-yellow-400 hover:bg-yellow-500 text-green-950 font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex justify-center items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+            ¿Cómo llegar?
+          </button>
         </div>
       </div>
     </div>
@@ -149,6 +212,7 @@ const error = ref(null)
 const selectedPlace = ref(null)
 const selectedPoster = ref(null)
 const isHoveringSlider = ref(false)
+const isSliderCompact = ref(false)
 let map = null
 
 const featuredPlaces = computed(() => {
@@ -159,6 +223,7 @@ window.openPlaceSidebar = (placeId) => {
   const found = places.value.find(p => String(p.place_id) === String(placeId))
   if (found) {
     selectedPlace.value = found
+    selectedPoster.value = null
     // Centrar el mapa al seleccionar
     // Usamos setView en lugar de flyTo porque la animación parabólica de flyTo 
     // laguea fuertemente cuando hay muchos vectores SVG (las calles) en pantalla.
