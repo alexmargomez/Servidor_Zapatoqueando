@@ -263,10 +263,8 @@ const initMap = () => {
   L.tileLayer('http://{s}.google.com/vt/lyrs=s&hl=es&x={x}&y={y}&z={z}', {
     subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
     attribution: '&copy; Google Maps',
-    keepBuffer: 2, // Reducido a 2 para no saturar la red de descargas en segundo plano
-    updateWhenZooming: false,
-    updateWhenIdle: true,
-    tileSize: 256,
+    maxZoom: 22,
+    maxNativeZoom: 19
   }).addTo(map)
 
   // Capa para marcadores (NO se añade al mapa de inmediato si el zoom es lejano)
