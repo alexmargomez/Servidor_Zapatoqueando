@@ -8,11 +8,11 @@ COPY package*.json ./
 RUN npm install --production
 
 # Copy server code
-COPY server.js ./
+COPY src ./src
 COPY public ./public
 
 # Expose port
 EXPOSE 3000
 
 # Start server
-CMD ["node", "server.js"]
+CMD ["npm", "start"]
