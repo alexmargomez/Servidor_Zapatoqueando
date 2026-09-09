@@ -1,66 +1,138 @@
 <template>
-  <div class="pt-32 px-6 min-h-screen max-w-7xl mx-auto flex flex-col pb-20">
-    <div class="mb-8">
-      <span class="text-yellow-500 font-bold tracking-widest uppercase text-sm mb-2 block">Directorio Comercial & Mapa</span>
-      <h1 class="text-5xl md:text-7xl font-black text-green-950 mb-4 tracking-tighter">Lugares de Interés</h1>
-      <p class="text-xl text-gray-500 max-w-2xl">Navega por el mapa interactivo y explora los mejores hospedajes, restaurantes y atracciones de Zapatoca.</p>
-    </div>
+  <div class="relative w-full h-screen overflow-hidden bg-slate-100">
+    <!-- El Mapa (Protagonista 100% Pantalla) -->
+    <div id="osm-map" class="absolute inset-0 w-full h-full z-0"></div>
     
-    <!-- Contenedor Principal: Mapa + Lista -->
-    <div class="flex flex-col lg:flex-row gap-8 flex-1">
+    <!-- Buscador Flotante Estilo Plataforma (Search / Filtros) -->
+    <div class="absolute top-24 md:top-28 left-4 right-4 md:left-8 md:right-auto md:w-[420px] z-[1000] pointer-events-none flex flex-col gap-3">
       
-      <!-- Lado Izquierdo: El Mapa -->
-      <div class="w-full lg:w-2/3 h-[50vh] lg:h-[70vh] rounded-3xl overflow-hidden shadow-lg border-4 border-white relative bg-gray-200 flex flex-col items-center justify-center group">
-        <!-- Espacio reservado para el mapa de OpenStreetMap (Leaflet) -->
-        <div id="osm-map" class="absolute inset-0 w-full h-full z-10 bg-slate-100"></div>
+      <!-- Input de Búsqueda Principal -->
+      <div class="bg-white rounded-full shadow-xl border border-gray-100 flex items-center px-4 py-3 pointer-events-auto transition-transform hover:-translate-y-0.5 focus-within:ring-2 ring-yellow-400">
+        <svg class="w-5 h-5 text-gray-400 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <input type="text" placeholder="¿Qué buscas en Zapatoca?" class="bg-transparent border-none outline-none w-full text-gray-700 font-semibold placeholder-gray-400 text-sm md:text-base" />
+        <button class="bg-green-900 text-white rounded-full p-2 hover:bg-green-800 transition-colors shrink-0 ml-2 shadow-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+        </button>
       </div>
 
-      <!-- Lado Derecho: Lista de Lugares -->
-      <div class="w-full lg:w-1/3 flex flex-col h-[50vh] lg:h-[70vh] overflow-y-auto hide-scrollbar pr-2 pb-4">
-        <h3 class="text-2xl font-black text-green-950 mb-6 sticky top-0 bg-white/90 backdrop-blur-md py-4 z-10 border-b border-gray-100">Lugares Destacados</h3>
-        
-        <div v-if="loading" class="flex-1 flex flex-col items-center justify-center py-10">
-          <div class="w-10 h-10 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mb-4"></div>
+      <!-- Chips de Filtros Rápidos -->
+      <div class="flex items-center gap-2 overflow-x-auto hide-scrollbar pointer-events-auto pb-1 px-1">
+        <button class="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-full shadow-md text-xs font-bold text-gray-700 hover:bg-green-50 hover:text-green-800 hover:border-green-200 border border-gray-100 transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer">
+          🏨 Hospedajes
+        </button>
+        <button class="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-full shadow-md text-xs font-bold text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 hover:border-yellow-200 border border-gray-100 transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer">
+          🍽️ Restaurantes
+        </button>
+        <button class="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-full shadow-md text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 border border-gray-100 transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer">
+          🏞️ Naturaleza
+        </button>
+      </div>
+    </div>
+
+    <!-- Slider Flotante de Publicidad (Posters) -->
+    <div class="absolute bottom-0 left-0 w-full z-[1000] pointer-events-none pb-6 md:pb-8">
+      
+      <!-- Fondo oscuro opcional para resaltar las tarjetas -->
+      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent -z-10 pointer-events-none h-64 bottom-0 top-auto"></div>
+      
+      <div class="w-full pointer-events-auto">
+        <div v-if="loading" class="flex justify-center py-10">
+          <div class="w-10 h-10 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
         </div>
 
-        <div v-else-if="error" class="p-6 bg-red-50 rounded-2xl border border-red-100 text-center">
+        <div v-else-if="error" class="p-4 mx-4 bg-red-50 rounded-xl text-center">
           <p class="text-red-500 font-bold">{{ error }}</p>
         </div>
 
-        <div v-else class="flex flex-col gap-6">
-          <!-- Tarjetas de Lugares (Formato Lista) -->
-          <div v-for="place in places" :key="place.place_id" class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 flex flex-col sm:flex-row lg:flex-col xl:flex-row cursor-pointer">
-            
-            <div class="w-full sm:w-2/5 lg:w-full xl:w-2/5 h-40 sm:h-auto lg:h-40 xl:h-auto relative bg-gray-100 overflow-hidden shrink-0">
-              <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10"></div>
-              <img v-if="place.image_url" :src="place.image_url" :alt="place.name" class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110" />
-              <div v-else class="w-full h-full flex items-center justify-center text-gray-300">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+        <div v-else class="relative w-full overflow-hidden py-4" @mouseenter="isHoveringSlider = true" @mouseleave="isHoveringSlider = false">
+          <!-- Marquee Container -->
+          <div class="flex">
+            <div class="marquee-content flex gap-6 px-3" :class="{ 'paused': isHoveringSlider }">
+              <!-- Set 1 -->
+              <div v-for="poster in posters" :key="'a-'+poster.id" @click="selectedPoster = poster" class="shrink-0 w-72 md:w-[450px] aspect-video bg-white rounded-2xl overflow-hidden shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 border border-white/40 cursor-pointer group hover:-translate-y-2">
+                <img v-if="poster.imageurl" :src="poster.imageurl" :alt="poster.title" class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" />
               </div>
-            </div>
-            
-            <div class="p-4 flex flex-col flex-1 justify-center">
-              <h4 class="text-lg font-black text-green-950 leading-tight mb-1 group-hover:text-yellow-600 transition-colors">{{ place.name }}</h4>
-              <div class="flex items-center text-xs font-bold text-gray-700 mb-2">
-                <span class="text-yellow-500 mr-1 text-sm">★</span> {{ place.rating || 'N/A' }} 
-                <span class="text-gray-400 font-medium ml-1">({{ place.user_ratings_total || 0 }})</span>
+              <!-- Set 2 -->
+              <div v-for="poster in posters" :key="'b-'+poster.id" @click="selectedPoster = poster" class="shrink-0 w-72 md:w-[450px] aspect-video bg-white rounded-2xl overflow-hidden shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 border border-white/40 cursor-pointer group hover:-translate-y-2">
+                <img v-if="poster.imageurl" :src="poster.imageurl" :alt="poster.title" class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" />
               </div>
-              <p class="text-gray-500 text-xs flex items-start line-clamp-2">
-                <svg class="w-3 h-3 mr-1 shrink-0 text-gray-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
-                {{ place.formatted_address }}
-              </p>
+              <!-- Set 3 (para asegurar que cubra pantallas ultra anchas) -->
+              <div v-for="poster in posters" :key="'c-'+poster.id" @click="selectedPoster = poster" class="shrink-0 w-72 md:w-[450px] aspect-video bg-white rounded-2xl overflow-hidden shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 border border-white/40 cursor-pointer group hover:-translate-y-2">
+                <img v-if="poster.imageurl" :src="poster.imageurl" :alt="poster.title" class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" />
+              </div>
+              <!-- Set 4 -->
+              <div v-for="poster in posters" :key="'d-'+poster.id" @click="selectedPoster = poster" class="shrink-0 w-72 md:w-[450px] aspect-video bg-white rounded-2xl overflow-hidden shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 border border-white/40 cursor-pointer group hover:-translate-y-2">
+                <img v-if="poster.imageurl" :src="poster.imageurl" :alt="poster.title" class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" />
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Panel Lateral Derecho (Detalles del Cartel / Publicidad) -->
+  <transition name="slide-fade">
+    <div v-if="selectedPoster" class="fixed inset-y-0 right-0 w-full md:w-96 bg-white shadow-2xl z-[9999] flex flex-col border-l border-gray-100">
+      <!-- Botón Cerrar -->
+      <button @click="selectedPoster = null" class="absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white p-2 rounded-full shadow-md hover:bg-black/70 transition-colors z-10">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+
+      <!-- Imagen Destacada del Cartel -->
+      <div class="w-full aspect-[3/4] relative shrink-0 bg-black">
+        <img :src="selectedPoster.imageurl || 'https://via.placeholder.com/400'" :alt="selectedPoster.title" class="w-full h-full object-contain" />
+      </div>
+
+      <!-- Contenido Detallado -->
+      <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-4 hide-scrollbar bg-slate-50">
+        <h2 class="text-2xl font-black text-green-950 leading-tight">{{ selectedPoster.title }}</h2>
+        
+        <!-- Descripción -->
+        <div>
+          <p class="text-gray-600 leading-relaxed text-sm text-justify whitespace-pre-wrap">
+            {{ selectedPoster.description }}
+          </p>
+        </div>
+
+        <!-- Botones de Acción (WhatsApp y Cómo llegar) -->
+        <div class="mt-auto pt-6 flex flex-col sm:flex-row gap-3">
+          <button class="flex-1 bg-yellow-400 hover:bg-yellow-500 text-green-950 font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex justify-center items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+            ¿Cómo llegar?
+          </button>
+          
+          <a href="https://wa.me/573000000000?text=Hola,%20vengo%20desde%20la%20App%20Zapatoqueando%20y%20quiero%20m%C3%A1s%20informaci%C3%B3n" target="_blank" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex justify-center items-center gap-2">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.012c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+            WhatsApp
+          </a>
+        </div>
+      </div>
+    </div>
+  </transition>
+
+  <!-- Portal para Modales y Paneles Flotantes (Eventos, Rutas, Descargar) -->
+  <router-view v-slot="{ Component }">
+    <transition name="fade" mode="out-in">
+      <component :is="Component" />
+    </transition>
+  </router-view>
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick, onBeforeUnmount } from 'vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+
+let routesLayer = null;
+let markersLayer = null;
+let sliderInterval = null;
+let zapatocaMarker = null;
+let laFuenteMarker = null;
+
+// El plugin leaflet-textpath requiere que L esté en window
+window.L = L
+import 'leaflet-textpath'
 
 // Fix for default marker icons in Vite/Vue
 delete L.Icon.Default.prototype._getIconUrl;
@@ -71,9 +143,30 @@ L.Icon.Default.mergeOptions({
 });
 
 const places = ref([])
+const posters = ref([])
 const loading = ref(true)
 const error = ref(null)
+const selectedPlace = ref(null)
+const selectedPoster = ref(null)
+const isHoveringSlider = ref(false)
 let map = null
+
+const featuredPlaces = computed(() => {
+  return places.value.filter(p => p.featured)
+})
+
+window.openPlaceSidebar = (placeId) => {
+  const found = places.value.find(p => String(p.place_id) === String(placeId))
+  if (found) {
+    selectedPlace.value = found
+    // Centrar el mapa al seleccionar
+    // Usamos setView en lugar de flyTo porque la animación parabólica de flyTo 
+    // laguea fuertemente cuando hay muchos vectores SVG (las calles) en pantalla.
+    if (map && found.location) {
+      map.setView([found.location.lat, found.location.lng], 17, { animate: false })
+    }
+  }
+}
 
 const initMap = () => {
   if (map) {
@@ -87,16 +180,100 @@ const initMap = () => {
 
   // Inicializar mapa centrado exactamente en el Parque Principal de Zapatoca
   map = L.map('osm-map', {
+    zoomControl: false,
     maxBounds: bounds,
     maxBoundsViscosity: 1.0,
     minZoom: 12, // Permitimos alejar más el zoom para ver grandes extensiones de senderos
     maxZoom: 18
   }).setView([6.816801, -73.268689], 15)
 
-  // CAPA ÚNICA: Satélite Híbrido (Imágenes reales de satélite con nombres de lugares)
-  L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=es&x={x}&y={y}&z={z}', {
+  // Añadir controles de zoom en la parte superior derecha para no solapar los widgets
+  L.control.zoom({ position: 'topright' }).addTo(map)
+
+  // CAPA ÚNICA: Satélite Puro (Imágenes reales de satélite sin nombres ni calles)
+  L.tileLayer('http://mt0.google.com/vt/lyrs=s&hl=es&x={x}&y={y}&z={z}', {
     attribution: '&copy; Google Maps'
   }).addTo(map)
+
+  // Capa para marcadores (NO se añade al mapa de inmediato si el zoom es lejano)
+  markersLayer = L.featureGroup()
+  if (map.getZoom() >= 16) {
+    markersLayer.addTo(map)
+  }
+
+  // Marcador principal de Zapatoca para el zoom lejano (Punto pequeño con texto discreto)
+  const customIcon = L.divIcon({
+    className: 'zapatoca-main-marker',
+    html: `<div style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+             <div style="background-color: #eab308; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.5);"></div>
+             <div style="background-color: rgba(255,255,255,0.95); color: #052e16; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 12px; margin-top: 4px; white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">📍 Zapatoca</div>
+           </div>`,
+    iconSize: [80, 50], 
+    iconAnchor: [40, 9] // Centro del punto
+  })
+  zapatocaMarker = L.marker([6.816801, -73.268689], { icon: customIcon })
+  
+  // Al hacer clic en el marcador general, hacer zoom hacia el casco urbano
+  zapatocaMarker.on('click', () => {
+    map.setView([6.816801, -73.268689], 16, { animate: true, duration: 1 })
+  })
+
+  // Marcador principal de La Fuente para el zoom lejano (Punto pequeño con texto discreto)
+  const laFuenteIcon = L.divIcon({
+    className: 'la-fuente-main-marker',
+    html: `<div style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+             <div style="background-color: #22c55e; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.5);"></div>
+             <div style="background-color: rgba(255,255,255,0.95); color: #064e3b; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 12px; margin-top: 4px; white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">📍 La Fuente</div>
+           </div>`,
+    iconSize: [80, 50],
+    iconAnchor: [40, 9] // Centro del punto
+  })
+  laFuenteMarker = L.marker([6.7075, -73.2804], { icon: laFuenteIcon })
+  
+  // Al hacer clic en el marcador general, hacer zoom hacia La Fuente
+  laFuenteMarker.on('click', () => {
+    map.setView([6.7075, -73.2804], 16, { animate: true, duration: 1 })
+  })
+
+  if (map.getZoom() < 16) {
+    zapatocaMarker.addTo(map)
+    laFuenteMarker.addTo(map)
+  }
+
+  // Evento para ocultar textos de las calles al alejar el zoom y adelgazar las vías
+  map.on('zoomend', () => {
+    const zoom = map.getZoom()
+    const mapContainer = document.getElementById('osm-map')
+    
+    // Adelgazar dinámicamente las vías al alejar para que no pinten todo de amarillo
+    if (routesLayer) {
+      routesLayer.setStyle({
+        weight: zoom >= 17 ? 12 : (zoom >= 15 ? 5 : 2),
+        opacity: zoom >= 17 ? 0.35 : 0.5
+      })
+    }
+    
+    // Transición entre marcador general y marcadores detallados
+    if (markersLayer) {
+      if (zoom < 16) {
+        if (map.hasLayer(markersLayer)) map.removeLayer(markersLayer)
+        if (zapatocaMarker && !map.hasLayer(zapatocaMarker)) zapatocaMarker.addTo(map)
+        if (laFuenteMarker && !map.hasLayer(laFuenteMarker)) laFuenteMarker.addTo(map)
+      } else {
+        if (!map.hasLayer(markersLayer)) map.addLayer(markersLayer)
+        if (zapatocaMarker && map.hasLayer(zapatocaMarker)) map.removeLayer(zapatocaMarker)
+        if (laFuenteMarker && map.hasLayer(laFuenteMarker)) map.removeLayer(laFuenteMarker)
+      }
+    }
+
+    if (mapContainer) {
+      if (zoom < 16) {
+        mapContainer.classList.add('map-zoomed-out')
+      } else {
+        mapContainer.classList.remove('map-zoomed-out')
+      }
+    }
+  })
 
   setTimeout(() => {
     if (map) map.invalidateSize()
@@ -104,17 +281,19 @@ const initMap = () => {
 }
 
 const addMarkers = () => {
-  if (!map) return
-  
-  places.value.forEach(place => {
+  if (!map || !markersLayer) return
+
+  // Solo agregar marcadores para los lugares que son destacados (los que tienen tarjeta en el slider)
+  featuredPlaces.value.forEach(place => {
     if (place.location && place.location.lat && place.location.lng) {
-      const marker = L.marker([place.location.lat, place.location.lng]).addTo(map)
-      
-      // Popup estilizado
+      const marker = L.marker([place.location.lat, place.location.lng]).addTo(markersLayer)
+
+      // Popup estilizado sin estrellas, con imagen pequeña y clickable
       const popupContent = `
-        <div style="text-align: center; font-family: sans-serif;">
-          <h4 style="margin: 0 0 5px 0; color: #052e16; font-weight: bold;">${place.name}</h4>
-          <p style="margin: 0; font-size: 12px; color: #6b7280;">★ ${place.rating}</p>
+        <div onclick="window.openPlaceSidebar('${place.place_id}')" style="text-align: center; font-family: sans-serif; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+          <img src="${place.image_url || 'https://via.placeholder.com/150'}" alt="${place.name}" style="width: 120px; height: 80px; object-fit: cover; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" />
+          <h4 style="margin: 0; color: #052e16; font-weight: bold; font-size: 14px;">${place.name}</h4>
+          <span style="font-size: 11px; color: #3b82f6; font-weight: 600;">Ver Detalles &rarr;</span>
         </div>
       `
       marker.bindPopup(popupContent)
@@ -130,8 +309,112 @@ const focusPlace = (place) => {
   }
 }
 
+const loadRoutes = async () => {
+  if (!map) return;
+  try {
+    const response = await fetch('/api/routes');
+    const data = await response.json();
+    
+    if (data.type === 'FeatureCollection' && data.features.length > 0) {
+      routesLayer = L.geoJSON(data, {
+        style: function (feature) {
+          const currentZoom = map ? map.getZoom() : 17;
+          return {
+            color: '#facc15', // yellow-400
+            weight: currentZoom >= 17 ? 12 : (currentZoom >= 15 ? 5 : 2),
+            opacity: currentZoom >= 17 ? 0.35 : 0.5
+          };
+        }
+      }).addTo(map);
+
+      // Aplicar texto a las líneas una vez que ya están en el mapa (requisito de leaflet-textpath)
+      routesLayer.eachLayer((layer) => {
+        if (layer.feature && layer.feature.properties && layer.feature.properties.name) {
+          
+          // Lógica para evitar textos al revés: revertir las coordenadas si van de derecha a izquierda o de arriba a abajo
+          if (typeof layer.getLatLngs === 'function') {
+            let latlngs = layer.getLatLngs();
+            const reverseSegment = (pts) => {
+              if (pts.length > 0 && pts[0].lat !== undefined) {
+                const start = pts[0];
+                const end = pts[pts.length - 1];
+                // Si va de Este a Oeste, o Norte a Sur verticalmente, revertimos la línea
+                if (start.lng > end.lng || (start.lng === end.lng && start.lat > end.lat)) {
+                  pts.reverse();
+                }
+              }
+            };
+            if (latlngs.length > 0) {
+              if (latlngs[0].lat !== undefined) {
+                reverseSegment(latlngs);
+              } else {
+                latlngs.forEach(segment => reverseSegment(segment));
+              }
+              layer.setLatLngs(latlngs);
+            }
+          }
+
+          if (typeof layer.setText === 'function') {
+            layer.setText(layer.feature.properties.name, {
+              center: true,
+              offset: 3, // Offset positivo baja el texto para que quede dentro del centro de la línea
+              attributes: {
+                class: 'street-svg-text'
+              }
+            });
+          }
+        }
+      });
+      
+      // Aplicar estado de zoom inicial
+      if (map.getZoom() < 16) {
+        document.getElementById('osm-map').classList.add('map-zoomed-out');
+      }
+    }
+  } catch (err) {
+    console.error('Error fetching routes:', err);
+  }
+}
+
+const loadBoundary = async () => {
+  if (!map) return;
+  try {
+    const response = await fetch('/zapatoca_boundary.geojson');
+    if (!response.ok) throw new Error('No boundary data found');
+    const data = await response.json();
+
+    if (data.type === 'FeatureCollection' && data.features.length > 0) {
+      L.geoJSON(data, {
+        filter: function(feature) {
+          // No renderizar los "Point" del geojson (que son los que generan el punto azul no deseado)
+          return feature.geometry.type !== 'Point' && feature.geometry.type !== 'MultiPoint';
+        },
+        style: function (feature) {
+          return {
+            color: '#3b82f6', // blue-500
+            weight: 4,
+            opacity: 0.6,
+            fillColor: '#3b82f6',
+            fillOpacity: 0.05 // Sombreado azul muy sutil
+          };
+        }
+      }).addTo(map);
+    }
+  } catch (err) {
+    console.error('Error fetching boundary:', err);
+  }
+}
+
 onMounted(async () => {
   try {
+    // Cargar Posters
+    const postersResponse = await fetch('/api/posters')
+    const postersData = await postersResponse.json()
+    if (postersData.message === 'success') {
+      posters.value = postersData.data
+    }
+
+    // Cargar Lugares
     const response = await fetch('/api/places')
     const data = await response.json()
     
@@ -141,16 +424,74 @@ onMounted(async () => {
       // Inicializar mapa después de que el DOM esté listo
       await nextTick()
       initMap()
-      addMarkers()
+      if (places.value.length > 0) {
+        addMarkers(places.value)
+      }
+      
+      // Cargar rutas de calles
+      await loadRoutes()
+      
+      // Cargar límite territorial
+      await loadBoundary()
+      
     } else {
-      error.value = 'No se pudieron cargar los lugares.'
+      console.error('Failed to load places:', data.message)
     }
   } catch (err) {
-    console.error('Error fetching places:', err)
+    console.error('Error fetching data:', err)
     error.value = 'Error de conexión con el servidor.'
   } finally {
     loading.value = false
   }
+  
+  // Escuchar eventos de selección de rutas desde el panel lateral
+  window.addEventListener('route-selected', handleRouteSelected)
+  window.addEventListener('route-unselected', handleRouteUnselected)
+})
+
+const handleRouteSelected = (e) => {
+  const selectedRoute = e.detail
+  if (!map || !routesLayer) return
+  
+  routesLayer.eachLayer((layer) => {
+    if (layer.feature && layer.feature.properties && layer.feature.properties.name === selectedRoute.name) {
+      // Resaltar la ruta seleccionada
+      layer.setStyle({
+        color: '#dc2626', // red-600
+        weight: 12,
+        opacity: 0.9
+      })
+      // Hacer zoom a los límites de esta ruta
+      if (typeof layer.getBounds === 'function') {
+        map.fitBounds(layer.getBounds(), { padding: [50, 50], duration: 1.5 })
+      }
+    } else {
+      // Opacar las demás rutas
+      layer.setStyle({
+        color: '#9ca3af', // gray-400
+        weight: 3,
+        opacity: 0.3
+      })
+    }
+  })
+}
+
+const handleRouteUnselected = () => {
+  if (!map || !routesLayer) return
+  // Restaurar estilo original
+  const currentZoom = map.getZoom()
+  routesLayer.eachLayer((layer) => {
+    layer.setStyle({
+      color: '#facc15',
+      weight: currentZoom >= 17 ? 12 : (currentZoom >= 15 ? 5 : 2),
+      opacity: currentZoom >= 17 ? 0.35 : 0.5
+    })
+  })
+}
+
+onBeforeUnmount(() => {
+  window.removeEventListener('route-selected', handleRouteSelected)
+  window.removeEventListener('route-unselected', handleRouteUnselected)
 })
 </script>
 
@@ -161,5 +502,53 @@ onMounted(async () => {
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Estilos para que los nombres de las calles parezcan dibujados en el mapa */
+:deep(.street-svg-text) {
+  fill: #ffffff;
+  font-weight: 800;
+  font-size: 9px;
+  stroke: #000000;
+  stroke-width: 1.5px;
+  paint-order: stroke fill;
+  font-family: sans-serif;
+}
+
+/* Ocultar las letras cuando el zoom es lejano */
+:deep(.map-zoomed-out .street-svg-text) {
+  display: none !important;
+}
+
+/* Transición para el Panel Lateral - Optimizada para GPU */
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  will-change: transform;
+}
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  transform: translateX(100%);
+}
+
+/* Ajuste de controles de zoom de Leaflet */
+:deep(.leaflet-top.leaflet-right) {
+  margin-top: 100px; /* Para que quede debajo del Navbar */
+  margin-right: 20px;
+}
+
+/* Animación Infinita para Carteles (Marquee) */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.marquee-content {
+  animation: marquee 30s linear infinite;
+  min-width: 200%;
+}
+
+.marquee-content.paused {
+  animation-play-state: paused;
 }
 </style>

@@ -1,15 +1,10 @@
 <template>
   <header 
-    class="fixed w-full z-50 transition-all duration-500 px-6 py-4 flex justify-between items-center"
-    :class="[
-      isScrolled || !isHome || isMobileMenuOpen
-        ? 'bg-white/85 backdrop-blur-md shadow-sm border-b border-gray-100 text-green-950' 
-        : 'bg-transparent text-green-950 pt-8'
-    ]"
+    class="fixed top-0 left-0 w-full z-[1010] px-6 py-4 flex justify-between items-center bg-transparent pointer-events-none"
   >
-    <div class="flex items-center gap-3 group cursor-pointer">
-      <img src="/logo.png" alt="Zapatoqueando Logo" class="h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-sm" />
-      <h1 class="text-3xl font-black tracking-tighter text-green-950">ZAPATOQUEANDO</h1>
+    <div class="flex items-center gap-3 group cursor-pointer pointer-events-auto">
+      <img src="/logo.png" alt="Zapatoqueando Logo" class="h-12 md:h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-md" />
+      <h1 class="text-2xl md:text-3xl font-black tracking-tighter text-green-950 drop-shadow-sm bg-white/70 backdrop-blur-sm px-3 py-1 rounded-xl">ZAPATOQUEANDO</h1>
     </div>
     
     <!-- Mobile Hamburger Button -->
@@ -23,27 +18,25 @@
     </button>
 
     <!-- Desktop Nav -->
-    <nav class="hidden md:flex items-center gap-2 bg-white/40 rounded-full px-4 py-2 backdrop-blur-md border border-white/40 shadow-sm">
+    <nav class="hidden md:flex items-center gap-2 bg-white/70 rounded-full px-4 py-2 backdrop-blur-md border border-white/40 shadow-sm pointer-events-auto">
       <router-link to="/" class="font-bold px-5 py-2 rounded-full transition-all duration-300 hover:bg-green-50 text-green-950">Inicio</router-link>
       <router-link to="/eventos" class="font-bold px-5 py-2 rounded-full transition-all duration-300 hover:bg-green-50 text-green-950">Eventos</router-link>
-      <router-link to="/lugares" class="font-bold px-5 py-2 rounded-full transition-all duration-300 hover:bg-green-50 text-green-950">Lugares</router-link>
       <router-link to="/rutas" class="font-bold px-5 py-2 rounded-full transition-all duration-300 hover:bg-green-50 text-green-950">Rutas</router-link>
       
-      <button class="ml-2 bg-yellow-400 hover:bg-yellow-300 text-green-950 font-black py-3 px-8 rounded-full shadow-[0_4px_14px_0_rgba(250,204,21,0.39)] hover:shadow-[0_6px_20px_rgba(250,204,21,0.23)] hover:-translate-y-1 transition-all duration-300 active:scale-95 uppercase tracking-wide text-sm">
+      <router-link to="/descargar" class="ml-2 bg-yellow-400 hover:bg-yellow-300 text-green-950 font-black py-3 px-8 rounded-full shadow-[0_4px_14px_0_rgba(250,204,21,0.39)] hover:shadow-[0_6px_20px_rgba(250,204,21,0.23)] hover:-translate-y-1 transition-all duration-300 active:scale-95 uppercase tracking-wide text-sm block">
         Descargar
-      </button>
+      </router-link>
     </nav>
 
     <!-- Mobile Nav Overlay -->
     <transition name="slide-fade">
-      <nav v-if="isMobileMenuOpen" class="absolute top-[80px] left-0 w-full bg-white shadow-xl flex flex-col items-center py-8 gap-6 md:hidden border-t border-gray-100">
+      <nav v-if="isMobileMenuOpen" class="absolute top-[80px] left-0 w-full bg-white shadow-xl flex flex-col items-center py-8 gap-6 md:hidden border-t border-gray-100 pointer-events-auto">
         <router-link @click="isMobileMenuOpen = false" to="/" class="text-2xl font-black text-green-950 hover:text-yellow-500">Inicio</router-link>
         <router-link @click="isMobileMenuOpen = false" to="/eventos" class="text-2xl font-black text-green-950 hover:text-yellow-500">Eventos</router-link>
-        <router-link @click="isMobileMenuOpen = false" to="/lugares" class="text-2xl font-black text-green-950 hover:text-yellow-500">Lugares</router-link>
         <router-link @click="isMobileMenuOpen = false" to="/rutas" class="text-2xl font-black text-green-950 hover:text-yellow-500">Rutas</router-link>
-        <button class="mt-4 bg-yellow-400 text-green-950 font-black py-4 px-12 rounded-full shadow-lg text-lg uppercase tracking-wide">
+        <router-link @click="isMobileMenuOpen = false" to="/descargar" class="mt-4 bg-yellow-400 text-green-950 font-black py-4 px-12 rounded-full shadow-lg text-lg uppercase tracking-wide block">
           Descargar App
-        </button>
+        </router-link>
       </nav>
     </transition>
   </header>
