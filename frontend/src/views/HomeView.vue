@@ -188,10 +188,13 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 let routesLayer = null;
+let streetsLayer = null;
 let markersLayer = null;
 let sliderInterval = null;
 let zapatocaMarker = null;
 let laFuenteMarker = null;
+
+let currentSelectedRouteName = null; // Guardar ruta activa
 
 // El plugin leaflet-textpath requiere que L esté en window
 window.L = L
@@ -310,11 +313,22 @@ const initMap = () => {
     const zoom = map.getZoom()
     const mapContainer = document.getElementById('osm-map')
     
-    // Adelgazar dinámicamente las vías al alejar para que no pinten todo de amarillo
+    // Adelgazar dinámicamente las vías al alejar
+    if (streetsLayer) {
+      streetsLayer.eachLayer(layer => {
+        layer.setStyle({
+          weight: zoom >= 17 ? 4 : (zoom >= 15 ? 2 : 1)
+        })
+      })
+    }
+    
     if (routesLayer) {
-      routesLayer.setStyle({
-        weight: zoom >= 17 ? 12 : (zoom >= 15 ? 5 : 2),
-        opacity: zoom >= 17 ? 0.35 : 0.5
+      routesLayer.eachLayer((layer) => {
+        if (currentSelectedRouteName && layer.feature.properties.name === currentSelectedRouteName) {
+          layer.setStyle({
+            weight: zoom >= 17 ? 6 : 4
+          })
+        }
       })
     }
     
@@ -374,26 +388,26 @@ const focusPlace = (place) => {
   }
 }
 
-const loadRoutes = async () => {
+const loadStreets = async () => {
   if (!map) return;
   try {
-    const response = await fetch('/api/routes');
+    const response = await fetch('/api/streets');
     const data = await response.json();
     
     if (data.type === 'FeatureCollection' && data.features.length > 0) {
-      routesLayer = L.geoJSON(data, {
+      streetsLayer = L.geoJSON(data, {
         style: function (feature) {
           const currentZoom = map ? map.getZoom() : 17;
           return {
-            color: '#facc15', // yellow-400
-            weight: currentZoom >= 17 ? 12 : (currentZoom >= 15 ? 5 : 2),
-            opacity: currentZoom >= 17 ? 0.35 : 0.5
+            color: '#e5e7eb', // gray-200 for a thin clear street line
+            weight: currentZoom >= 17 ? 4 : (currentZoom >= 15 ? 2 : 1),
+            opacity: 0.7
           };
         }
       }).addTo(map);
 
       // Aplicar texto a las líneas una vez que ya están en el mapa (requisito de leaflet-textpath)
-      routesLayer.eachLayer((layer) => {
+      streetsLayer.eachLayer((layer) => {
         if (layer.feature && layer.feature.properties && layer.feature.properties.name) {
           
           // Lógica para evitar textos al revés: revertir las coordenadas si van de derecha a izquierda o de arriba a abajo
@@ -435,6 +449,36 @@ const loadRoutes = async () => {
       if (map.getZoom() < 16) {
         document.getElementById('osm-map').classList.add('map-zoomed-out');
       }
+    }
+  } catch (err) {
+    console.error('Error fetching streets:', err);
+  }
+}
+
+const loadRoutes = async () => {
+  if (!map) return;
+  try {
+    const response = await fetch('/api/routes');
+    const data = await response.json();
+    
+    if (data.type === 'FeatureCollection' && data.features.length > 0) {
+      routesLayer = L.geoJSON(data, {
+        style: function (feature) {
+          return {
+            color: '#fbbf24', // Yellow color but hidden by default
+            weight: 4,
+            opacity: 0, // Ocultas por defecto
+            dashArray: 'none', // Sin puntear
+            className: '' // Sin neón
+          };
+        }
+      }).addTo(map);
+
+      routesLayer.eachLayer((layer) => {
+        if (layer.feature && layer.feature.properties && layer.feature.properties.name) {
+          // No textpath for tourist routes
+        }
+      });
     }
   } catch (err) {
     console.error('Error fetching routes:', err);
@@ -494,6 +538,9 @@ onMounted(async () => {
       }
       
       // Cargar rutas de calles
+      await loadStreets()
+      
+      // Cargar rutas turísticas
       await loadRoutes()
       
       // Cargar límite territorial
@@ -516,40 +563,39 @@ onMounted(async () => {
 
 const handleRouteSelected = (e) => {
   const selectedRoute = e.detail
+  currentSelectedRouteName = selectedRoute.name
   if (!map || !routesLayer) return
   
   routesLayer.eachLayer((layer) => {
-    if (layer.feature && layer.feature.properties && layer.feature.properties.name === selectedRoute.name) {
-      // Resaltar la ruta seleccionada
+    if (layer.feature && layer.feature.properties && layer.feature.properties.name === currentSelectedRouteName) {
+      // Mostrar y resaltar SÓLO la ruta seleccionada (amarilla, solida, delgada)
       layer.setStyle({
-        color: '#dc2626', // red-600
-        weight: 12,
-        opacity: 0.9
+        color: '#facc15', // amarillo
+        weight: 4,
+        opacity: 1,
+        dashArray: 'none',
+        className: ''
       })
       // Hacer zoom a los límites de esta ruta
       if (typeof layer.getBounds === 'function') {
         map.fitBounds(layer.getBounds(), { padding: [50, 50], duration: 1.5 })
       }
     } else {
-      // Opacar las demás rutas
+      // Mantener invisibles las demás rutas
       layer.setStyle({
-        color: '#9ca3af', // gray-400
-        weight: 3,
-        opacity: 0.3
+        opacity: 0
       })
     }
   })
 }
 
 const handleRouteUnselected = () => {
+  currentSelectedRouteName = null
   if (!map || !routesLayer) return
-  // Restaurar estilo original
-  const currentZoom = map.getZoom()
+  // Ocultar de nuevo todas las rutas
   routesLayer.eachLayer((layer) => {
     layer.setStyle({
-      color: '#facc15',
-      weight: currentZoom >= 17 ? 12 : (currentZoom >= 15 ? 5 : 2),
-      opacity: currentZoom >= 17 ? 0.35 : 0.5
+      opacity: 0 // Volver a ocultar todas
     })
   })
 }
@@ -584,6 +630,8 @@ onBeforeUnmount(() => {
 :deep(.map-zoomed-out .street-svg-text) {
   display: none !important;
 }
+
+/* Eliminado efecto neón y estilos de texto de ruta */
 
 /* Transición para el Panel Lateral - Optimizada para GPU */
 .slide-fade-enter-active,
