@@ -206,10 +206,10 @@ delete L.Icon.Default.prototype._getIconUrl;
 const createMinimalDot = (colorHex) => {
   return L.divIcon({
     className: 'minimal-marker',
-    html: `<div style="background-color: ${colorHex}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.4); cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></div>`,
-    iconSize: [14, 14],
-    iconAnchor: [7, 7],
-    popupAnchor: [0, -10]
+    html: `<svg viewBox="0 0 24 24" width="22" height="22" style="filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.5)); transform-origin: center; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.3)'" onmouseout="this.style.transform='scale(1)'"><path fill="${colorHex}" stroke="white" stroke-width="1.5" stroke-linejoin="round" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`,
+    iconSize: [22, 22],
+    iconAnchor: [11, 11],
+    popupAnchor: [0, -11]
   });
 };
 
@@ -362,11 +362,11 @@ const initMap = () => {
     map.setView([6.816801, -73.268689], 16, { animate: true, duration: 1 })
   })
 
-  // Evento para deseleccionar ruta al hacer clic en el mapa vacío
-  map.on('click', () => {
-    const event = new CustomEvent('route-unselected');
-    window.dispatchEvent(event);
-  })
+  // Evento para deseleccionar ruta al hacer clic en el mapa vacío ELIMINADO A PETICIÓN DEL USUARIO
+  // map.on('click', () => {
+  //   const event = new CustomEvent('route-unselected');
+  //   window.dispatchEvent(event);
+  // })
 
   // Marcador principal de La Fuente para el zoom lejano (Punto pequeño con texto discreto)
   const laFuenteIcon = L.divIcon({
@@ -467,9 +467,9 @@ const loadStreets = async () => {
         style: function (feature) {
           const currentZoom = map ? map.getZoom() : 17;
           return {
-            color: '#e5e7eb', // gray-200 for a thin clear street line
-            weight: currentZoom >= 17 ? 4 : (currentZoom >= 15 ? 2 : 1),
-            opacity: 0.7
+            color: '#ffffff', // Calles en blanco brillante
+            weight: currentZoom >= 17 ? 6 : (currentZoom >= 15 ? 3 : 1.5),
+            opacity: 1 // Totalmente opacas
           };
         }
       }).addTo(map);
@@ -687,9 +687,9 @@ onBeforeUnmount(() => {
 :deep(.street-svg-text) {
   fill: #ffffff;
   font-weight: 800;
-  font-size: 9px;
+  font-size: 15px; /* Aumentado de 9px a 15px */
   stroke: #000000;
-  stroke-width: 1.5px;
+  stroke-width: 2.5px; /* Borde más grueso para que contraste mejor */
   paint-order: stroke fill;
   font-family: sans-serif;
 }

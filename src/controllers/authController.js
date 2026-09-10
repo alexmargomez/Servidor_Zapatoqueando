@@ -10,7 +10,7 @@ class AuthController {
                 return res.status(400).json({ error: 'Email and password are required' });
             }
 
-            const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+            const result = await pool.query('SELECT * FROM users WHERE username = $1', [email]);
             if (result.rows.length === 0) {
                 return res.status(401).json({ error: 'Invalid credentials' });
             }
@@ -22,7 +22,7 @@ class AuthController {
                 return res.status(401).json({ error: 'Invalid credentials' });
             }
 
-            const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET || 'secret_key_123', { expiresIn: '1d' });
+            const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET || 'secret_key_123', { expiresIn: '1d' });
             
             res.json({ message: 'success', token });
         } catch (err) {

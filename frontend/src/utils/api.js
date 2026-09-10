@@ -4,9 +4,14 @@ export const apiFetch = async (url, options = {}) => {
   const token = localStorage.getItem('admin_token');
   
   const headers = {
-    'Content-Type': 'application/json',
     ...options.headers,
   };
+
+  if (options.body && typeof options.body === 'string') {
+    if (!headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json';
+    }
+  }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;

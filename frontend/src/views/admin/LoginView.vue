@@ -8,18 +8,18 @@
 
       <form @submit.prevent="handleLogin" class="space-y-6">
         <div>
-          <label class="block text-sm font-bold text-gray-700 mb-2">Correo Electrónico</label>
+          <label class="block text-sm font-medium text-gray-500 text-sm mb-2">Usuario</label>
           <input 
             v-model="email" 
-            type="email" 
+            type="text" 
             required 
             class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
-            placeholder="admin@zapatoqueando.com"
+            placeholder="admin"
           >
         </div>
 
         <div>
-          <label class="block text-sm font-bold text-gray-700 mb-2">Contraseña</label>
+          <label class="block text-sm font-medium text-gray-500 text-sm mb-2">Contraseña</label>
           <input 
             v-model="password" 
             type="password" 
@@ -36,7 +36,7 @@
         <button 
           type="submit" 
           :disabled="loading"
-          class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-3 px-4 rounded-lg shadow transition-colors flex justify-center items-center"
+          class="w-full bg-gray-900 hover:bg-black text-white font-medium py-3 px-4 rounded-xl shadow-sm transition-colors flex justify-center items-center"
         >
           <span v-if="loading" class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mr-2"></span>
           Ingresar

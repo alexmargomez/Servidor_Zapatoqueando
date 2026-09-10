@@ -1,1 +1,0 @@
-const r=async(n,e={})=>{const o=localStorage.getItem("admin_token"),a={"Content-Type":"application/json",...e.headers};o&&(a.Authorization=`Bearer ${o}`);const t=await fetch(n,{...e,headers:a});if(t.status===401||t.status===403)throw localStorage.removeItem("admin_token"),window.location.href="/admin/login",new Error("No autorizado");return t};export{r as a};

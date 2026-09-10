@@ -8,7 +8,7 @@
       </div>
       <button 
         @click="openModal()" 
-        class="bg-green-700 hover:bg-green-800 text-white font-bold py-2.5 px-5 rounded-lg shadow transition-colors flex items-center gap-2"
+        class="bg-gray-900 hover:bg-black text-white font-medium py-2.5 px-5 rounded-xl shadow-sm transition-colors flex items-center gap-2"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
         Nuevo Lugar
@@ -16,7 +16,7 @@
     </div>
 
     <!-- Tabla -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
       <div v-if="loading" class="p-8 text-center text-gray-500 font-medium">Cargando...</div>
       <table v-else class="w-full text-left border-collapse">
         <thead>
@@ -52,31 +52,38 @@
 
     <!-- Modal Formulario -->
     <div v-if="showModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden relative">
         <div class="bg-slate-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center shrink-0">
           <h3 class="text-lg font-bold text-gray-800">{{ form.id ? 'Editar Lugar' : 'Nuevo Lugar' }}</h3>
-          <button @click="showModal = false" class="text-gray-400 hover:text-gray-600">
+          <button @click="closeModal" class="text-gray-400 hover:text-gray-600">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
         </div>
         
-        <form @submit.prevent="saveItem" class="flex-1 overflow-y-auto p-6 flex flex-col md:flex-row gap-6">
+        <form @submit.prevent="saveItem" class="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col md:flex-row gap-6">
           <div class="flex-1 space-y-4">
             <div>
-              <label class="block text-sm font-bold text-gray-700 mb-1">Nombre</label>
-              <input v-model="form.name" type="text" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
+              <label class="block text-sm font-medium text-gray-500 text-sm mb-1">Nombre</label>
+              <input v-model="form.name" type="text" required class="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 rounded-xl outline-none transition-all">
             </div>
             <div>
-              <label class="block text-sm font-bold text-gray-700 mb-1">Dirección</label>
-              <input v-model="form.formatted_address" type="text" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
+              <label class="block text-sm font-medium text-gray-500 text-sm mb-1">Dirección</label>
+              <input v-model="form.formatted_address" type="text" required class="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 rounded-xl outline-none transition-all">
             </div>
             <div>
-              <label class="block text-sm font-bold text-gray-700 mb-1">URL de la Imagen</label>
-              <input v-model="form.image_url" type="url" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
+              <label class="block text-sm font-medium text-gray-500 text-sm mb-1">Descripción</label>
+              <textarea v-model="form.description" rows="3" required class="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 rounded-xl outline-none transition-all"></textarea>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-500 text-sm mb-1">Imagen (Sube una foto)</label>
+              <div class="flex gap-2 items-center mb-2">
+                <input type="file" @change="handleImageUpload" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-gray-900 file:text-white hover:file:bg-black outline-none cursor-pointer transition-all"/>
+                <span v-if="uploadingImage" class="animate-spin h-5 w-5 border-2 border-gray-900 border-t-transparent rounded-full shrink-0"></span>
+              </div>
             </div>
             <!-- Category Select -->
             <div class="flex flex-col gap-1">
-              <label for="category" class="font-bold text-gray-700">Categoría</label>
+              <label for="category" class="font-medium text-gray-500 text-sm">Categoría</label>
               <select v-model="form.category" id="category" required class="p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-400 focus:border-transparent">
                 <option value="Hospedajes">🏨 Hospedajes</option>
                 <option value="Restaurantes">🍽️ Restaurantes</option>
@@ -88,20 +95,36 @@
             </div>
           </div>
 
-          <!-- Mapa Selector de Coordenadas -->
-          <div class="flex-1 flex flex-col min-h-[300px]">
-            <label class="block text-sm font-bold text-gray-700 mb-1">Ubicación (Haz clic en el mapa)</label>
-            <div class="flex gap-2 mb-2">
-              <input v-model="form.lat" type="number" step="any" placeholder="Latitud" required class="w-full px-3 py-2 border rounded-lg bg-gray-50 outline-none text-sm" readonly>
-              <input v-model="form.lng" type="number" step="any" placeholder="Longitud" required class="w-full px-3 py-2 border rounded-lg bg-gray-50 outline-none text-sm" readonly>
-            </div>
-            <div id="admin-map" class="flex-1 w-full rounded-xl border border-gray-300 z-10 bg-slate-100"></div>
-          </div>
+            <!-- Se eliminó el botón normal de ubicación de aquí, se movió abajo como un "handle" gigante -->
         </form>
 
-        <div class="bg-slate-50 px-6 py-4 border-t border-gray-100 flex justify-end gap-3 shrink-0">
-          <button type="button" @click="showModal = false" class="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors">Cancelar</button>
-          <button @click="saveItem" type="button" :disabled="saving" class="bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-6 rounded-lg shadow transition-colors flex items-center">
+        <!-- Handle gigante para abrir el mapa (similar a AdminRoutes) -->
+        <div class="flex justify-center items-center h-[65px] shrink-0 border-t border-gray-100 cursor-pointer bg-slate-50 hover:bg-gray-100 transition-colors" @click="showMapSheet = true">
+          <div class="flex flex-col items-center" :class="form.lat ? 'text-green-600' : 'text-gray-500'">
+            <svg v-if="!form.lat" class="w-6 h-6 animate-bounce mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+            <svg v-else class="w-6 h-6 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            <span class="text-xs font-bold uppercase tracking-wider">{{ form.lat ? 'Ubicación Seleccionada (✓)' : 'Abrir Mapa y Seleccionar Ubicación' }}</span>
+          </div>
+        </div>
+
+        <!-- Bottom Sheet del Mapa -->
+        <div class="absolute inset-x-0 bottom-0 bg-white rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transition-transform duration-300 z-50 flex flex-col h-[80%]" :class="showMapSheet ? 'translate-y-0' : 'translate-y-full'">
+          <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white rounded-t-2xl shrink-0">
+            <h4 class="font-bold text-gray-800">Seleccionar Ubicación</h4>
+            <button @click="showMapSheet = false" type="button" class="text-gray-400 hover:text-gray-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+          </div>
+          <div class="px-6 py-2 text-sm text-gray-500 bg-slate-50 text-center shrink-0">Haz clic en el mapa para marcar la ubicación.</div>
+          <div id="admin-map" class="flex-1 w-full bg-slate-100"></div>
+          <div class="p-4 bg-white border-t border-gray-100 shrink-0">
+            <button @click="showMapSheet = false" type="button" class="w-full bg-gray-900 hover:bg-black text-white font-medium py-3 rounded-xl shadow-sm transition-colors">Confirmar Ubicación</button>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 px-4 md:px-6 py-4 border-t border-gray-100 flex justify-end gap-3 shrink-0">
+          <button type="button" @click="closeModal" class="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors">Cancelar</button>
+          <button @click="saveItem" type="button" :disabled="saving" class="bg-gray-900 hover:bg-black text-white font-medium py-2 px-6 rounded-xl shadow-sm transition-colors flex items-center">
             <span v-if="saving" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>
             Guardar
           </button>
@@ -142,16 +165,49 @@ const getCategoryColor = (category) => {
 const places = ref([])
 const loading = ref(true)
 const saving = ref(false)
+const uploadingImage = ref(false)
 const showModal = ref(false)
 
 const form = ref({
   id: null,
   name: '',
+  description: '',
   formatted_address: '',
   image_url: '',
+  image_file: null,
   category: 'Lugares turísticos',
   lat: null,
   lng: null
+})
+
+const resetForm = () => {
+  form.value = {
+    id: null,
+    name: '',
+    description: '',
+    formatted_address: '',
+    image_url: '',
+    image_file: null,
+    category: 'Lugares turísticos',
+    lat: null,
+    lng: null
+  }
+}
+
+const closeModal = () => {
+  showModal.value = false
+  resetForm()
+}
+
+const showMapSheet = ref(false)
+
+watch(showMapSheet, async (newVal) => {
+  if (newVal) {
+    await nextTick()
+    if (map) {
+      map.invalidateSize()
+    }
+  }
 })
 
 let map = null
@@ -215,16 +271,25 @@ const openModal = async (item = null) => {
     form.value = {
       id: item.place_id,
       name: item.name,
+      description: item.description || '',
       formatted_address: item.formatted_address,
       image_url: item.image_url,
+      image_file: null,
       category: item.category || 'Lugares turísticos',
       lat: item.location.lat,
       lng: item.location.lng
     }
   } else {
     form.value = {
-      id: null, name: '', formatted_address: '', image_url: '', 
-      category: 'Lugares turísticos', lat: null, lng: null
+      id: null,
+      name: '',
+      description: '',
+      formatted_address: '',
+      image_url: '',
+      image_file: null,
+      category: 'Lugares turísticos',
+      lat: null,
+      lng: null
     }
   }
   showModal.value = true
@@ -238,23 +303,49 @@ const saveItem = async () => {
     alert('Por favor selecciona una ubicación en el mapa.')
     return
   }
+  
+  if (!form.value.image_file && !form.value.image_url) {
+    alert('Por favor selecciona una imagen.')
+    return
+  }
+
   try {
     saving.value = true
     const url = form.value.id ? `/api/places/${form.value.id}` : '/api/places'
     const method = form.value.id ? 'PUT' : 'POST'
     
+    const formData = new FormData()
+    formData.append('name', form.value.name)
+    formData.append('description', form.value.description)
+    formData.append('formatted_address', form.value.formatted_address)
+    formData.append('lat', form.value.lat)
+    formData.append('lng', form.value.lng)
+    formData.append('category', form.value.category)
+    if (form.value.image_file) {
+      formData.append('image', form.value.image_file)
+    } else {
+      formData.append('image_url', form.value.image_url)
+    }
+    
     await apiFetch(url, {
       method,
-      body: JSON.stringify(form.value)
+      body: formData // Eliminado el JSON.stringify
     })
     
     showModal.value = false
+    resetForm()
     loadData()
   } catch (err) {
     alert('Error al guardar')
   } finally {
     saving.value = false
   }
+}
+
+const handleImageUpload = (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+  form.value.image_file = file
 }
 
 const deleteItem = async (id) => {

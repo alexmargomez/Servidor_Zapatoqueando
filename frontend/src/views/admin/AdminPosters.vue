@@ -8,7 +8,7 @@
       </div>
       <button 
         @click="openModal()" 
-        class="bg-green-700 hover:bg-green-800 text-white font-bold py-2.5 px-5 rounded-lg shadow transition-colors flex items-center gap-2"
+        class="bg-gray-900 hover:bg-black text-white font-medium py-2.5 px-5 rounded-xl shadow-sm transition-colors flex items-center gap-2"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
         Nueva Publicidad
@@ -16,7 +16,7 @@
     </div>
 
     <!-- Tabla -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
       <div v-if="loading" class="p-8 text-center text-gray-500 font-medium">Cargando...</div>
       <table v-else class="w-full text-left border-collapse">
         <thead>
@@ -62,30 +62,34 @@
           </button>
         </div>
         
-        <form @submit.prevent="saveItem" class="p-6 space-y-4">
+        <form @submit.prevent="saveItem" class="p-4 md:p-6 space-y-4 max-h-[80vh] overflow-y-auto">
           <div>
-            <label class="block text-sm font-bold text-gray-700 mb-1">Título</label>
-            <input v-model="form.title" type="text" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
+            <label class="block text-sm font-medium text-gray-500 text-sm mb-1">Título</label>
+            <input v-model="form.title" type="text" required class="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 rounded-xl outline-none transition-all">
           </div>
           <div>
-            <label class="block text-sm font-bold text-gray-700 mb-1">Descripción</label>
-            <textarea v-model="form.description" rows="3" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"></textarea>
+            <label class="block text-sm font-medium text-gray-500 text-sm mb-1">Descripción</label>
+            <textarea v-model="form.description" rows="3" class="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 rounded-xl outline-none transition-all"></textarea>
           </div>
           <div>
-            <label class="block text-sm font-bold text-gray-700 mb-1">URL de la Imagen</label>
-            <input v-model="form.imageUrl" type="url" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" placeholder="https://...">
+            <label class="block text-sm font-medium text-gray-500 text-sm mb-1">Imagen (Sube una foto o pega una URL)</label>
+            <div class="flex gap-2 items-center mb-2">
+              <input type="file" @change="handleImageUpload" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 outline-none cursor-pointer"/>
+              <span v-if="uploadingImage" class="animate-spin h-5 w-5 border-2 border-green-700 border-t-transparent rounded-full shrink-0"></span>
+            </div>
+            <input v-model="form.imageUrl" type="url" required class="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 rounded-xl outline-none transition-all text-sm text-gray-500 bg-gray-50" placeholder="https://...">
           </div>
           <div>
-            <label class="block text-sm font-bold text-gray-700 mb-1">Tipo</label>
-            <select v-model="form.type" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white">
+            <label class="block text-sm font-medium text-gray-500 text-sm mb-1">Tipo</label>
+            <select v-model="form.type" required class="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 rounded-xl outline-none transition-all bg-white">
               <option value="event">Evento</option>
               <option value="business">Negocio</option>
             </select>
           </div>
 
-          <div class="pt-4 flex justify-end gap-3">
+          <div class="pt-4 flex justify-end gap-3 sticky bottom-0 bg-white pb-2">
             <button type="button" @click="showModal = false" class="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors">Cancelar</button>
-            <button type="submit" :disabled="saving" class="bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-6 rounded-lg shadow transition-colors flex items-center">
+            <button type="submit" :disabled="saving" class="bg-gray-900 hover:bg-black text-white font-medium py-2 px-6 rounded-xl shadow-sm transition-colors flex items-center">
               <span v-if="saving" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>
               Guardar
             </button>
@@ -103,6 +107,7 @@ import { apiFetch } from '../../utils/api'
 const posters = ref([])
 const loading = ref(true)
 const saving = ref(false)
+const uploadingImage = ref(false)
 const showModal = ref(false)
 const form = ref({ id: null, title: '', description: '', imageUrl: '', type: 'event' })
 
@@ -152,6 +157,35 @@ const saveItem = async () => {
     alert('Error al guardar')
   } finally {
     saving.value = false
+  }
+}
+
+const handleImageUpload = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  const formData = new FormData()
+  formData.append('image', file)
+
+  try {
+    uploadingImage.value = true
+    const token = localStorage.getItem('zapatoqueando_token')
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    })
+    
+    if (!response.ok) throw new Error('Error al subir')
+    
+    const data = await response.json()
+    form.value.imageUrl = data.imageUrl
+  } catch (error) {
+    alert('Error al subir la imagen. Verifica el peso y formato.')
+  } finally {
+    uploadingImage.value = false
   }
 }
 

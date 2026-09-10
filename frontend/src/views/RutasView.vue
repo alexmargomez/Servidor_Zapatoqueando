@@ -78,6 +78,11 @@ const selectRuta = (ruta) => {
   window.dispatchEvent(event);
 }
 
+onUnmounted(() => {
+  const event = new CustomEvent('route-unselected');
+  window.dispatchEvent(event);
+})
+
 onMounted(async () => {
   try {
     const response = await fetch('/api/routes')

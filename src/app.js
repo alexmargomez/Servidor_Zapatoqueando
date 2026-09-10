@@ -24,6 +24,10 @@ const apiLimiter = rateLimit({
 
 // Middlewares
 app.use(cors());
+app.use((req, res, next) => {
+    console.log(`[REQ] ${req.method} ${req.url} | Content-Type: ${req.headers['content-type']}`);
+    next();
+});
 app.use(express.json());
 
 // Apply rate limiter to /api/auth routes
