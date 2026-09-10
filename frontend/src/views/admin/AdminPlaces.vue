@@ -90,7 +90,7 @@
                 <option value="CafeBar">☕ CafeBar</option>
                 <option value="Fuentes de soda">🥤 Fuentes de soda</option>
                 <option value="Lugares turísticos">📸 Lugares turísticos</option>
-                <option value="Puntos de interés">📍 Puntos de interés</option>
+                <option value="Puntos de interés">⭐ Puntos de interés</option>
               </select>
             </div>
           </div>

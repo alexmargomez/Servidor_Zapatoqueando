@@ -160,6 +160,10 @@
           {{ selectedPlace.formatted_address }}
         </p>
 
+        <div v-if="selectedPlace.description" class="mt-4">
+          <p class="text-gray-700 text-base leading-relaxed whitespace-pre-wrap">{{ selectedPlace.description }}</p>
+        </div>
+
         <!-- Botones de Acción -->
         <div class="mt-auto pt-6 flex flex-col sm:flex-row gap-3">
           <button class="flex-1 bg-yellow-400 hover:bg-yellow-500 text-green-950 font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex justify-center items-center gap-2">
@@ -206,7 +210,7 @@ delete L.Icon.Default.prototype._getIconUrl;
 const createMinimalDot = (colorHex) => {
   return L.divIcon({
     className: 'minimal-marker',
-    html: `<svg viewBox="0 0 24 24" width="22" height="22" style="filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.5)); transform-origin: center; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.3)'" onmouseout="this.style.transform='scale(1)'"><path fill="${colorHex}" stroke="white" stroke-width="1.5" stroke-linejoin="round" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`,
+    html: `<svg viewBox="0 0 24 24" width="20" height="20" style="filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.5)); transform-origin: center; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.3)'" onmouseout="this.style.transform='scale(1)'"><circle cx="12" cy="12" r="10" fill="${colorHex}" stroke="white" stroke-width="2"/></svg>`,
     iconSize: [22, 22],
     iconAnchor: [11, 11],
     popupAnchor: [0, -11]
@@ -238,7 +242,7 @@ const categories = [
   { name: 'CafeBar', icon: '☕', color: '#8b5cf6' },
   { name: 'Fuentes de soda', icon: '🥤', color: '#06b6d4' },
   { name: 'Lugares turísticos', icon: '📸', color: '#ec4899' },
-  { name: 'Puntos de interés', icon: '📍', color: '#64748b' }
+  { name: 'Puntos de interés', icon: '⭐', color: '#64748b' }
 ]
 
 const toggleCategory = (category) => {
@@ -284,14 +288,20 @@ const updateMarkers = () => {
       const markerColor = getCategoryColor(place.category)
       const marker = L.marker([place.location.lat, place.location.lng], { icon: createMinimalDot(markerColor) }).addTo(markersLayer)
 
-      // Popup estilizado sin estrellas, con imagen pequeña y clickable
+      // Mini-modal (Popup) minimalista estilo cápsula (sin 'X')
       const popupContent = `
-        <div onclick="window.openPlaceSidebar('${place.place_id}')" style="text-align: center; font-family: sans-serif; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-          <img src="${place.image_url || 'https://via.placeholder.com/150'}" alt="${place.name}" style="width: 120px; height: 80px; object-fit: cover; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" />
-          <h4 style="margin: 0; color: #052e16; font-weight: bold; font-size: 14px;">${place.name}</h4>
+        <div onclick="window.openPlaceSidebar('${place.place_id}')" class="flex items-center gap-3 pr-3 cursor-pointer">
+          <div class="w-10 h-10 shrink-0 rounded-full overflow-hidden border-2 border-white shadow-sm bg-gray-100">
+            <img src="${place.image_url || 'https://via.placeholder.com/150'}" alt="${place.name}" class="w-full h-full object-cover" />
+          </div>
+          <span class="font-bold text-gray-800 text-sm whitespace-nowrap">${place.name}</span>
         </div>
       `
-      marker.bindPopup(popupContent)
+      marker.bindPopup(popupContent, {
+        closeButton: false,
+        className: 'custom-minimal-popup',
+        offset: [0, -5]
+      })
 
       // Abrir popup al pasar el cursor (hover)
       marker.on('mouseover', function () {
@@ -683,15 +693,55 @@ onBeforeUnmount(() => {
   scrollbar-width: none;
 }
 
+/* Diseño UI/UX Minimalista para el Popup del Mapa */
+:deep(.custom-minimal-popup .leaflet-popup-content-wrapper) {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 50px; /* Forma de píldora */
+  padding: 4px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+:deep(.custom-minimal-popup .leaflet-popup-content) {
+  margin: 0;
+  width: auto !important;
+}
+:deep(.custom-minimal-popup .leaflet-popup-tip-container) {
+  display: none; /* Ocultar el triangulito para un diseño más limpio flotante */
+}
+
+/* Forzar repintado de la capa SVG entera en Leaflet y marcadores (Evita borrosidad en PC al hacer zoom) */
+:deep(.leaflet-overlay-pane svg),
+:deep(.minimal-marker svg) {
+  will-change: transform;
+  transform: translateZ(0);
+  shape-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+}
+
 /* Estilos para que los nombres de las calles parezcan dibujados en el mapa */
 :deep(.street-svg-text) {
   fill: #ffffff;
   font-weight: 800;
-  font-size: 9px;
+  font-size: 10px; /* Tamaño base para celulares */
   stroke: #000000;
   stroke-width: 1.5px;
   paint-order: stroke fill;
   font-family: sans-serif;
+  
+  /* Optimizaciones para forzar nitidez (Fix para PC/Chrome donde se queda borroso hasta hacer clic) */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  shape-rendering: geometricPrecision;
+  will-change: transform;
+}
+
+/* En PC (pantallas más grandes), agrandar el texto para que se lea mejor */
+@media (min-width: 768px) {
+  :deep(.street-svg-text) {
+    font-size: 14px;
+    stroke-width: 2px;
+  }
 }
 
 /* Ocultar las letras cuando el zoom es lejano */
