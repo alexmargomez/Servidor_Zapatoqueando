@@ -461,15 +461,15 @@ const loadStreets = async () => {
   try {
     const response = await fetch('/api/streets');
     const data = await response.json();
-    
+
     if (data.type === 'FeatureCollection' && data.features.length > 0) {
       streetsLayer = L.geoJSON(data, {
         style: function (feature) {
           const currentZoom = map ? map.getZoom() : 17;
           return {
-            color: '#ffffff', // Calles en blanco brillante
-            weight: currentZoom >= 17 ? 6 : (currentZoom >= 15 ? 3 : 1.5),
-            opacity: 1 // Totalmente opacas
+            color: '#e5e7eb', // gray-200 for a thin clear street line
+            weight: currentZoom >= 17 ? 4 : (currentZoom >= 15 ? 2 : 1),
+            opacity: 0.7
           };
         }
       }).addTo(map);
@@ -687,9 +687,9 @@ onBeforeUnmount(() => {
 :deep(.street-svg-text) {
   fill: #ffffff;
   font-weight: 800;
-  font-size: 15px; /* Aumentado de 9px a 15px */
+  font-size: 9px;
   stroke: #000000;
-  stroke-width: 2.5px; /* Borde más grueso para que contraste mejor */
+  stroke-width: 1.5px;
   paint-order: stroke fill;
   font-family: sans-serif;
 }
