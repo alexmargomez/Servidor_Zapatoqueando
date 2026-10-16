@@ -5,16 +5,17 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    command: -p ${POSTGRES_PORT:-5432}
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-admin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password123}
       POSTGRES_DB: ${POSTGRES_DB:-zapatoqueando}
     ports:
-      - "${POSTGRES_EXTERNAL_PORT:-5432}:5432"
+      - "${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-admin} -d $${POSTGRES_DB:-zapatoqueando}"]
+      test: ["CMD-SHELL", "pg_isready -p $${POSTGRES_PORT:-5432} -U $${POSTGRES_USER:-admin} -d $${POSTGRES_DB:-zapatoqueando}"]
       interval: 3s
       timeout: 3s
       retries: 15
