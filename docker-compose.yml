@@ -15,7 +15,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -p $${POSTGRES_PORT:-5432} -U $${POSTGRES_USER:-admin} -d $${POSTGRES_DB:-zapatoqueando}"]
+      test: ['CMD-SHELL', 'pg_isready -p $${POSTGRES_PORT:-5432} -U $${POSTGRES_USER:-admin} -d $${POSTGRES_DB:-zapatoqueando} && psql -p $${POSTGRES_PORT:-5432} -U $${POSTGRES_USER:-admin} -d $${POSTGRES_DB:-zapatoqueando} -c "ALTER USER \"$$POSTGRES_USER\" WITH PASSWORD ''$$POSTGRES_PASSWORD'';" >/dev/null 2>&1 || pg_isready -p $${POSTGRES_PORT:-5432} -U $${POSTGRES_USER:-admin} -d $${POSTGRES_DB:-zapatoqueando}']
       interval: 3s
       timeout: 3s
       retries: 15
@@ -41,8 +41,9 @@ services:
       - POSTGRES_PORT=${POSTGRES_PORT:-5432}
       - JWT_SECRET=${JWT_SECRET}
     volumes:
+      - ./src:/usr/src/app/src
+      - ./public:/usr/src/app/public
       - uploads_data:/usr/src/app/public/uploads
-      - ./public/map-cache:/usr/src/app/public/map-cache
     depends_on:
       zapatoqueando-db:
         condition: service_healthy
