@@ -41,9 +41,6 @@ services:
       - POSTGRES_PORT=${POSTGRES_PORT:-5432}
       - JWT_SECRET=${JWT_SECRET}
     volumes:
-      - ./src:/usr/src/app/src
-      - ./public/assets:/usr/src/app/public/assets
-      - ./public/index.html:/usr/src/app/public/index.html
       - uploads_data:/usr/src/app/public/uploads
       - ./public/map-cache:/usr/src/app/public/map-cache
     depends_on:
