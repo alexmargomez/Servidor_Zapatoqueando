@@ -42,7 +42,6 @@ services:
       - JWT_SECRET=${JWT_SECRET}
     volumes:
       - ./src:/usr/src/app/src
-      - ./dist:/usr/src/app/dist
       - ./prisma:/usr/src/app/prisma
       - ./public:/usr/src/app/public
       - uploads_data:/usr/src/app/public/uploads
