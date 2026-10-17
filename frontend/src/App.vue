@@ -3,11 +3,7 @@
     <Navbar v-if="!isAdminRoute" />
     
     <main class="flex-1 relative w-full h-screen overflow-hidden">
-      <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
-          <component :is="Component" />
-        </transition>
-      </router-view>
+      <router-view />
     </main>
   </div>
 </template>

@@ -147,115 +147,115 @@
         </div>
       </div>
     </transition>
-  </div>
 
-  <!-- Panel Lateral Derecho (Detalles del Cartel / Publicidad) -->
-  <transition name="slide-fade">
-    <div v-if="selectedPoster" class="fixed inset-y-0 right-0 w-full md:w-[420px] bg-white shadow-2xl z-[9999] flex flex-col border-l border-gray-100">
-      <!-- Botón Cerrar -->
-      <button @click="selectedPoster = null" class="absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white p-2 rounded-full shadow-md hover:bg-black/70 transition-colors z-10 cursor-pointer">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-      </button>
+    <!-- Panel Lateral Derecho (Detalles del Cartel / Publicidad) -->
+    <transition name="slide-fade">
+      <div v-if="selectedPoster" class="fixed inset-y-0 right-0 w-full md:w-[420px] bg-white shadow-2xl z-[9999] flex flex-col border-l border-gray-100">
+        <!-- Botón Cerrar -->
+        <button @click="selectedPoster = null" class="absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white p-2 rounded-full shadow-md hover:bg-black/70 transition-colors z-10 cursor-pointer">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
 
-      <!-- Imagen Destacada del Cartel -->
-      <div class="w-full aspect-video relative shrink-0 bg-slate-100 border-b border-gray-200">
-        <img :src="getPosterImage(selectedPoster)" :alt="selectedPoster.title" class="w-full h-full object-cover" />
-      </div>
-
-      <!-- Contenido Detallado -->
-      <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-4 hide-scrollbar bg-slate-50">
-        <div class="flex items-center gap-2">
-          <span class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider" :class="selectedPoster.type === 'event' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'">
-            {{ selectedPoster.type === 'event' ? 'Evento' : 'Destacado' }}
-          </span>
-        </div>
-        <h2 class="text-2xl font-black text-green-950 leading-tight">{{ selectedPoster.title }}</h2>
-        
-        <!-- Descripción -->
-        <div>
-          <p class="text-gray-600 leading-relaxed text-sm text-justify whitespace-pre-wrap">
-            {{ selectedPoster.description || 'Descubre más sobre esta experiencia en Zapatoca.' }}
-          </p>
+        <!-- Imagen Destacada del Cartel -->
+        <div class="w-full aspect-video relative shrink-0 bg-slate-100 border-b border-gray-200">
+          <img :src="getPosterImage(selectedPoster)" :alt="selectedPoster.title" class="w-full h-full object-cover" />
         </div>
 
-        <!-- Botones de Acción (WhatsApp y Cómo llegar) -->
-        <div class="mt-auto pt-6 flex flex-col sm:flex-row gap-3">
-          <button 
-            @click="openPosterDirections(selectedPoster)" 
-            type="button"
-            class="flex-1 bg-yellow-400 hover:bg-yellow-500 text-green-950 font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex justify-center items-center gap-2 cursor-pointer"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
-            ¿Cómo llegar?
-          </button>
+        <!-- Contenido Detallado -->
+        <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-4 hide-scrollbar bg-slate-50">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider" :class="selectedPoster.type === 'event' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'">
+              {{ selectedPoster.type === 'event' ? 'Evento' : 'Destacado' }}
+            </span>
+          </div>
+          <h2 class="text-2xl font-black text-green-950 leading-tight">{{ selectedPoster.title }}</h2>
           
-          <a 
-            :href="getWhatsAppUrl(selectedPoster.title)" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex justify-center items-center gap-2"
-          >
-            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.012c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
-            WhatsApp
-          </a>
+          <!-- Descripción -->
+          <div>
+            <p class="text-gray-600 leading-relaxed text-sm text-justify whitespace-pre-wrap">
+              {{ selectedPoster.description || 'Descubre más sobre esta experiencia en Zapatoca.' }}
+            </p>
+          </div>
+
+          <!-- Botones de Acción (WhatsApp y Cómo llegar) -->
+          <div class="mt-auto pt-6 flex flex-col sm:flex-row gap-3">
+            <button 
+              @click="openPosterDirections(selectedPoster)" 
+              type="button"
+              class="flex-1 bg-yellow-400 hover:bg-yellow-500 text-green-950 font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex justify-center items-center gap-2 cursor-pointer"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+              ¿Cómo llegar?
+            </button>
+            
+            <a 
+              :href="getWhatsAppUrl(selectedPoster.title)" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex justify-center items-center gap-2"
+            >
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.012c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+              WhatsApp
+            </a>
+          </div>
         </div>
       </div>
-    </div>
-  </transition>
-
-  <!-- Panel Lateral Derecho (Detalles del Lugar del Mapa) -->
-  <transition name="slide-fade">
-    <div v-if="selectedPlace" class="fixed inset-y-0 right-0 w-full md:w-[420px] bg-white shadow-2xl z-[9999] flex flex-col border-l border-gray-100">
-      <!-- Botón Cerrar -->
-      <button @click="selectedPlace = null" class="absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white p-2 rounded-full shadow-md hover:bg-black/70 transition-colors z-10 cursor-pointer">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-      </button>
-
-      <!-- Imagen Destacada del Lugar -->
-      <div class="w-full aspect-video relative shrink-0 bg-slate-100 border-b border-gray-200">
-        <img :src="selectedPlace.image_url || '/logo.png'" :alt="selectedPlace.name" class="w-full h-full object-cover" />
-      </div>
-
-      <!-- Contenido Detallado -->
-      <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-4 hide-scrollbar bg-slate-50">
-        <div v-if="selectedPlace.category" class="flex items-center gap-2">
-          <span class="px-3 py-1 rounded-full text-xs font-bold text-white" :style="{ backgroundColor: getCategoryColor(selectedPlace.category) }">
-            {{ selectedPlace.category }}
-          </span>
-        </div>
-
-        <h2 class="text-2xl font-black text-green-950 leading-tight">{{ selectedPlace.name }}</h2>
-
-        <p v-if="selectedPlace.formatted_address" class="text-gray-600 text-sm flex items-start">
-          <svg class="w-4 h-4 mr-2 shrink-0 text-gray-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
-          {{ selectedPlace.formatted_address }}
-        </p>
-
-        <div v-if="selectedPlace.description" class="mt-2">
-          <p class="text-gray-700 text-base leading-relaxed whitespace-pre-wrap">{{ selectedPlace.description }}</p>
-        </div>
-
-        <!-- Botones de Acción -->
-        <div class="mt-auto pt-6 flex flex-col sm:flex-row gap-3">
-          <button 
-            @click="openDirections(selectedPlace)" 
-            type="button"
-            class="flex-1 bg-yellow-400 hover:bg-yellow-500 text-green-950 font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex justify-center items-center gap-2 cursor-pointer"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
-            ¿Cómo llegar?
-          </button>
-        </div>
-      </div>
-    </div>
-  </transition>
-
-  <!-- Portal para Modales y Paneles Flotantes (Eventos, Rutas, Descargar) -->
-  <router-view v-slot="{ Component }">
-    <transition name="slide-up" mode="out-in">
-      <component :is="Component" />
     </transition>
-  </router-view>
+
+    <!-- Panel Lateral Derecho (Detalles del Lugar del Mapa) -->
+    <transition name="slide-fade">
+      <div v-if="selectedPlace" class="fixed inset-y-0 right-0 w-full md:w-[420px] bg-white shadow-2xl z-[9999] flex flex-col border-l border-gray-100">
+        <!-- Botón Cerrar -->
+        <button @click="selectedPlace = null" class="absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white p-2 rounded-full shadow-md hover:bg-black/70 transition-colors z-10 cursor-pointer">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+
+        <!-- Imagen Destacada del Lugar -->
+        <div class="w-full aspect-video relative shrink-0 bg-slate-100 border-b border-gray-200">
+          <img :src="selectedPlace.image_url || '/logo.png'" :alt="selectedPlace.name" class="w-full h-full object-cover" />
+        </div>
+
+        <!-- Contenido Detallado -->
+        <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-4 hide-scrollbar bg-slate-50">
+          <div v-if="selectedPlace.category" class="flex items-center gap-2">
+            <span class="px-3 py-1 rounded-full text-xs font-bold text-white" :style="{ backgroundColor: getCategoryColor(selectedPlace.category) }">
+              {{ selectedPlace.category }}
+            </span>
+          </div>
+
+          <h2 class="text-2xl font-black text-green-950 leading-tight">{{ selectedPlace.name }}</h2>
+
+          <p v-if="selectedPlace.formatted_address" class="text-gray-600 text-sm flex items-start">
+            <svg class="w-4 h-4 mr-2 shrink-0 text-gray-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+            {{ selectedPlace.formatted_address }}
+          </p>
+
+          <div v-if="selectedPlace.description" class="mt-2">
+            <p class="text-gray-700 text-base leading-relaxed whitespace-pre-wrap">{{ selectedPlace.description }}</p>
+          </div>
+
+          <!-- Botones de Acción -->
+          <div class="mt-auto pt-6 flex flex-col sm:flex-row gap-3">
+            <button 
+              @click="openDirections(selectedPlace)" 
+              type="button"
+              class="flex-1 bg-yellow-400 hover:bg-yellow-500 text-green-950 font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex justify-center items-center gap-2 cursor-pointer"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+              ¿Cómo llegar?
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Portal para Modales y Paneles Flotantes (Eventos, Rutas, Descargar) -->
+    <router-view v-slot="{ Component }">
+      <transition name="slide-up" mode="out-in">
+        <component :is="Component" />
+      </transition>
+    </router-view>
+  </div>
 </template>
 
 <script setup>
@@ -726,8 +726,9 @@ const loadStreets = async () => {
       });
       
       // Aplicar estado de zoom inicial
-      if (map.getZoom() < 16) {
-        document.getElementById('osm-map').classList.add('map-zoomed-out');
+      const mapEl = document.getElementById('osm-map');
+      if (map && mapEl && map.getZoom() < 16) {
+        mapEl.classList.add('map-zoomed-out');
       }
     }
   } catch (err) {
@@ -741,7 +742,7 @@ const loadRoutes = async () => {
     const response = await fetch('/api/routes');
     const data = await response.json();
     
-    if (data.type === 'FeatureCollection' && data.features.length > 0) {
+    if (map && data.type === 'FeatureCollection' && data.features.length > 0) {
       routesLayer = L.geoJSON(data, {
         style: function (feature) {
           return {
@@ -766,7 +767,7 @@ const loadBoundary = async () => {
     if (!response.ok) throw new Error('No boundary data found');
     const data = await response.json();
 
-    if (data.type === 'FeatureCollection' && data.features.length > 0) {
+    if (map && data.type === 'FeatureCollection' && data.features.length > 0) {
       L.geoJSON(data, {
         filter: function(feature) {
           // No renderizar los "Point" del geojson (que son los que generan el punto azul no deseado)
@@ -882,6 +883,10 @@ const handleRouteUnselected = () => {
 onBeforeUnmount(() => {
   window.removeEventListener('route-selected', handleRouteSelected)
   window.removeEventListener('route-unselected', handleRouteUnselected)
+  if (map) {
+    map.remove()
+    map = null
+  }
 })
 </script>
 
