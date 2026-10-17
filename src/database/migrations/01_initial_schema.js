@@ -15,7 +15,10 @@ module.exports = {
             CREATE TABLE IF NOT EXISTS posters (
                 id SERIAL PRIMARY KEY,
                 title VARCHAR(100) NOT NULL,
-                image_url TEXT NOT NULL,
+                description TEXT,
+                imageUrl TEXT,
+                image_url TEXT,
+                type VARCHAR(50) DEFAULT 'event',
                 order_index INTEGER DEFAULT 0
             )
         `);

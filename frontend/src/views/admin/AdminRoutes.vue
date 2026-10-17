@@ -284,8 +284,7 @@ const initAdminMap = () => {
   
   const center = [6.8168, -73.2687]
   map = L.map('admin-route-map').setView(center, 15)
-  L.tileLayer('http://{s}.google.com/vt/lyrs=s&hl=es&x={x}&y={y}&z={z}', {
-    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+  L.tileLayer('/map-cache/{z}/{x}/{y}.jpg', {
     maxZoom: 22,
     maxNativeZoom: 19
   }).addTo(map)
@@ -373,15 +372,19 @@ const saveItem = async () => {
     const url = form.value.id ? `/api/routes/${form.value.id}` : '/api/routes'
     const method = form.value.id ? 'PUT' : 'POST'
     
-    await apiFetch(url, {
+    const res = await apiFetch(url, {
       method,
       body: JSON.stringify(payload)
     })
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}))
+      throw new Error(errData.error || 'Error al guardar')
+    }
     
     showModal.value = false
     loadData()
   } catch (err) {
-    alert('Error al guardar')
+    alert(err.message || 'Error al guardar')
   } finally {
     saving.value = false
   }
@@ -390,7 +393,8 @@ const saveItem = async () => {
 const deleteItem = async (id) => {
   if (!confirm('¿Estás seguro de eliminar esta ruta?')) return
   try {
-    await apiFetch(`/api/routes/${id}`, { method: 'DELETE' })
+    const res = await apiFetch(`/api/routes/${id}`, { method: 'DELETE' })
+    if (!res.ok) throw new Error('Error al eliminar')
     loadData()
   } catch (err) {
     alert('Error al eliminar')

@@ -75,16 +75,19 @@
               <textarea v-model="form.description" rows="3" required class="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 rounded-xl outline-none transition-all"></textarea>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-500 text-sm mb-1">Imagen (Sube una foto)</label>
+              <label class="block text-sm font-medium text-gray-500 mb-1">Imagen (Sube una foto)</label>
               <div class="flex gap-2 items-center mb-2">
                 <input type="file" @change="handleImageUpload" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-gray-900 file:text-white hover:file:bg-black outline-none cursor-pointer transition-all"/>
                 <span v-if="uploadingImage" class="animate-spin h-5 w-5 border-2 border-gray-900 border-t-transparent rounded-full shrink-0"></span>
+              </div>
+              <div v-if="imagePreview || form.image_url" class="mt-2 rounded-xl overflow-hidden border border-gray-200 aspect-video bg-slate-100 max-h-36">
+                <img :src="imagePreview || form.image_url" alt="Vista previa" class="w-full h-full object-cover" />
               </div>
             </div>
             <!-- Category Select -->
             <div class="flex flex-col gap-1">
               <label for="category" class="font-medium text-gray-500 text-sm">Categoría</label>
-              <select v-model="form.category" id="category" required class="p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-400 focus:border-transparent">
+              <select v-model="form.category" id="category" required class="p-2.5 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-green-400 focus:border-transparent outline-none">
                 <option value="Hospedajes">🏨 Hospedajes</option>
                 <option value="Restaurantes">🍽️ Restaurantes</option>
                 <option value="CafeBar">☕ CafeBar</option>
@@ -111,20 +114,20 @@
         <div class="absolute inset-x-0 bottom-0 bg-white rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transition-transform duration-300 z-50 flex flex-col h-[80%]" :class="showMapSheet ? 'translate-y-0' : 'translate-y-full'">
           <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white rounded-t-2xl shrink-0">
             <h4 class="font-bold text-gray-800">Seleccionar Ubicación</h4>
-            <button @click="showMapSheet = false" type="button" class="text-gray-400 hover:text-gray-600">
+            <button @click="showMapSheet = false" type="button" class="text-gray-400 hover:text-gray-600 cursor-pointer">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
           </div>
           <div class="px-6 py-2 text-sm text-gray-500 bg-slate-50 text-center shrink-0">Haz clic en el mapa para marcar la ubicación.</div>
           <div id="admin-map" class="flex-1 w-full bg-slate-100"></div>
           <div class="p-4 bg-white border-t border-gray-100 shrink-0">
-            <button @click="showMapSheet = false" type="button" class="w-full bg-gray-900 hover:bg-black text-white font-medium py-3 rounded-xl shadow-sm transition-colors">Confirmar Ubicación</button>
+            <button @click="showMapSheet = false" type="button" class="w-full bg-gray-900 hover:bg-black text-white font-medium py-3 rounded-xl shadow-sm transition-colors cursor-pointer">Confirmar Ubicación</button>
           </div>
         </div>
 
         <div class="bg-slate-50 px-4 md:px-6 py-4 border-t border-gray-100 flex justify-end gap-3 shrink-0">
-          <button type="button" @click="closeModal" class="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors">Cancelar</button>
-          <button @click="saveItem" type="button" :disabled="saving" class="bg-gray-900 hover:bg-black text-white font-medium py-2 px-6 rounded-xl shadow-sm transition-colors flex items-center">
+          <button type="button" @click="closeModal" class="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">Cancelar</button>
+          <button @click="saveItem" type="button" :disabled="saving" class="bg-gray-900 hover:bg-black text-white font-medium py-2 px-6 rounded-xl shadow-sm transition-colors flex items-center cursor-pointer">
             <span v-if="saving" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>
             Guardar
           </button>
@@ -167,6 +170,7 @@ const loading = ref(true)
 const saving = ref(false)
 const uploadingImage = ref(false)
 const showModal = ref(false)
+const imagePreview = ref('')
 
 const form = ref({
   id: null,
@@ -181,6 +185,7 @@ const form = ref({
 })
 
 const resetForm = () => {
+  imagePreview.value = ''
   form.value = {
     id: null,
     name: '',
@@ -196,6 +201,7 @@ const resetForm = () => {
 
 const closeModal = () => {
   showModal.value = false
+  showMapSheet.value = false
   resetForm()
 }
 
@@ -206,6 +212,9 @@ watch(showMapSheet, async (newVal) => {
     await nextTick()
     if (map) {
       map.invalidateSize()
+      setTimeout(() => {
+        if (map) map.invalidateSize()
+      }, 320)
     }
   }
 })
@@ -218,7 +227,7 @@ const loadData = async () => {
     loading.value = true
     const res = await apiFetch('/api/places')
     const data = await res.json()
-    places.value = data.data
+    places.value = data.data || []
   } catch (err) {
     console.error(err)
   } finally {
@@ -234,9 +243,9 @@ const initAdminMap = () => {
   const mapCenter = form.value.lat ? [form.value.lat, form.value.lng] : center
   
   map = L.map('admin-map').setView(mapCenter, 15)
-  L.tileLayer('http://{s}.google.com/vt/lyrs=s&hl=es&x={x}&y={y}&z={z}', {
-    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-    maxZoom: 20
+  L.tileLayer('/map-cache/{z}/{x}/{y}.jpg', {
+    maxZoom: 20,
+    maxNativeZoom: 19
   }).addTo(map)
 
   // Load existing places
@@ -267,6 +276,8 @@ const initAdminMap = () => {
 }
 
 const openModal = async (item = null) => {
+  imagePreview.value = ''
+  showMapSheet.value = false
   if (item) {
     form.value = {
       id: item.place_id,
@@ -327,16 +338,21 @@ const saveItem = async () => {
       formData.append('image_url', form.value.image_url)
     }
     
-    await apiFetch(url, {
+    const res = await apiFetch(url, {
       method,
-      body: formData // Eliminado el JSON.stringify
+      body: formData
     })
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}))
+      throw new Error(errData.error || 'Error al guardar')
+    }
     
     showModal.value = false
+    showMapSheet.value = false
     resetForm()
     loadData()
   } catch (err) {
-    alert('Error al guardar')
+    alert(err.message || 'Error al guardar')
   } finally {
     saving.value = false
   }
@@ -346,12 +362,14 @@ const handleImageUpload = (event) => {
   const file = event.target.files[0]
   if (!file) return
   form.value.image_file = file
+  imagePreview.value = URL.createObjectURL(file)
 }
 
 const deleteItem = async (id) => {
   if (!confirm('¿Estás seguro de eliminar este lugar?')) return
   try {
-    await apiFetch(`/api/places/${id}`, { method: 'DELETE' })
+    const res = await apiFetch(`/api/places/${id}`, { method: 'DELETE' })
+    if (!res.ok) throw new Error('Error al eliminar')
     loadData()
   } catch (err) {
     alert('Error al eliminar')

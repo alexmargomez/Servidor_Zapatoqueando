@@ -42,6 +42,11 @@ app.use(express.static(path.join(__dirname, '../public'), {
     etag: true
 }));
 
+// Fallback para caché de mapas: 
+// Si express.static no encontró la imagen en public/map-cache, caerá aquí para descargarla.
+const tileRoutes = require('./routes/tileRoutes');
+app.use('/map-cache', tileRoutes);
+
 // Catch-all route for SPA routing
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/index.html'));

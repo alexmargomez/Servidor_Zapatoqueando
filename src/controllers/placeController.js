@@ -14,7 +14,7 @@ class PlaceController {
         try {
             const placeData = { ...req.body };
             if (req.file) {
-                placeData.image_url = '/assets/' + req.file.filename;
+                placeData.image_url = '/uploads/' + req.file.filename;
             }
             const data = await placeRepository.create(placeData);
             res.status(201).json({ message: "success", data });
@@ -27,7 +27,7 @@ class PlaceController {
         try {
             const placeData = { ...req.body };
             if (req.file) {
-                placeData.image_url = '/assets/' + req.file.filename;
+                placeData.image_url = '/uploads/' + req.file.filename;
             }
             const data = await placeRepository.update(req.params.id, placeData);
             if (!data) return res.status(404).json({ error: "Place not found" });
