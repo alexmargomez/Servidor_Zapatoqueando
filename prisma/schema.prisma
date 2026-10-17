@@ -1,0 +1,74 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int     @id @default(autoincrement())
+  username String  @unique @db.VarChar(50)
+  password String  @db.VarChar(255)
+  role     String? @default("admin") @db.VarChar(20)
+
+  @@map("users")
+}
+
+model Poster {
+  id          Int     @id @default(autoincrement())
+  title       String  @db.VarChar(100)
+  description String? @db.Text
+  imageurl    String? @map("imageurl") @db.Text
+  image_url   String? @map("image_url") @db.Text
+  type        String? @default("event") @db.VarChar(50)
+  order_index Int?    @default(0) @map("order_index")
+
+  @@map("posters")
+}
+
+model Place {
+  id                 Int     @id @default(autoincrement())
+  place_id           String  @unique @map("place_id") @db.Text
+  name               String  @db.Text
+  rating             Float?  @db.Real
+  user_ratings_total Int?    @map("user_ratings_total")
+  formatted_address  String? @map("formatted_address") @db.Text
+  image_url          String? @map("image_url") @db.Text
+  lat                Float?  @db.Real
+  lng                Float?  @db.Real
+  category           String? @default("Lugares turísticos") @db.VarChar(50)
+  description        String? @db.Text
+
+  @@map("places")
+}
+
+model Route {
+  id          Int     @id @default(autoincrement())
+  name        String  @db.VarChar(100)
+  description String? @db.Text
+  duration    String? @db.VarChar(50)
+  difficulty  String? @db.VarChar(20)
+  color       String? @default("#eab308") @db.VarChar(7)
+  coordinates Json
+
+  @@map("routes")
+}
+
+model Street {
+  id      Int     @id @default(autoincrement())
+  name    String? @db.VarChar(255)
+  geojson Json
+
+  @@map("streets")
+}
+
+model Migration {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique @db.VarChar(255)
+  executed_at DateTime? @default(now())
+
+  @@map("migrations")
+}

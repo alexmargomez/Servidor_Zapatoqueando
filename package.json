@@ -2,12 +2,14 @@
   "name": "api_zapatoqueando",
   "version": "1.0.0",
   "description": "Backend API para la plataforma Zapatoqueando",
-  "main": "src/server.js",
+  "main": "dist/server.js",
   "scripts": {
-    "start": "node src/database/migrate.js && node src/server.js",
-    "dev": "node src/database/migrate.js && nodemon src/server.js"
+    "build": "prisma generate && tsc",
+    "start": "node dist/shared/infrastructure/database/migrate.js && node dist/server.js",
+    "dev": "ts-node src/shared/infrastructure/database/migrate.ts && ts-node src/server.ts"
   },
   "dependencies": {
+    "@prisma/client": "^5.22.0",
     "axios": "^1.20.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
@@ -21,6 +23,14 @@
     "pg": "^8.23.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.3"
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^20.14.10",
+    "nodemon": "^3.0.3",
+    "prisma": "^5.22.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.3"
   }
 }
