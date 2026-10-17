@@ -1,15 +1,23 @@
 FROM node:20-alpine
 
+RUN apk add --no-cache openssl
+
 # Set working directory
 WORKDIR /usr/src/app
 
-# Copy package.json and install dependencies
+# Copy package.json and prisma schema, then install dependencies
 COPY package*.json ./
-RUN npm install --production
+COPY prisma ./prisma
+RUN npm install
 
-# Copy server code
+# Copy TypeScript config, source, compiled dist and public assets
+COPY tsconfig.json ./
 COPY src ./src
+COPY dist ./dist
 COPY public ./public
+
+# Generate Prisma Client and compile TypeScript
+RUN npm run build
 
 # Expose port
 EXPOSE 3000
