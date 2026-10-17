@@ -69,16 +69,17 @@
         </div>
       </div>
 
-      <!-- Chips de Filtros Rápidos -->
-      <div v-show="showCategoryChips" class="flex items-center gap-2 overflow-x-auto hide-scrollbar pointer-events-auto pb-1 px-1">
+      <!-- Chips de Filtros Rápidos (flex-wrap para que ninguno quede cortado) -->
+      <div v-show="showCategoryChips" class="flex flex-wrap items-center gap-2 pointer-events-auto pb-1 px-1">
         <button v-for="cat in categories" :key="cat.name" @click="toggleCategory(cat.name)"
           :class="[
-            'px-4 py-2 rounded-full shadow-md text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer border',
+            'px-3.5 py-1.5 rounded-full shadow-md text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer border',
             activeCategories.includes(cat.name) 
-              ? 'bg-green-600 text-white border-green-700' 
+              ? 'bg-green-600 text-white border-green-700 scale-105' 
               : 'bg-white/95 backdrop-blur-sm text-gray-700 hover:bg-gray-50 border-gray-100'
           ]">
-          {{ cat.icon }} {{ cat.name }}
+          <span>{{ cat.icon }}</span>
+          <span>{{ cat.name }}</span>
         </button>
       </div>
     </div>

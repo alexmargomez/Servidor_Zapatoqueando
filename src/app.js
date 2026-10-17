@@ -39,7 +39,14 @@ app.use('/api', apiRoutes);
 // Static files (Frontend)
 app.use(express.static(path.join(__dirname, '../public'), {
     maxAge: '1d',
-    etag: true
+    etag: true,
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+        }
+    }
 }));
 
 // Fallback para caché de mapas: 
@@ -49,6 +56,9 @@ app.use('/map-cache', tileRoutes);
 
 // Catch-all route for SPA routing
 app.get('*', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
