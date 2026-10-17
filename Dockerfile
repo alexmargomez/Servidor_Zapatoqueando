@@ -10,10 +10,9 @@ COPY package*.json ./
 COPY prisma ./prisma
 RUN npm install
 
-# Copy TypeScript config, source, compiled dist and public assets
+# Copy TypeScript config, source and public assets
 COPY tsconfig.json ./
 COPY src ./src
-COPY dist ./dist
 COPY public ./public
 
 # Generate Prisma Client and compile TypeScript

@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "build": "prisma generate && tsc",
-    "start": "node dist/shared/infrastructure/database/migrate.js && node dist/server.js",
+    "start": "tsc && node dist/shared/infrastructure/database/migrate.js && node dist/server.js",
     "dev": "ts-node src/shared/infrastructure/database/migrate.ts && ts-node src/server.ts"
   },
   "dependencies": {
