@@ -36,3 +36,6 @@ zapatoqueando.sqlite
 # OS files
 .DS_Store
 Thumbs.db
+
+# Map Cache
+public/map-cache/

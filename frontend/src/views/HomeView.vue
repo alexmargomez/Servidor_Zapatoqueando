@@ -1,22 +1,76 @@
 <template>
   <div class="relative w-full h-screen overflow-hidden bg-slate-100">
     <!-- El Mapa (Protagonista 100% Pantalla) -->
-    <div id="osm-map" class="absolute inset-0 w-full h-full z-0"></div>
+    <div id="osm-map" class="absolute inset-0 w-full h-full z-0" @click="isSearchFocused = false"></div>
     
     <!-- Buscador Flotante Estilo Plataforma (Search / Filtros) -->
-    <div class="absolute top-24 md:top-28 left-4 right-4 md:left-8 md:right-auto md:w-[420px] z-[1000] pointer-events-none flex flex-col gap-3">
+    <div class="absolute top-24 md:top-28 left-4 right-4 md:left-8 md:right-auto md:w-[420px] z-[1000] pointer-events-none flex flex-col gap-2.5">
       
       <!-- Input de Búsqueda Principal -->
-      <div class="bg-white rounded-full shadow-xl border border-gray-100 flex items-center px-4 py-3 pointer-events-auto transition-transform hover:-translate-y-0.5 focus-within:ring-2 ring-yellow-400">
-        <svg class="w-5 h-5 text-gray-400 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-        <input type="text" placeholder="¿Qué buscas en Zapatoca?" class="bg-transparent border-none outline-none w-full text-gray-700 font-semibold placeholder-gray-400 text-sm md:text-base" />
-        <button class="bg-green-900 text-white rounded-full p-2 hover:bg-green-800 transition-colors shrink-0 ml-2 shadow-sm">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
-        </button>
+      <div class="relative pointer-events-auto">
+        <div class="bg-white rounded-full shadow-xl border border-gray-100 flex items-center px-4 py-2.5 transition-transform focus-within:ring-2 ring-yellow-400">
+          <svg class="w-5 h-5 text-gray-400 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <input 
+            ref="searchInputRef"
+            v-model="searchQuery" 
+            @focus="isSearchFocused = true"
+            @input="onSearchInput"
+            type="text" 
+            placeholder="¿Qué buscas en Zapatoca?" 
+            class="bg-transparent border-none outline-none w-full text-gray-700 font-semibold placeholder-gray-400 text-sm md:text-base" 
+          />
+          <button 
+            v-if="searchQuery || activeCategories.length > 0" 
+            @click="clearFilters" 
+            type="button"
+            title="Limpiar filtros"
+            class="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100 transition-colors shrink-0 mr-1"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+          <button 
+            @click="showCategoryChips = !showCategoryChips" 
+            type="button"
+            :title="showCategoryChips ? 'Ocultar categorías' : 'Mostrar categorías'"
+            :class="[
+              'rounded-full p-2 transition-colors shrink-0 ml-1 shadow-sm cursor-pointer',
+              activeCategories.length > 0 ? 'bg-yellow-400 text-green-950 hover:bg-yellow-300' : 'bg-green-900 text-white hover:bg-green-800'
+            ]"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+          </button>
+        </div>
+
+        <!-- Dropdown de Resultados de Búsqueda -->
+        <div 
+          v-if="isSearchFocused && searchQuery.trim().length > 0" 
+          class="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-100 max-h-72 overflow-y-auto z-50 divide-y divide-gray-50"
+        >
+          <div v-if="searchResults.length === 0" class="p-4 text-center text-sm text-gray-500">
+            No se encontraron lugares para "<span class="font-bold text-gray-700">{{ searchQuery }}</span>"
+          </div>
+          <button 
+            v-for="place in searchResults" 
+            :key="place.place_id"
+            type="button"
+            @click="selectSearchResult(place)"
+            class="w-full px-4 py-3 text-left hover:bg-green-50/70 transition-colors flex items-center gap-3 cursor-pointer"
+          >
+            <img :src="place.image_url || '/logo.png'" :alt="place.name" class="w-10 h-10 rounded-xl object-cover shrink-0 bg-gray-100 border border-gray-200" />
+            <div class="min-w-0 flex-1">
+              <div class="font-bold text-sm text-green-950 truncate">{{ place.name }}</div>
+              <div class="text-xs text-gray-500 truncate flex items-center gap-1.5">
+                <span class="inline-block w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: getCategoryColor(place.category) }"></span>
+                <span>{{ place.category || 'Lugar' }}</span>
+                <span v-if="place.formatted_address" class="text-gray-400">· {{ place.formatted_address }}</span>
+              </div>
+            </div>
+          </button>
+        </div>
       </div>
 
       <!-- Chips de Filtros Rápidos -->
-      <div class="flex items-center gap-2 overflow-x-auto hide-scrollbar pointer-events-auto pb-1 px-1">
+      <div v-show="showCategoryChips" class="flex items-center gap-2 overflow-x-auto hide-scrollbar pointer-events-auto pb-1 px-1">
         <button v-for="cat in categories" :key="cat.name" @click="toggleCategory(cat.name)"
           :class="[
             'px-4 py-2 rounded-full shadow-md text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer border',
@@ -31,69 +85,65 @@
 
     <!-- Slider Flotante de Publicidad (Posters) -->
     <transition name="slide-up">
-      <div v-show="route.path !== '/rutas'" class="absolute bottom-0 left-0 w-full z-[1000] pointer-events-none pb-6 md:pb-8">
+      <div v-show="route.path !== '/rutas' && (loading || error || posters.length > 0)" class="absolute bottom-0 left-0 w-full z-[1000] pointer-events-none pb-6 md:pb-8">
       
-      <!-- Fondo oscuro opcional para resaltar las tarjetas -->
-      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent -z-10 pointer-events-none h-64 bottom-0 top-auto"></div>
-      
-      <div class="w-full pointer-events-auto">
-        <div v-if="loading" class="flex justify-center py-10">
-          <div class="w-10 h-10 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-
-        <div v-else-if="error" class="p-4 mx-4 bg-red-50 rounded-xl text-center">
-          <p class="text-red-500 font-bold">{{ error }}</p>
-        </div>
-
-        <div v-else class="relative w-full flex flex-col items-center justify-end pointer-events-none">
-          <!-- Contenedor del Slider -->
-          <div class="relative w-full overflow-hidden py-4 pointer-events-auto" @mouseenter="isHoveringSlider = true" @mouseleave="isHoveringSlider = false">
-          
-          <!-- Botón Alternar Vista Centrado -->
-          <div class="absolute top-0 left-1/2 transform -translate-x-1/2 z-30">
-            <button @click="isSliderCompact = !isSliderCompact" class="bg-black/30 backdrop-blur-md text-white/90 py-1.5 px-5 rounded-full hover:bg-black/50 transition-colors shadow flex items-center gap-2 text-xs font-medium" title="Cambiar tamaño">
-              {{ isSliderCompact ? 'Ampliar' : 'Reducir' }}
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <!-- Flecha arriba si está compacto -->
-                <path v-if="isSliderCompact" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
-                <!-- Flecha abajo si está grande -->
-                <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
+        <!-- Fondo oscuro opcional para resaltar las tarjetas -->
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent -z-10 pointer-events-none h-64 bottom-0 top-auto"></div>
+        
+        <div class="w-full pointer-events-auto">
+          <div v-if="loading" class="flex justify-center py-10">
+            <div class="w-10 h-10 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
           </div>
 
-          <!-- Marquee Container -->
-          <div class="flex mt-2">
-            <div class="marquee-content flex gap-6 px-3" :class="{ 'paused': isHoveringSlider }">
-              <!-- Set 1 -->
-              <div v-for="poster in posters" :key="'a-'+poster.id" @click="selectedPoster = poster; selectedPlace = null" 
-                   class="shrink-0 aspect-video bg-white rounded-2xl overflow-hidden shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 border border-white/40 cursor-pointer group hover:-translate-y-2"
-                   :class="isSliderCompact ? 'w-32 md:w-48' : 'w-72 md:w-[450px]'">
-                <img v-if="poster.imageurl" :src="poster.imageurl" :alt="poster.title" class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" />
+          <div v-else-if="error" class="p-4 mx-4 bg-red-50 rounded-xl text-center">
+            <p class="text-red-500 font-bold">{{ error }}</p>
+          </div>
+
+          <div v-else-if="posters.length > 0" class="relative w-full flex flex-col items-center justify-end pointer-events-none">
+            <!-- Contenedor del Slider -->
+            <div class="relative w-full overflow-hidden py-4 pointer-events-auto" @mouseenter="isHoveringSlider = true" @mouseleave="isHoveringSlider = false">
+            
+              <!-- Botón Alternar Vista Centrado -->
+              <div class="absolute top-0 left-1/2 transform -translate-x-1/2 z-30">
+                <button @click="isSliderCompact = !isSliderCompact" class="bg-black/40 backdrop-blur-md text-white/90 py-1.5 px-5 rounded-full hover:bg-black/60 transition-colors shadow flex items-center gap-2 text-xs font-medium cursor-pointer" title="Cambiar tamaño">
+                  {{ isSliderCompact ? 'Ampliar' : 'Reducir' }}
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path v-if="isSliderCompact" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                    <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </button>
               </div>
-              <!-- Set 2 -->
-              <div v-for="poster in posters" :key="'b-'+poster.id" @click="selectedPoster = poster; selectedPlace = null" 
-                   class="shrink-0 aspect-video bg-white rounded-2xl overflow-hidden shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 border border-white/40 cursor-pointer group hover:-translate-y-2"
-                   :class="isSliderCompact ? 'w-32 md:w-48' : 'w-72 md:w-[450px]'">
-                <img v-if="poster.imageurl" :src="poster.imageurl" :alt="poster.title" class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" />
-              </div>
-              <!-- Set 3 (para asegurar que cubra pantallas ultra anchas) -->
-              <div v-for="poster in posters" :key="'c-'+poster.id" @click="selectedPoster = poster; selectedPlace = null" 
-                   class="shrink-0 aspect-video bg-white rounded-2xl overflow-hidden shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 border border-white/40 cursor-pointer group hover:-translate-y-2"
-                   :class="isSliderCompact ? 'w-32 md:w-48' : 'w-72 md:w-[450px]'">
-                <img v-if="poster.imageurl" :src="poster.imageurl" :alt="poster.title" class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" />
-              </div>
-              <!-- Set 4 -->
-              <div v-for="poster in posters" :key="'d-'+poster.id" @click="selectedPoster = poster; selectedPlace = null" 
-                   class="shrink-0 aspect-video bg-white rounded-2xl overflow-hidden shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 border border-white/40 cursor-pointer group hover:-translate-y-2"
-                   :class="isSliderCompact ? 'w-32 md:w-48' : 'w-72 md:w-[450px]'">
-                <img v-if="poster.imageurl" :src="poster.imageurl" :alt="poster.title" class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" />
+
+              <!-- Marquee Container -->
+              <div class="flex mt-3 overflow-hidden">
+                <div class="marquee-content flex" :class="{ 'paused': isHoveringSlider }">
+                  <!-- Mitad 1 -->
+                  <div class="flex gap-6 pr-6 shrink-0">
+                    <div v-for="(poster, idx) in repeatedPosters" :key="'m1-'+idx+'-'+poster.id" @click="selectedPoster = poster; selectedPlace = null" 
+                         class="shrink-0 aspect-video bg-white rounded-2xl overflow-hidden shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 border border-white/40 cursor-pointer group hover:-translate-y-2 relative"
+                         :class="isSliderCompact ? 'w-36 md:w-48' : 'w-72 md:w-[420px]'">
+                      <img :src="getPosterImage(poster)" :alt="poster.title" class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" />
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <p class="text-white font-bold text-xs md:text-sm truncate">{{ poster.title }}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Mitad 2 (Idéntica para loop infinito perfecto al -50%) -->
+                  <div class="flex gap-6 pr-6 shrink-0">
+                    <div v-for="(poster, idx) in repeatedPosters" :key="'m2-'+idx+'-'+poster.id" @click="selectedPoster = poster; selectedPlace = null" 
+                         class="shrink-0 aspect-video bg-white rounded-2xl overflow-hidden shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 border border-white/40 cursor-pointer group hover:-translate-y-2 relative"
+                         :class="isSliderCompact ? 'w-36 md:w-48' : 'w-72 md:w-[420px]'">
+                      <img :src="getPosterImage(poster)" :alt="poster.title" class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" />
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <p class="text-white font-bold text-xs md:text-sm truncate">{{ poster.title }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-        </div>
-      </div>
       </div>
     </transition>
   </div>
@@ -102,34 +152,48 @@
   <transition name="slide-fade">
     <div v-if="selectedPoster" class="fixed inset-y-0 right-0 w-full md:w-[420px] bg-white shadow-2xl z-[9999] flex flex-col border-l border-gray-100">
       <!-- Botón Cerrar -->
-      <button @click="selectedPoster = null" class="absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white p-2 rounded-full shadow-md hover:bg-black/70 transition-colors z-10">
+      <button @click="selectedPoster = null" class="absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white p-2 rounded-full shadow-md hover:bg-black/70 transition-colors z-10 cursor-pointer">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
 
       <!-- Imagen Destacada del Cartel -->
       <div class="w-full aspect-video relative shrink-0 bg-slate-100 border-b border-gray-200">
-        <img :src="selectedPoster.imageurl || 'https://via.placeholder.com/400'" :alt="selectedPoster.title" class="w-full h-full object-cover" />
+        <img :src="getPosterImage(selectedPoster)" :alt="selectedPoster.title" class="w-full h-full object-cover" />
       </div>
 
       <!-- Contenido Detallado -->
       <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-4 hide-scrollbar bg-slate-50">
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider" :class="selectedPoster.type === 'event' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'">
+            {{ selectedPoster.type === 'event' ? 'Evento' : 'Destacado' }}
+          </span>
+        </div>
         <h2 class="text-2xl font-black text-green-950 leading-tight">{{ selectedPoster.title }}</h2>
         
         <!-- Descripción -->
         <div>
           <p class="text-gray-600 leading-relaxed text-sm text-justify whitespace-pre-wrap">
-            {{ selectedPoster.description }}
+            {{ selectedPoster.description || 'Descubre más sobre esta experiencia en Zapatoca.' }}
           </p>
         </div>
 
         <!-- Botones de Acción (WhatsApp y Cómo llegar) -->
         <div class="mt-auto pt-6 flex flex-col sm:flex-row gap-3">
-          <button class="flex-1 bg-yellow-400 hover:bg-yellow-500 text-green-950 font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex justify-center items-center gap-2">
+          <button 
+            @click="openPosterDirections(selectedPoster)" 
+            type="button"
+            class="flex-1 bg-yellow-400 hover:bg-yellow-500 text-green-950 font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex justify-center items-center gap-2 cursor-pointer"
+          >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
             ¿Cómo llegar?
           </button>
           
-          <a href="https://wa.me/573000000000?text=Hola,%20vengo%20desde%20la%20App%20Zapatoqueando%20y%20quiero%20m%C3%A1s%20informaci%C3%B3n" target="_blank" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex justify-center items-center gap-2">
+          <a 
+            :href="getWhatsAppUrl(selectedPoster.title)" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex justify-center items-center gap-2"
+          >
             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.012c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
             WhatsApp
           </a>
@@ -142,31 +206,41 @@
   <transition name="slide-fade">
     <div v-if="selectedPlace" class="fixed inset-y-0 right-0 w-full md:w-[420px] bg-white shadow-2xl z-[9999] flex flex-col border-l border-gray-100">
       <!-- Botón Cerrar -->
-      <button @click="selectedPlace = null" class="absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white p-2 rounded-full shadow-md hover:bg-black/70 transition-colors z-10">
+      <button @click="selectedPlace = null" class="absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white p-2 rounded-full shadow-md hover:bg-black/70 transition-colors z-10 cursor-pointer">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
 
       <!-- Imagen Destacada del Lugar -->
       <div class="w-full aspect-video relative shrink-0 bg-slate-100 border-b border-gray-200">
-        <img :src="selectedPlace.image_url || 'https://via.placeholder.com/400'" :alt="selectedPlace.name" class="w-full h-full object-cover" />
+        <img :src="selectedPlace.image_url || '/logo.png'" :alt="selectedPlace.name" class="w-full h-full object-cover" />
       </div>
 
       <!-- Contenido Detallado -->
       <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-4 hide-scrollbar bg-slate-50">
+        <div v-if="selectedPlace.category" class="flex items-center gap-2">
+          <span class="px-3 py-1 rounded-full text-xs font-bold text-white" :style="{ backgroundColor: getCategoryColor(selectedPlace.category) }">
+            {{ selectedPlace.category }}
+          </span>
+        </div>
+
         <h2 class="text-2xl font-black text-green-950 leading-tight">{{ selectedPlace.name }}</h2>
 
-        <p class="text-gray-600 text-sm flex items-start">
+        <p v-if="selectedPlace.formatted_address" class="text-gray-600 text-sm flex items-start">
           <svg class="w-4 h-4 mr-2 shrink-0 text-gray-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
           {{ selectedPlace.formatted_address }}
         </p>
 
-        <div v-if="selectedPlace.description" class="mt-4">
+        <div v-if="selectedPlace.description" class="mt-2">
           <p class="text-gray-700 text-base leading-relaxed whitespace-pre-wrap">{{ selectedPlace.description }}</p>
         </div>
 
         <!-- Botones de Acción -->
         <div class="mt-auto pt-6 flex flex-col sm:flex-row gap-3">
-          <button class="flex-1 bg-yellow-400 hover:bg-yellow-500 text-green-950 font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex justify-center items-center gap-2">
+          <button 
+            @click="openDirections(selectedPlace)" 
+            type="button"
+            class="flex-1 bg-yellow-400 hover:bg-yellow-500 text-green-950 font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex justify-center items-center gap-2 cursor-pointer"
+          >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
             ¿Cómo llegar?
           </button>
@@ -196,6 +270,7 @@ let sliderInterval = null;
 let zapatocaMarker = null;
 let laFuenteMarker = null;
 
+let currentSelectedRouteId = null;
 let currentSelectedRouteName = null; // Guardar ruta activa
 
 // El plugin leaflet-textpath requiere que L esté en window
@@ -226,10 +301,89 @@ const selectedPoster = ref(null)
 const route = useRoute()
 const isHoveringSlider = ref(false)
 const isSliderCompact = ref(false)
+const searchQuery = ref('')
+const isSearchFocused = ref(false)
+const showCategoryChips = ref(true)
+const searchInputRef = ref(null)
 let map = null
 
-// Al cerrar las rutas (salir de /rutas), hacer que el slider reaparezca en estado minimizado
+// Repetir posters para que cada mitad del marquee cubra pantallas grandes sin espacios vacíos
+const repeatedPosters = computed(() => {
+  if (!posters.value || posters.value.length === 0) return []
+  const list = posters.value
+  const minItems = 6
+  const repeats = Math.max(2, Math.ceil(minItems / list.length))
+  const result = []
+  for (let i = 0; i < repeats; i++) {
+    result.push(...list)
+  }
+  return result
+})
+
+const getPosterImage = (poster) => {
+  return poster?.imageurl || poster?.image_url || '/hero-bg.jpeg'
+}
+
+const getWhatsAppUrl = (title) => {
+  const text = `Hola, vengo desde la App Zapatoqueando y quiero más información${title ? ' sobre: ' + title : ''}`
+  return `https://wa.me/573000000000?text=${encodeURIComponent(text)}`
+}
+
+const openDirections = (place) => {
+  if (!place) return
+  focusPlace(place)
+  if (place.location && place.location.lat && place.location.lng) {
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${place.location.lat},${place.location.lng}`, '_blank', 'noopener')
+  }
+}
+
+const openPosterDirections = (poster) => {
+  if (!poster) return
+  const query = encodeURIComponent(`${poster.title || ''} Zapatoca Santander`)
+  window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank', 'noopener')
+}
+
+// Resultados filtrados para el autocompletado del buscador
+const searchResults = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return []
+  return places.value.filter(p => {
+    const matchName = p.name && p.name.toLowerCase().includes(q)
+    const matchCat = p.category && p.category.toLowerCase().includes(q)
+    const matchAddr = p.formatted_address && p.formatted_address.toLowerCase().includes(q)
+    const matchDesc = p.description && p.description.toLowerCase().includes(q)
+    return matchName || matchCat || matchAddr || matchDesc
+  }).slice(0, 8)
+})
+
+const onSearchInput = () => {
+  isSearchFocused.value = true
+  updateMarkers()
+  syncMarkersVisibility()
+}
+
+const selectSearchResult = (place) => {
+  isSearchFocused.value = false
+  selectedPlace.value = place
+  selectedPoster.value = null
+  focusPlace(place)
+}
+
+const clearFilters = () => {
+  searchQuery.value = ''
+  activeCategories.value = []
+  isSearchFocused.value = false
+  updateMarkers()
+  syncMarkersVisibility()
+}
+
+// Al navegar entre subrutas (/eventos, /rutas, /descargar), cerrar paneles laterales abiertos
 watch(() => route.path, (newPath, oldPath) => {
+  if (newPath !== '/') {
+    selectedPlace.value = null
+    selectedPoster.value = null
+    isSearchFocused.value = false
+  }
   if (oldPath === '/rutas' && newPath !== '/rutas') {
     isSliderCompact.value = true
   }
@@ -245,6 +399,24 @@ const categories = [
   { name: 'Puntos de interés', icon: '⭐', color: '#64748b' }
 ]
 
+const hasActiveFilter = computed(() => {
+  return activeCategories.value.length > 0 || searchQuery.value.trim().length > 0
+})
+
+const syncMarkersVisibility = () => {
+  if (!map || !markersLayer) return
+  const zoom = map.getZoom()
+  if (zoom >= 16 || hasActiveFilter.value) {
+    if (!map.hasLayer(markersLayer)) map.addLayer(markersLayer)
+    if (zapatocaMarker && map.hasLayer(zapatocaMarker)) map.removeLayer(zapatocaMarker)
+    if (laFuenteMarker && map.hasLayer(laFuenteMarker)) map.removeLayer(laFuenteMarker)
+  } else {
+    if (map.hasLayer(markersLayer)) map.removeLayer(markersLayer)
+    if (zapatocaMarker && !map.hasLayer(zapatocaMarker)) zapatocaMarker.addTo(map)
+    if (laFuenteMarker && !map.hasLayer(laFuenteMarker)) laFuenteMarker.addTo(map)
+  }
+}
+
 const toggleCategory = (category) => {
   const index = activeCategories.value.indexOf(category)
   if (index === -1) {
@@ -253,6 +425,10 @@ const toggleCategory = (category) => {
     activeCategories.value.splice(index, 1)
   }
   updateMarkers() // Redibujar marcadores
+  syncMarkersVisibility()
+  if (activeCategories.value.length > 0 && map && map.getZoom() < 16) {
+    map.setView([6.816801, -73.268689], 16, { animate: true, duration: 0.8 })
+  }
 }
 
 const getCategoryColor = (category) => {
@@ -278,9 +454,18 @@ const updateMarkers = () => {
     markersLayer.clearLayers()
   }
 
-  const filteredPlaces = activeCategories.value.length === 0 
-    ? places.value 
-    : places.value.filter(p => activeCategories.value.includes(p.category))
+  const q = searchQuery.value.trim().toLowerCase()
+
+  const filteredPlaces = places.value.filter(p => {
+    const matchesCategory = activeCategories.value.length === 0 || activeCategories.value.includes(p.category)
+    const matchesQuery = !q || (
+      (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.category && p.category.toLowerCase().includes(q)) ||
+      (p.formatted_address && p.formatted_address.toLowerCase().includes(q)) ||
+      (p.description && p.description.toLowerCase().includes(q))
+    )
+    return matchesCategory && matchesQuery
+  })
 
   // Agregar marcadores
   filteredPlaces.forEach(place => {
@@ -292,7 +477,7 @@ const updateMarkers = () => {
       const popupContent = `
         <div onclick="window.openPlaceSidebar('${place.place_id}')" class="flex items-center gap-3 pr-3 cursor-pointer">
           <div class="w-10 h-10 shrink-0 rounded-full overflow-hidden border-2 border-white shadow-sm bg-gray-100">
-            <img src="${place.image_url || 'https://via.placeholder.com/150'}" alt="${place.name}" class="w-full h-full object-cover" />
+            <img src="${place.image_url || '/logo.png'}" alt="${place.name}" class="w-full h-full object-cover" />
           </div>
           <span class="font-bold text-gray-800 text-sm whitespace-nowrap">${place.name}</span>
         </div>
@@ -331,28 +516,57 @@ const initMap = () => {
     [7.10, -72.90]  // Noreste (mucho margen hacia arriba y la derecha)
   )
 
+  // PARCHE MANUAL: Forzar a Leaflet a cargar tiles fuera del viewport real
+  if (!L.GridLayer.prototype._patchedEdgeBuffer) {
+    const originalGetBounds = L.GridLayer.prototype._getTiledPixelBounds
+    L.GridLayer.include({
+      _patchedEdgeBuffer: true,
+      _getTiledPixelBounds: function(center, zoom, tileZoom) {
+        let pixelBounds = originalGetBounds.call(this, center, zoom, tileZoom)
+        const edgeBufferTiles = this.options.edgeBufferTiles || 0
+        if (edgeBufferTiles > 0) {
+          const pixelEdgeBuffer = this.getTileSize().multiplyBy(edgeBufferTiles)
+          pixelBounds = new L.Bounds(
+            pixelBounds.min.subtract(pixelEdgeBuffer),
+            pixelBounds.max.add(pixelEdgeBuffer)
+          )
+        }
+        return pixelBounds
+      }
+    })
+  }
+
   // Inicializar mapa centrado en Zapatoca
   map = L.map('osm-map', {
     zoomControl: false,
     maxBounds: bounds,
-    maxBoundsViscosity: 0.8, // 0.8 permite un ligero rebote suave en los bordes
-    minZoom: 10, // Permitimos alejar el zoom para ver grandes extensiones
-    maxZoom: 22
+    maxBoundsViscosity: 0.8,
+    minZoom: 10,
+    maxZoom: 22,
+    fadeAnimation: false, // Evita el efecto de "cuadro blanco que se pinta"
+    zoomAnimation: true,
+    markerZoomAnimation: true
   }).setView([6.816801, -73.268689], 15)
 
-  // Añadir controles de zoom en la parte superior derecha para no solapar los widgets
-  L.control.zoom({ position: 'topright' }).addTo(map)
+  // Añadir controles de zoom en la parte superior derecha
+  L.control.zoom({
+    position: 'topright'
+  }).addTo(map)
 
-  L.tileLayer('http://{s}.google.com/vt/lyrs=s&hl=es&x={x}&y={y}&z={z}', {
-    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-    attribution: '&copy; Google Maps',
+  // Capa Base del Mapa: Usamos nuestro servidor local con Precarga Activa real
+  L.tileLayer('/map-cache/{z}/{x}/{y}.jpg', {
     maxZoom: 22,
-    maxNativeZoom: 19
+    maxNativeZoom: 19,
+    attribution: ' Zapatoqueando Map Cache',
+    keepBuffer: 10, 
+    edgeBufferTiles: 2, // PRECARGA REAL: Carga 2 imágenes invisibles por cada lado (balance perfecto)
+    updateWhenIdle: false, 
+    updateWhenZooming: false 
   }).addTo(map)
 
   // Capa para marcadores (NO se añade al mapa de inmediato si el zoom es lejano)
   markersLayer = L.featureGroup()
-  if (map.getZoom() >= 16) {
+  if (map.getZoom() >= 16 || hasActiveFilter.value) {
     markersLayer.addTo(map)
   }
 
@@ -372,12 +586,6 @@ const initMap = () => {
     map.setView([6.816801, -73.268689], 16, { animate: true, duration: 1 })
   })
 
-  // Evento para deseleccionar ruta al hacer clic en el mapa vacío ELIMINADO A PETICIÓN DEL USUARIO
-  // map.on('click', () => {
-  //   const event = new CustomEvent('route-unselected');
-  //   window.dispatchEvent(event);
-  // })
-
   // Marcador principal de La Fuente para el zoom lejano (Punto pequeño con texto discreto)
   const laFuenteIcon = L.divIcon({
     className: 'la-fuente-main-marker',
@@ -395,7 +603,7 @@ const initMap = () => {
     map.setView([6.7075, -73.2804], 16, { animate: true, duration: 1 })
   })
 
-  if (map.getZoom() < 16) {
+  if (map.getZoom() < 16 && !hasActiveFilter.value) {
     zapatocaMarker.addTo(map)
     laFuenteMarker.addTo(map)
   }
@@ -416,7 +624,10 @@ const initMap = () => {
     
     if (routesLayer) {
       routesLayer.eachLayer((layer) => {
-        if (currentSelectedRouteName && layer.feature.properties.name === currentSelectedRouteName) {
+        const props = layer.feature?.properties || {}
+        const isSelected = (currentSelectedRouteId && props.id === currentSelectedRouteId) ||
+                           (currentSelectedRouteName && props.name === currentSelectedRouteName)
+        if (isSelected) {
           layer.setStyle({
             weight: zoom >= 17 ? 6 : 4
           })
@@ -425,17 +636,7 @@ const initMap = () => {
     }
     
     // Transición entre marcador general y marcadores detallados
-    if (markersLayer) {
-      if (zoom < 16) {
-        if (map.hasLayer(markersLayer)) map.removeLayer(markersLayer)
-        if (zapatocaMarker && !map.hasLayer(zapatocaMarker)) zapatocaMarker.addTo(map)
-        if (laFuenteMarker && !map.hasLayer(laFuenteMarker)) laFuenteMarker.addTo(map)
-      } else {
-        if (!map.hasLayer(markersLayer)) map.addLayer(markersLayer)
-        if (zapatocaMarker && map.hasLayer(zapatocaMarker)) map.removeLayer(zapatocaMarker)
-        if (laFuenteMarker && map.hasLayer(laFuenteMarker)) map.removeLayer(laFuenteMarker)
-      }
-    }
+    syncMarkersVisibility()
 
     if (mapContainer) {
       if (zoom < 16) {
@@ -543,20 +744,14 @@ const loadRoutes = async () => {
       routesLayer = L.geoJSON(data, {
         style: function (feature) {
           return {
-            color: '#fbbf24', // Yellow color but hidden by default
+            color: feature?.properties?.color || '#fbbf24',
             weight: 4,
             opacity: 0, // Ocultas por defecto
-            dashArray: 'none', // Sin puntear
-            className: '' // Sin neón
+            dashArray: 'none',
+            className: ''
           };
         }
       }).addTo(map);
-
-      routesLayer.eachLayer((layer) => {
-        if (layer.feature && layer.feature.properties && layer.feature.properties.name) {
-          // No textpath for tourist routes
-        }
-      });
     }
   } catch (err) {
     console.error('Error fetching routes:', err);
@@ -593,40 +788,39 @@ const loadBoundary = async () => {
 }
 
 onMounted(async () => {
+  await nextTick()
+  initMap()
+
   try {
-    // Cargar Posters
-    const postersResponse = await fetch('/api/posters')
-    const postersData = await postersResponse.json()
-    if (postersData.message === 'success') {
-      posters.value = postersData.data
+    // Cargar Posters y Lugares en paralelo
+    const [postersResponse, placesResponse] = await Promise.all([
+      fetch('/api/posters').catch(() => null),
+      fetch('/api/places').catch(() => null)
+    ])
+
+    if (postersResponse && postersResponse.ok) {
+      const postersData = await postersResponse.json()
+      if (postersData.message === 'success' && Array.isArray(postersData.data)) {
+        posters.value = postersData.data
+      }
     }
 
-    // Cargar Lugares
-    const response = await fetch('/api/places')
-    const data = await response.json()
-    
-    if (data.message === 'success') {
-      places.value = data.data
-      
-      // Inicializar mapa después de que el DOM esté listo
-      await nextTick()
-      initMap()
-      if (places.value.length > 0) {
-        addMarkers(places.value)
+    if (placesResponse && placesResponse.ok) {
+      const data = await placesResponse.json()
+      if (data.message === 'success' && Array.isArray(data.data)) {
+        places.value = data.data
+        if (places.value.length > 0) {
+          addMarkers(places.value)
+        }
       }
-      
-      // Cargar rutas de calles
-      await loadStreets()
-      
-      // Cargar rutas turísticas
-      await loadRoutes()
-      
-      // Cargar límite territorial
-      await loadBoundary()
-      
-    } else {
-      console.error('Failed to load places:', data.message)
     }
+
+    // Cargar capas del mapa
+    await Promise.all([
+      loadStreets(),
+      loadRoutes(),
+      loadBoundary()
+    ])
   } catch (err) {
     console.error('Error fetching data:', err)
     error.value = 'Error de conexión con el servidor.'
@@ -641,22 +835,27 @@ onMounted(async () => {
 
 const handleRouteSelected = (e) => {
   const selectedRoute = e.detail
-  currentSelectedRouteName = selectedRoute.name
+  if (!selectedRoute) return
+  currentSelectedRouteId = selectedRoute.id || selectedRoute.route_id || null
+  currentSelectedRouteName = selectedRoute.name || null
   if (!map || !routesLayer) return
   
   routesLayer.eachLayer((layer) => {
-    if (layer.feature && layer.feature.properties && layer.feature.properties.name === currentSelectedRouteName) {
-      // Mostrar y resaltar SÓLO la ruta seleccionada (amarilla, solida, delgada)
+    const props = layer.feature?.properties || {}
+    const isMatch = (currentSelectedRouteId && props.id === currentSelectedRouteId) ||
+                    (currentSelectedRouteName && props.name === currentSelectedRouteName)
+    if (isMatch) {
+      // Mostrar y resaltar SÓLO la ruta seleccionada con su color configurado
       layer.setStyle({
-        color: '#facc15', // amarillo
-        weight: 4,
+        color: props.color || '#facc15',
+        weight: map.getZoom() >= 17 ? 6 : 5,
         opacity: 1,
         dashArray: 'none',
         className: ''
       })
       // Hacer zoom a los límites de esta ruta
       if (typeof layer.getBounds === 'function') {
-        map.fitBounds(layer.getBounds(), { padding: [50, 50], duration: 1.5 })
+        map.fitBounds(layer.getBounds(), { padding: [60, 60], duration: 1.5 })
       }
     } else {
       // Mantener invisibles las demás rutas
@@ -668,6 +867,7 @@ const handleRouteSelected = (e) => {
 }
 
 const handleRouteUnselected = () => {
+  currentSelectedRouteId = null
   currentSelectedRouteName = null
   if (!map || !routesLayer) return
   // Ocultar de nuevo todas las rutas
@@ -707,6 +907,11 @@ onBeforeUnmount(() => {
 }
 :deep(.custom-minimal-popup .leaflet-popup-tip-container) {
   display: none; /* Ocultar el triangulito para un diseño más limpio flotante */
+}
+
+/* Cambiar el fondo gris/blanco por defecto de Leaflet a oscuro para que no destelle al moverse rápido */
+:deep(.leaflet-container) {
+  background: #1c211a !important; /* Color tierra/bosque muy oscuro */
 }
 
 /* Forzar repintado de la capa SVG entera en Leaflet y marcadores (Evita borrosidad en PC al hacer zoom) */
@@ -787,8 +992,8 @@ onBeforeUnmount(() => {
 }
 
 .marquee-content {
-  animation: marquee 30s linear infinite;
-  min-width: 200%;
+  animation: marquee 35s linear infinite;
+  width: max-content;
 }
 
 .marquee-content.paused {
