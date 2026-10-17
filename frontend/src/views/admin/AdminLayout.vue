@@ -61,18 +61,14 @@
             {{ currentRouteName }}
           </h2>
         </div>
-        <a href="/" target="_blank" class="text-xs md:text-sm font-bold text-green-700 hover:text-green-800 bg-green-50 px-3 py-2 rounded-lg whitespace-nowrap ml-2">
-          Ver Sitio &rarr;
-        </a>
+        <router-link to="/" class="text-xs md:text-sm font-bold text-green-700 hover:text-green-800 bg-green-50 px-3 py-2 rounded-lg whitespace-nowrap ml-2">
+          &larr; Ver Sitio
+        </router-link>
       </header>
       
       <!-- Router View Container -->
       <div class="flex-1 overflow-y-auto p-4 md:p-8 relative">
-        <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
-            <component :is="Component" />
-          </transition>
-        </router-view>
+        <router-view />
       </div>
     </main>
   </div>
