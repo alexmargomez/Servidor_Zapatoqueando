@@ -45,16 +45,16 @@
         Descargar
       </router-link>
 
-      <!-- Botón de Login discreto / menos visible -->
+      <!-- Botón de Login discreto / menos visible que los principales -->
       <router-link 
         :to="isLoggedIn ? '/admin' : '/admin/login'" 
-        class="ml-1 text-green-950/45 hover:text-green-950/90 hover:bg-green-950/5 px-3 py-2 rounded-full transition-all duration-300 text-xs font-semibold flex items-center gap-1"
-        :title="isLoggedIn ? 'Ir al Panel Admin' : 'Ingresar al Panel'"
+        class="ml-1.5 text-green-950/75 hover:text-green-950 bg-green-950/5 hover:bg-green-950/15 border border-green-950/15 px-3.5 py-2 rounded-full transition-all duration-300 text-xs font-bold flex items-center gap-1.5"
+        :title="isLoggedIn ? 'Ir al Panel Admin' : 'Iniciar Sesión'"
       >
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
         </svg>
-        <span>{{ isLoggedIn ? 'Admin' : 'Ingresar' }}</span>
+        <span>{{ isLoggedIn ? 'Admin' : 'Login' }}</span>
       </router-link>
     </nav>
 
@@ -69,12 +69,12 @@
         <router-link 
           @click="isMobileMenuOpen = false" 
           :to="isLoggedIn ? '/admin' : '/admin/login'" 
-          class="mt-2 pt-3 border-t border-gray-100 w-3/4 text-center text-xs font-semibold text-gray-400 hover:text-green-950 flex items-center justify-center gap-1.5 transition-colors"
+          class="mt-2 py-2 px-5 rounded-full bg-gray-100 hover:bg-gray-200 text-xs font-bold text-gray-600 hover:text-green-950 flex items-center justify-center gap-1.5 transition-colors"
         >
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
           </svg>
-          <span>{{ isLoggedIn ? 'Panel Admin' : 'Ingresar' }}</span>
+          <span>{{ isLoggedIn ? 'Panel Admin' : 'Login' }}</span>
         </router-link>
       </nav>
     </transition>
