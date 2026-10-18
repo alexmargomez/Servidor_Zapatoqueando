@@ -14,5 +14,5 @@
     "sourceMap": false
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "frontend", "public"]
+  "exclude": ["node_modules", "dist", "frontend", "public", "tests", "**/*.spec.ts"]
 }
