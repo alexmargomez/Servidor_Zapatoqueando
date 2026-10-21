@@ -4,15 +4,31 @@
 
 La visión de esta herramienta trasciende a un solo lugar: **es un sistema altamente escalable que puede ser replicado y adaptado para cualquier otro municipio, ciudad o región** que busque digitalizar su oferta turística y comercial mediante mapas amigables.
 
+![Node.js 20](https://img.shields.io/badge/Node.js-20_Alpine-339933?logo=nodedotjs&logoColor=white)
+![Vue 3](https://img.shields.io/badge/Vue_3-Composition_API-4FC08D?logo=vuedotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?logo=typescript&logoColor=white)
+![Express](https://img.shields.io/badge/Express-REST_API-000000?logo=express&logoColor=white)
+![Prisma ORM](https://img.shields.io/badge/Prisma_ORM-5.22-2D3748?logo=prisma&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15_Alpine-4169E1?logo=postgresql&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.3-06B6D4?logo=tailwindcss&logoColor=white)
+![Leaflet](https://img.shields.io/badge/Leaflet-OpenStreetMap-199900?logo=leaflet&logoColor=white)
+![Docker Compose](https://img.shields.io/badge/Docker-Multi--Container-2496ED?logo=docker&logoColor=white)
+![Architecture](https://img.shields.io/badge/Architecture-Hexagonal_(Ports_%26_Adapters)-8A2BE2)
+![Unit Tests](https://img.shields.io/badge/Tests-41_Passing_(Jest_%2B_ts--jest)-C21325?logo=jest&logoColor=white)
+
 ---
 
 ## ✨ Características Principales
 
-- 📍 **Mapeo Dinámico y Categorizado:** Los lugares se pueden agregar en el mapa con colores únicos dependiendo de su categoría (Hospedajes, Restaurantes, CafeBar, Fuentes de soda, Lugares turísticos, Puntos de interés).
-- 🛣️ **Gestor de Rutas Avanzado:** Trazado de rutas punto a punto sobre el mapa, con cálculo de color, dificultad y distancias.
-- 📱 **Panel de Administración (Backoffice):** Una vista privada y protegida (`/admin`) donde cualquier gestor sin conocimientos de código puede añadir, editar o eliminar lugares, publicidad (sliders) y rutas.
-- 🔍 **Buscador y Filtros en Tiempo Real:** El usuario final puede buscar o usar *chips* interactivos para ocultar o mostrar categorías instantáneamente en el mapa.
-- 🎨 **Interfaz Premium:** Diseño altamente responsivo ("mobile-first") e inmersivo, utilizando cristalografía (glassmorphism), sombras profundas y mapas estéticos que ocultan calles innecesarias hasta que el usuario hace zoom (Clean Map).
+- 📍 **Mapeo Dinámico y Categorizado:** Los lugares se pueden agregar en el mapa con colores únicos dependiendo de su categoría (*Hospedajes*, *Restaurantes*, *CafeBar*, *Fuentes de soda*, *Lugares turísticos*, *Puntos de interés*).
+- 🛣️ **Gestor de Rutas Avanzado (GeoJSON):** Trazado de rutas punto a punto sobre el mapa con cálculo de color (`RouteColorVO`), dificultad, duración y geometría `LineString`.
+- 📱 **Panel de Administración (Backoffice `/admin`) y Acceso Discreto:** Vista privada protegida con JWT donde cualquier gestor puede añadir, editar o eliminar lugares, publicidad (eventos/comercios) y rutas, con botón discreto de acceso rápido (`Login` / `Panel Admin`) integrado en la barra superior del mapa.
+- 🔍 **Buscador y Filtros Multi-línea en Tiempo Real:** Búsqueda instantánea y *chips* interactivos con ajuste responsivo (`flex-wrap`) para filtrar categorías en el mapa sin recortes en pantallas móviles o de escritorio.
+- 🗺️ **Caché Local de Tiles OpenStreetMap y Vectores Viales:** Proxy de teselas con almacenamiento en caché local (`public/map-cache/`) y descarga/sembrado automático de la red vial de Zapatoca vía Overpass API (`osmtogeojson`).
+- ⚡ **Integración Nativa con ALpanel (`Git Pull & Restart`):**
+  - Sincronización automática de puertos (`PORT`, `POSTGRES_PORT`) y credenciales desde `.env`.
+  - El *healthcheck* de `zapatoqueando-db` sincroniza automáticamente `POSTGRES_PASSWORD` en el volumen persistente `pgdata` si cambia en `.env`.
+  - Volúmenes de código (`./src`, `./prisma`, `./public`) montados en caliente y compilación automática de TypeScript (`tsc`) al iniciar el contenedor, permitiendo desplegar cambios con **`Git Pull & Restart`** sin necesidad de reconstruir la imagen Docker.
 
 ---
 
@@ -41,8 +57,8 @@ La plataforma está construida utilizando un ecosistema moderno Fullstack separa
 
 ### Backend (`src/` y `prisma/`)
 - **[TypeScript](https://www.typescriptlang.org/) & [Node.js](https://nodejs.org/) ([Express](https://expressjs.com/))** - API REST tipada estáticamente.
-- **Arquitectura Hexagonal (Vertical Slicing):** Organización modular bajo `src/modules/` (`users`, `places`, `posters`, `routes`, `streets`, `uploads`) separando estrictamente:
-  - `domain/`: Entidades, Value Objects (`CoordinatesVO`, `UsernameVO`, `PosterTypeVO`, `RouteColorVO`) y Excepciones de Dominio.
+- **Arquitectura Hexagonal (Puertos y Adaptadores — Vertical Slicing):** Organización modular bajo `src/modules/` (`users`, `places`, `posters`, `routes`, `streets`, `uploads`) separando estrictamente:
+  - `domain/`: Entidades (`UserEntity`, `PlaceEntity`, `PosterEntity`, `RouteEntity`, `StreetEntity`), Value Objects (`CoordinatesVO`, `UsernameVO`, `PosterTypeVO`, `RouteColorVO`) y Excepciones de Dominio.
   - `application/`: Casos de Uso (`UseCases`) y Puertos (`RepositoryPort`, `ServicePort`).
   - `infrastructure/`: Adaptadores de Prisma ORM, Controladores Express, DTOs y Rutas HTTP.
 - **[Prisma ORM](https://www.prisma.io/) & [PostgreSQL](https://www.postgresql.org/)** - Acceso tipado a datos y persistencia relacional (`prisma/schema.prisma`).
@@ -54,6 +70,91 @@ La plataforma está construida utilizando un ecosistema moderno Fullstack separa
 
 ### Infraestructura
 - **[Docker & Docker Compose](https://www.docker.com/)** - Contenerización del servidor y base de datos PostgreSQL.
+
+### Estructura de Carpetas: Backend (`src/`), Frontend (`frontend/`) y Tests (`tests/`)
+
+```text
+Servidor_Zapatoqueando/
+├── frontend/                                # 🎨 FRONTEND (Vue 3 Composition API + Vite + Tailwind CSS + Leaflet)
+│   └── src/
+│       ├── main.js                          # Punto de entrada de la SPA Vue 3
+│       ├── App.vue                          # Layout raíz y enrutamiento de vistas
+│       ├── router/                          # Rutas públicas (/) y protegidas (/admin, /login)
+│       ├── views/
+│       │   ├── HomeView.vue                 # Mapa interactivo, filtros por categoría y buscador en vivo
+│       │   ├── LoginView.vue                # Autenticación JWT para administradores
+│       │   └── admin/
+│       │       ├── AdminLayout.vue          # Backoffice lateral para gestión territorial
+│       │       ├── PlacesManager.vue        # CRUD visual de lugares y comercios en el mapa
+│       │       ├── RoutesManager.vue        # Trazado y edición de rutas turísticas GeoJSON
+│       │       └── PostersManager.vue       # Gestión de anuncios y eventos destacados
+│       └── components/                      # Componentes reutilizables (Sliders, Modales, Tarjetas)
+│
+├── prisma/                                  # 🗄️ ESQUEMA PRISMA ORM
+│   └── schema.prisma                        # Modelos: User, Place, Route, Poster, Street
+│
+├── src/                                     # ⚙️ BACKEND HEXAGONAL (TypeScript + Express + Prisma ORM)
+│   ├── app.ts                               # Configuración de Express, seguridad (Helmet, Rate-Limit) y estáticos
+│   ├── server.ts                            # Bootstrap del servidor, seed de admin y calles OSM
+│   ├── shared/                              # 🏛️ NÚCLEO COMPARTIDO (Cross-Cutting Concerns)
+│   │   ├── domain/
+│   │   │   └── exceptions/domain.exception.ts # Excepción base tipada con statusCode HTTP
+│   │   └── infrastructure/
+│   │       ├── database/
+│   │       │   ├── prisma.service.ts        # Cliente Prisma Singleton con resolución dinámica de DATABASE_URL
+│   │       │   └── migrate.ts               # Inicialización automática de tablas en PostgreSQL
+│   │       └── http/
+│   │           ├── middlewares/             # Guardias JWT (auth.middleware.ts) y Multer (upload.middleware.ts)
+│   │           └── routes/api.routes.ts     # Enrutador maestro (/api/*)
+│   └── modules/                             # ⬢ MÓDULOS HEXAGONALES (Domain / Application / Infrastructure)
+│       ├── users/                           # Autenticación JWT, UsernameVO, UserRepositoryPort y PrismaUserRepository
+│       ├── places/                          # Lugares de interés, CoordinatesVO, PlaceEntity y CRUD casos de uso
+│       ├── posters/                         # Eventos y comercios destacados, PosterTypeVO y CRUD casos de uso
+│       ├── routes/                          # Rutas turísticas GeoJSON, RouteColorVO y CRUD casos de uso
+│       ├── streets/                         # Red vial OpenStreetMap (GetStreetsUseCase y SeedStreetsUseCase)
+│       └── uploads/                         # Almacenamiento de imágenes y caché local de tiles del mapa
+│
+├── tests/                                   # 🧪 PRUEBAS UNITARIAS CENTRALIZADAS (Jest + ts-jest)
+│   └── unit/
+│       ├── users/                           # username.vo.spec.ts, login-user y ensure-default-admin
+│       ├── places/                          # coordinates.vo.spec.ts y places.use-cases.spec.ts
+│       ├── posters/                         # poster-type.vo.spec.ts y posters.use-cases.spec.ts
+│       ├── routes/                          # route-color.vo.spec.ts y routes.use-cases.spec.ts
+│       ├── streets/                         # streets.use-cases.spec.ts
+│       └── uploads/                         # upload-image.use-case.spec.ts
+│
+└── public/                                  # 📦 Activos estáticos servidos por Express + uploads y map-cache
+```
+
+---
+
+## 🧪 Pruebas Unitarias Centralizadas (`tests/` + Jest)
+
+Todas las pruebas unitarias están centralizadas en la carpeta raíz [`tests/unit/`](tests/unit/) y se ejecutan con **Jest (`jest` + `ts-jest`)**, manteniendo `src/` y `dist/` exclusivamente para código de producción.
+
+Gracias a la **Arquitectura Hexagonal**, toda la lógica de dominio y los casos de uso se prueban de forma **100% aislada en memoria** mediante *mocks* de los puertos (`RepositoryPort`, `TokenGeneratorServicePort`, `FileStorageServicePort`), sin requerir contenedores Docker activos ni base de datos PostgreSQL conectada:
+
+```bash
+# Ejecutar las 11 suites (41 tests unitarios)
+npm test
+
+# Ejecutar con reporte de cobertura de código
+npm run test:coverage
+```
+
+### Cobertura de las 11 Suites (41 Tests)
+- **Dominio y Value Objects (`domain/`):**
+  - `UsernameVO`: Sanitización (`trim`) y lanzamiento de `MissingCredentialsException` (`400`) ante entradas vacías.
+  - `CoordinatesVO` y `PlaceEntity`: Conversión segura de coordenadas numéricas/cadenas, manejo de valores nulos y transformación a formato público (`location: { lat, lng }`) o registro crudo.
+  - `PosterTypeVO` y `PosterEntity`: Normalización de tipos de anuncio (`event` / `business`) y compatibilidad de campos `image_url` / `imageurl`.
+  - `RouteColorVO` y `RouteEntity`: Validación de colores hexadecimales (`#RRGGBB`) con fallback seguro (`#eab308`) y serialización a `GeoJSON Feature`.
+- **Casos de Uso con Puertos Mockeados en Memoria (`application/`):**
+  - `users`: `LoginUserUseCase` (autenticación exitosa con `username` o `email`, rechazo por credenciales faltantes o inválidas) y `EnsureDefaultAdminUseCase` (creación idempotente del administrador inicial).
+  - `places`: `GetPlacesUseCase`, `CreatePlaceUseCase`, `UpdatePlaceUseCase` y `DeletePlaceUseCase` (incluyendo verificación de `PlaceNotFoundException` `404`).
+  - `posters`: `GetPostersUseCase`, `CreatePosterUseCase`, `UpdatePosterUseCase` y `DeletePosterUseCase` (incluyendo `PosterNotFoundException` `404`).
+  - `routes`: `GetRoutesUseCase`, `CreateRouteUseCase`, `UpdateRouteUseCase` y `DeleteRouteUseCase` (incluyendo `RouteNotFoundException` `404`).
+  - `streets`: `GetStreetsUseCase` (extracción de geometrías GeoJSON de la red vial).
+  - `uploads`: `UploadImageUseCase` (resolución de URL pública `/uploads/...` y validación `InvalidUploadException` `400`).
 
 ---
 
@@ -94,22 +195,13 @@ cp -r dist/* ../public/
 cd ..
 ```
 
-### 4. Ejecutar Pruebas Unitarias (Backend Hexagonal)
-La capa de Dominio y los Casos de Uso cuentan con pruebas unitarias aisladas mediante mocks de los puertos:
-```bash
-npm install
-npm test
-# O para ver el reporte de cobertura:
-npm run test:coverage
-```
-
-### 5. Desplegar Contenedores con Docker
+### 4. Desplegar Contenedores con Docker
 Levanta el servidor y la base de datos PostgreSQL:
 ```bash
 docker compose -f docker-compose.yml up -d --build --force-recreate
 ```
 
-### 6. Verificar Funcionamiento
+### 5. Verificar Funcionamiento
 - **Mapa Público:** [http://localhost:3000](http://localhost:3000)
 - **Panel de Administración:** [http://localhost:3000/admin](http://localhost:3000/admin)
 
