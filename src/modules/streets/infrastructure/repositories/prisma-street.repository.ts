@@ -6,7 +6,10 @@ import { StreetEntity } from '../../domain/entities/street.entity';
 export class PrismaStreetRepository implements StreetRepositoryPort {
   async findAll(limit = 1000): Promise<StreetEntity[]> {
     const safeTake = Math.min(Math.max(1, limit), 2000);
-    const rows = await prisma.street.findMany({ take: safeTake });
+    const rows = await prisma.street.findMany({
+      take: safeTake,
+      orderBy: { id: 'asc' },
+    });
     return rows.map(
       (r) =>
         new StreetEntity({

@@ -34,8 +34,14 @@ export class TileController {
       }
 
       const imageBuffer = await this.tileCacheService.getOrFetchTileBuffer(tileCoord);
+      const mimeType =
+        imageBuffer[0] === 0x89 && imageBuffer[1] === 0x50
+          ? 'image/png'
+          : imageBuffer[0] === 0x52 && imageBuffer[1] === 0x49
+            ? 'image/webp'
+            : 'image/jpeg';
       res.setHeader('Cache-Control', 'public, max-age=31536000');
-      res.setHeader('Content-Type', 'image/jpeg');
+      res.setHeader('Content-Type', mimeType);
       res.send(imageBuffer);
     } catch (error: any) {
       console.error(`[TileProxy] Error descargando tile ${tileCoord.cacheKey}:`, error?.message);

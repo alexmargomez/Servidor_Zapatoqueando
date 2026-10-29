@@ -71,15 +71,28 @@ app.get('*', (_req, res) => {
   res.sendFile(path.join(publicDir, 'index.html'));
 });
 
-// Global Error Handler (Multer / DomainException -> JSON 400 en vez de HTML 500)
+// Global Error Handler (Multer / DomainException -> JSON 400; fallos internos -> JSON 500)
 app.use(
   (
     err: any,
     _req: express.Request,
     res: express.Response,
-    _next: express.NextFunction
+    next: express.NextFunction
   ) => {
-    const status = typeof err?.statusCode === 'number' ? err.statusCode : 400;
+    if (res.headersSent) {
+      return next(err);
+    }
+    const isClientError =
+      err?.name === 'MulterError' ||
+      err?.name === 'DomainException' ||
+      err?.name === 'InvalidUploadException' ||
+      err?.type === 'entity.parse.failed';
+    const status =
+      typeof err?.statusCode === 'number'
+        ? err.statusCode
+        : isClientError
+          ? 400
+          : 500;
     res.status(status).json({
       error: err?.message || 'Error procesando la solicitud.',
     });
