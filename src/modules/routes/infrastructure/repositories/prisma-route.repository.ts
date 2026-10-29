@@ -27,9 +27,11 @@ export class PrismaRouteRepository implements RouteRepositoryPort {
     });
   }
 
-  async findAll(): Promise<RouteEntity[]> {
+  async findAll(limit = 200): Promise<RouteEntity[]> {
+    const safeTake = Math.min(Math.max(1, limit), 500);
     const rows = await prisma.route.findMany({
       orderBy: { id: 'desc' },
+      take: safeTake,
     });
     return rows.map((r) => this.mapRowToEntity(r));
   }

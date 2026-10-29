@@ -25,9 +25,11 @@ export class PrismaPosterRepository implements PosterRepositoryPort {
     });
   }
 
-  async findAll(): Promise<PosterEntity[]> {
+  async findAll(limit = 200): Promise<PosterEntity[]> {
+    const safeTake = Math.min(Math.max(1, limit), 500);
     const rows = await prisma.poster.findMany({
       orderBy: { id: 'desc' },
+      take: safeTake,
     });
     return rows.map((r) => this.mapRowToEntity(r));
   }
