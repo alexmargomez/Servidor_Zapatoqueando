@@ -14,7 +14,7 @@ export interface CreatePlaceData {
 }
 
 export interface PlaceRepositoryPort {
-  findAll(): Promise<PlaceEntity[]>;
+  findAll(limit?: number): Promise<PlaceEntity[]>;
   create(data: CreatePlaceData): Promise<PlaceEntity>;
   update(id: number, data: CreatePlaceData): Promise<PlaceEntity | null>;
   delete(id: number): Promise<PlaceEntity | null>;

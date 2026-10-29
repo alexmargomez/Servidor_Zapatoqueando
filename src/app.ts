@@ -39,6 +39,9 @@ app.use('/api/auth', apiLimiter);
 
 // API Routes (Hexagonal Modules)
 app.use('/api', apiRouter);
+app.use('/api', (_req, res) => {
+  res.status(404).json({ error: 'Endpoint de API no encontrado.' });
+});
 
 const publicDir = path.resolve(process.cwd(), 'public');
 

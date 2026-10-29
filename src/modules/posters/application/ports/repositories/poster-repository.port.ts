@@ -8,7 +8,7 @@ export interface SavePosterData {
 }
 
 export interface PosterRepositoryPort {
-  findAll(): Promise<PosterEntity[]>;
+  findAll(limit?: number): Promise<PosterEntity[]>;
   create(data: SavePosterData): Promise<PosterEntity>;
   update(id: number, data: SavePosterData): Promise<PosterEntity | null>;
   delete(id: number): Promise<PosterEntity | null>;
