@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
+import { TileCoordinateVO } from '../../domain/value-objects/tile-coordinate.vo';
+import { InvalidUploadException } from '../../domain/exceptions/invalid-upload.exception';
 
 const CACHE_DIR = path.resolve(process.cwd(), 'public/map-cache');
 
@@ -11,19 +13,33 @@ if (!fs.existsSync(CACHE_DIR)) {
 
 export class TileController {
   getTile = async (req: Request, res: Response): Promise<void> => {
+    let tileCoord: TileCoordinateVO;
     try {
-      const { z, x, y } = req.params;
-      const tileDir = path.join(CACHE_DIR, z, x);
-      const filePath = path.join(tileDir, y);
+      tileCoord = new TileCoordinateVO(
+        String(req.params.z || ''),
+        String(req.params.x || ''),
+        String(req.params.y || '')
+      );
+    } catch (err) {
+      if (err instanceof InvalidUploadException) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+      res.status(400).json({ error: 'Coordenadas de tesela inválidas.' });
+      return;
+    }
+
+    const googleUrl = tileCoord.getUpstreamSatelliteUrl();
+
+    try {
+      const tileDir = path.join(CACHE_DIR, String(tileCoord.z), String(tileCoord.x));
+      const filePath = path.join(tileDir, tileCoord.fileName);
 
       if (fs.existsSync(filePath)) {
         res.setHeader('Cache-Control', 'public, max-age=31536000');
         res.sendFile(filePath);
         return;
       }
-
-      const yNumber = y.replace('.jpg', '');
-      const googleUrl = `http://mt0.google.com/vt/lyrs=s&hl=es&x=${x}&y=${yNumber}&z=${z}`;
 
       const response = await axios({
         method: 'get',
@@ -48,13 +64,11 @@ export class TileController {
       });
 
       writer.on('error', (err) => {
-        console.error(`[TileProxy] Error guardando tile ${z}/${x}/${y}:`, err);
+        console.error(`[TileProxy] Error guardando tile ${tileCoord.z}/${tileCoord.x}/${tileCoord.fileName}:`, err);
         res.redirect(googleUrl);
       });
     } catch (error: any) {
       console.error(`[TileProxy] Error descargando tile:`, error?.message);
-      const yNumber = (req.params.y || '').replace('.jpg', '');
-      const googleUrl = `http://mt0.google.com/vt/lyrs=s&hl=es&x=${req.params.x}&y=${yNumber}&z=${req.params.z}`;
       res.redirect(googleUrl);
     }
   };
