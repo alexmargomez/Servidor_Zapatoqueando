@@ -35,9 +35,11 @@ export class PrismaPlaceRepository implements PlaceRepositoryPort {
     });
   }
 
-  async findAll(): Promise<PlaceEntity[]> {
+  async findAll(limit: number = 500): Promise<PlaceEntity[]> {
+    const safeLimit = Math.max(1, Math.min(limit, 500));
     const rows = await prisma.place.findMany({
       orderBy: { id: 'asc' },
+      take: safeLimit,
     });
     return rows.map((r) => this.mapRowToEntity(r));
   }

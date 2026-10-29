@@ -39,6 +39,9 @@ app.use('/api/auth', apiLimiter);
 
 // API Routes (Hexagonal Modules)
 app.use('/api', apiRouter);
+app.use('/api', (_req, res) => {
+  res.status(404).json({ error: 'Endpoint de API no encontrado.' });
+});
 
 const publicDir = path.resolve(process.cwd(), 'public');
 
@@ -67,5 +70,33 @@ app.get('*', (_req, res) => {
   res.setHeader('Expires', '0');
   res.sendFile(path.join(publicDir, 'index.html'));
 });
+
+// Global Error Handler (Multer / DomainException -> JSON 400; fallos internos -> JSON 500)
+app.use(
+  (
+    err: any,
+    _req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    if (res.headersSent) {
+      return next(err);
+    }
+    const isClientError =
+      err?.name === 'MulterError' ||
+      err?.name === 'DomainException' ||
+      err?.name === 'InvalidUploadException' ||
+      err?.type === 'entity.parse.failed';
+    const status =
+      typeof err?.statusCode === 'number'
+        ? err.statusCode
+        : isClientError
+          ? 400
+          : 500;
+    res.status(status).json({
+      error: err?.message || 'Error procesando la solicitud.',
+    });
+  }
+);
 
 export default app;
