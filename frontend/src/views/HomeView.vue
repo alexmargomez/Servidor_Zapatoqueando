@@ -1,5 +1,5 @@
 <template>
-  <div class="relative w-full h-screen overflow-hidden bg-slate-100">
+  <div class="relative w-full h-screen h-dvh overflow-hidden bg-slate-100">
     <!-- El Mapa (Protagonista 100% Pantalla) -->
     <div id="osm-map" class="absolute inset-0 w-full h-full z-0" @click="isSearchFocused = false"></div>
     
@@ -318,13 +318,14 @@
 
     <!-- Controles Flotantes de Geolocalización GPS (Parte Inferior Derecha) -->
     <div
+      style="margin-bottom: env(safe-area-inset-bottom, 0px);"
       :class="[
-        'absolute right-4 md:right-6 z-[1005] flex flex-col items-end gap-2 pointer-events-auto transition-all duration-300',
+        'fixed right-3.5 sm:right-4 md:right-6 z-[1005] flex flex-col items-end gap-2 pointer-events-auto transition-all duration-300',
         route.path === '/rutas' || posters.length === 0
-          ? 'bottom-6'
+          ? 'bottom-20 sm:bottom-8'
           : isSliderCompact
-            ? 'bottom-32 md:bottom-36'
-            : 'bottom-48 md:bottom-64'
+            ? 'bottom-40 md:bottom-36'
+            : 'bottom-56 md:bottom-64'
       ]"
     >
       <!-- Botón rápido para volver a Zapatoca si el usuario está fuera del municipio -->
@@ -375,7 +376,7 @@
     <transition name="slide-fade">
       <div
         v-if="locationNotice"
-        class="absolute bottom-20 right-16 sm:right-20 z-[1006] max-w-xs bg-white/95 backdrop-blur-md border border-emerald-200 shadow-xl rounded-2xl px-4 py-3 text-xs text-emerald-950 flex items-start gap-2.5 pointer-events-auto"
+        class="fixed bottom-32 sm:bottom-24 right-16 sm:right-20 z-[1006] max-w-[260px] sm:max-w-xs bg-white/95 backdrop-blur-md border border-emerald-200 shadow-xl rounded-2xl px-4 py-3 text-xs text-emerald-950 flex items-start gap-2.5 pointer-events-auto"
       >
         <span class="text-base leading-none mt-0.5">📡</span>
         <div class="flex-1 font-semibold leading-snug">{{ locationNotice }}</div>
@@ -385,7 +386,7 @@
 
     <!-- Slider Flotante de Publicidad (Posters) -->
     <transition name="slide-up">
-      <div v-show="route.path !== '/rutas' && (loading || error || posters.length > 0)" class="absolute bottom-0 left-0 w-full z-[1000] pointer-events-none pb-4 md:pb-6">
+      <div v-show="route.path !== '/rutas' && (loading || error || posters.length > 0)" style="padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));" class="absolute bottom-0 left-0 w-full z-[1000] pointer-events-none pb-4 md:pb-6">
       
         <!-- Gradiente suave inferior -->
         <div class="absolute inset-0 bg-gradient-to-t from-emerald-950/75 via-emerald-950/25 to-transparent -z-10 pointer-events-none h-52 bottom-0 top-auto"></div>
