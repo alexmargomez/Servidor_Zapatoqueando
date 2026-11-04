@@ -57,14 +57,13 @@
           </div>
 
           <div class="flex items-center justify-between pt-2 border-t border-gray-50">
-            <div class="flex items-center text-[11px] text-gray-500 font-medium gap-3">
-              <span class="flex items-center gap-1">
+            <div class="flex items-center text-[11px] text-gray-500 font-medium gap-2.5 flex-wrap">
+              <span class="flex items-center gap-1 font-semibold text-green-800 bg-green-50 px-1.5 py-0.5 rounded-md border border-green-100" title="Distancia calculada automáticamente">
+                📏 {{ ruta.distance_label || '0 m' }}
+              </span>
+              <span class="flex items-center gap-1" title="Tiempo estimado">
                 <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 {{ formatDuration(ruta.duration) }}
-              </span>
-              <span class="flex items-center gap-1">
-                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                {{ ruta.difficulty || 'Media' }}
               </span>
             </div>
             <span 
@@ -96,9 +95,36 @@ const rutas = ref([])
 const loading = ref(true)
 const selectedRutaId = ref(null)
 
+// Cálculo automático de distancia (Haversine) desde coordenadas [lng, lat]
+const calculateDistanceKm = (coords) => {
+  if (!coords || coords.length < 2) return 0
+  const R = 6371
+  const toRad = (deg) => (deg * Math.PI) / 180
+  let totalKm = 0
+  for (let i = 0; i < coords.length - 1; i++) {
+    const [lng1, lat1] = coords[i]
+    const [lng2, lat2] = coords[i + 1]
+    const dLat = toRad(lat2 - lat1)
+    const dLng = toRad(lng2 - lng1)
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2)
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+    totalKm += R * c
+  }
+  return Math.round(totalKm * 100) / 100
+}
+
+const formatDistanceLabel = (km) => {
+  if (!km || km <= 0) return '0 m'
+  if (km < 1) return `${Math.round(km * 1000)} m`
+  return `${km.toFixed(2)} km`
+}
+
 const formatDuration = (duration) => {
   const mins = parseInt(duration, 10)
-  if (!mins || isNaN(mins)) return duration || '1h 30m'
+  if (!mins || isNaN(mins)) return duration || '15 min'
   if (mins < 60) return `${mins} min`
   const h = Math.floor(mins / 60)
   const m = mins % 60
@@ -129,7 +155,16 @@ onMounted(async () => {
     const data = await response.json()
     
     if (data.type === 'FeatureCollection' && data.features) {
-      rutas.value = data.features.map(f => f.properties)
+      rutas.value = data.features.map(f => {
+        const coords = f.geometry?.coordinates || []
+        const km = f.properties?.distance_km ?? calculateDistanceKm(coords)
+        const distance_label = f.properties?.distance_label || formatDistanceLabel(km)
+        return {
+          ...f.properties,
+          distance_km: km,
+          distance_label
+        }
+      })
     }
   } catch (err) {
     console.error('Error fetching routes:', err)

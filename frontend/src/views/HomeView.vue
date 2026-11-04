@@ -89,40 +89,17 @@
       </div>
     </div>
 
-    <!-- Controles Flotantes de Geolocalización GPS (Debajo de los botones de Zoom en top-right) -->
-    <div class="absolute top-[182px] right-[20px] z-[1000] flex flex-col items-end gap-2 pointer-events-auto">
-      <button
-        @click="toggleUserLocation"
-        type="button"
-        :title="isTrackingLocation ? 'Centrar en mi ubicación actual' : 'Mostrar mi ubicación en el mapa'"
-        :class="[
-          'w-[34px] h-[34px] rounded-md shadow-md border flex items-center justify-center transition-all cursor-pointer',
-          isTrackingLocation
-            ? 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700 ring-2 ring-blue-300'
-            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-        ]"
-      >
-        <svg v-if="isLocating" class="w-4 h-4 animate-spin text-current" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-        </svg>
-        <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06z"></path>
-        </svg>
-      </button>
-
-      <!-- Botón para desactivar GPS cuando está activo -->
-      <button
-        v-if="isTrackingLocation"
-        @click="stopUserLocation"
-        type="button"
-        title="Desactivar ubicación GPS"
-        class="bg-white/95 backdrop-blur-sm text-gray-700 hover:text-red-600 border border-gray-200 shadow-md rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1"
-      >
-        <span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
-        <span>GPS Activo · Salir</span>
-      </button>
-
+    <!-- Controles Flotantes de Geolocalización GPS (Parte Inferior Derecha) -->
+    <div
+      :class="[
+        'absolute right-4 md:right-6 z-[1005] flex flex-col items-end gap-2 pointer-events-auto transition-all duration-300',
+        route.path === '/rutas' || posters.length === 0
+          ? 'bottom-6'
+          : isSliderCompact
+            ? 'bottom-32 md:bottom-36'
+            : 'bottom-48 md:bottom-64'
+      ]"
+    >
       <!-- Botón rápido para volver a Zapatoca si el usuario está fuera del municipio -->
       <button
         v-if="isTrackingLocation && isUserOutsideZapatoca"
@@ -132,13 +109,46 @@
       >
         <span>📍 Volver a Zapatoca</span>
       </button>
+
+      <!-- Botón para desactivar GPS cuando está activo -->
+      <button
+        v-if="isTrackingLocation"
+        @click="stopUserLocation"
+        type="button"
+        title="Desactivar ubicación GPS"
+        class="bg-white/95 text-gray-700 hover:text-red-600 border border-gray-200 shadow-md rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+      >
+        <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+        <span>GPS Activo · Salir</span>
+      </button>
+
+      <!-- Botón Principal Mi Ubicación -->
+      <button
+        @click="toggleUserLocation"
+        type="button"
+        :title="isTrackingLocation ? 'Centrar en mi ubicación actual' : 'Mostrar mi ubicación en el mapa'"
+        :class="[
+          'w-12 h-12 rounded-full shadow-xl border flex items-center justify-center transition-transform active:scale-95 cursor-pointer',
+          isTrackingLocation
+            ? 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700 ring-4 ring-blue-400/30'
+            : 'bg-white text-green-950 border-gray-200 hover:bg-gray-50'
+        ]"
+      >
+        <svg v-if="isLocating" class="w-5 h-5 animate-spin text-current" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        </svg>
+        <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06z"></path>
+        </svg>
+      </button>
     </div>
 
     <!-- Aviso Flotante de Geolocalización -->
     <transition name="slide-fade">
       <div
         v-if="locationNotice"
-        class="absolute top-24 right-16 z-[1001] max-w-xs bg-white/95 backdrop-blur-md border border-blue-100 shadow-xl rounded-2xl px-4 py-3 text-xs text-gray-700 flex items-start gap-2.5 pointer-events-auto"
+        class="absolute bottom-20 right-20 z-[1006] max-w-xs bg-white border border-blue-100 shadow-xl rounded-2xl px-4 py-3 text-xs text-gray-700 flex items-start gap-2.5 pointer-events-auto"
       >
         <span class="text-base leading-none mt-0.5">📡</span>
         <div class="flex-1 font-medium leading-snug">{{ locationNotice }}</div>
@@ -179,7 +189,7 @@
 
               <!-- Marquee Container -->
               <div class="flex mt-3 overflow-hidden">
-                <div class="marquee-content flex" :class="{ 'paused': isHoveringSlider }">
+                <div class="marquee-content flex" :class="{ 'paused': isHoveringSlider || isMapMoving }">
                   <!-- Mitad 1 -->
                   <div class="flex gap-6 pr-6 shrink-0">
                     <div v-for="(poster, idx) in repeatedPosters" :key="'m1-'+idx+'-'+poster.id" @click="selectedPoster = poster; selectedPlace = null" 
@@ -218,19 +228,19 @@
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
 
-        <!-- Imagen Destacada del Cartel -->
-        <div class="w-full aspect-video relative shrink-0 bg-slate-100 border-b border-gray-200">
-          <img :src="getPosterImage(selectedPoster)" :alt="selectedPoster.title" class="w-full h-full object-cover" />
+        <!-- Imagen Destacada del Cartel (Altura controlada en móvil y web) -->
+        <div class="w-full h-44 sm:h-52 max-h-[28vh] relative shrink-0 overflow-hidden bg-slate-100 border-b border-gray-200">
+          <img :src="getPosterImage(selectedPoster)" :alt="selectedPoster.title" class="w-full h-full object-cover object-center" />
         </div>
 
         <!-- Contenido Detallado -->
-        <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-4 hide-scrollbar bg-slate-50">
+        <div class="flex-1 overflow-y-auto p-5 sm:p-6 flex flex-col gap-3.5 hide-scrollbar bg-slate-50">
           <div class="flex items-center gap-2">
             <span class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider" :class="selectedPoster.type === 'event' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'">
               {{ selectedPoster.type === 'event' ? 'Evento' : 'Destacado' }}
             </span>
           </div>
-          <h2 class="text-2xl font-black text-green-950 leading-tight">{{ selectedPoster.title }}</h2>
+          <h2 class="text-xl sm:text-2xl font-black text-green-950 leading-tight">{{ selectedPoster.title }}</h2>
           
           <!-- Descripción -->
           <div>
@@ -240,7 +250,7 @@
           </div>
 
           <!-- Botones de Acción (WhatsApp y Cómo llegar) -->
-          <div class="mt-auto pt-6 flex flex-col sm:flex-row gap-3">
+          <div class="mt-auto pt-4 flex flex-col sm:flex-row gap-3">
             <button 
               @click="openPosterDirections(selectedPoster)" 
               type="button"
@@ -272,13 +282,13 @@
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
 
-        <!-- Imagen Destacada del Lugar -->
-        <div class="w-full aspect-video relative shrink-0 bg-slate-100 border-b border-gray-200">
-          <img :src="selectedPlace.image_url || '/logo.png'" :alt="selectedPlace.name" class="w-full h-full object-cover" />
+        <!-- Imagen Destacada del Lugar (Altura controlada en móvil y web para que no ocupe toda la pantalla) -->
+        <div class="w-full h-44 sm:h-52 max-h-[28vh] relative shrink-0 overflow-hidden bg-slate-100 border-b border-gray-200">
+          <img :src="selectedPlace.image_url || '/logo.png'" :alt="selectedPlace.name" class="w-full h-full object-cover object-center" />
         </div>
 
         <!-- Contenido Detallado -->
-        <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-4 hide-scrollbar bg-slate-50">
+        <div class="flex-1 overflow-y-auto p-5 sm:p-6 flex flex-col gap-3.5 hide-scrollbar bg-slate-50">
           <div class="flex flex-wrap items-center gap-2">
             <span v-if="selectedPlace.category" class="px-3 py-1 rounded-full text-xs font-bold text-white" :style="{ backgroundColor: getCategoryColor(selectedPlace.category) }">
               {{ selectedPlace.category }}
@@ -393,6 +403,7 @@ const searchQuery = ref('')
 const isSearchFocused = ref(false)
 const showCategoryChips = ref(true)
 const searchInputRef = ref(null)
+const isMapMoving = ref(false)
 const userCoords = ref(null)
 const isLocating = ref(false)
 const isTrackingLocation = ref(false)
@@ -438,7 +449,7 @@ const getDistanceFromUser = (place) => {
   return `${(meters / 1000).toFixed(1)} km`
 }
 
-const updateUserMapLayers = (lat, lng, accuracy, shouldFly = false) => {
+const updateUserMapLayers = (lat, lng, accuracy, shouldCenter = false) => {
   if (!map) return
   const latLng = [lat, lng]
   const radius = Math.min(Math.max(accuracy || 25, 10), 250)
@@ -473,19 +484,19 @@ const updateUserMapLayers = (lat, lng, accuracy, shouldFly = false) => {
   const outsideBounds = zapatocaBounds ? !zapatocaBounds.contains(latLng) : distToZapatoca > 35000
   isUserOutsideZapatoca.value = outsideBounds
 
-  if (shouldFly) {
+  if (shouldCenter) {
     if (outsideBounds) {
-      // Permitir centrar en la ubicación del usuario aunque esté en otra ciudad
+      // Salto directo (sin flyTo) para no descargar cientos de tiles intermedios fuera de Zapatoca
       map.setMaxBounds(null)
-      map.flyTo(latLng, 15, { duration: 1.4 })
+      map.setView(latLng, 15, { animate: false })
       const kmAway = (distToZapatoca / 1000).toFixed(1)
       showLocationNotice(
-        `Estás a ${kmAway} km de Zapatoca. Usa el botón "📍 Volver a Zapatoca" cuando quieras regresar al mapa del municipio.`,
-        7000
+        `Estás a ${kmAway} km de Zapatoca. Usa el botón "📍 Volver a Zapatoca" para regresar al municipio.`,
+        6500
       )
     } else {
-      map.flyTo(latLng, Math.max(map.getZoom(), 17), { duration: 1.2 })
-      showLocationNotice('Ubicación GPS activa en tiempo real.', 3500)
+      map.setView(latLng, Math.max(map.getZoom(), 17), { animate: true, duration: 0.6 })
+      showLocationNotice('Ubicación GPS activa en tiempo real.', 3000)
     }
   }
 }
@@ -508,11 +519,21 @@ const toggleUserLocation = () => {
   geoWatchId = navigator.geolocation.watchPosition(
     (position) => {
       const { latitude, longitude, accuracy } = position.coords
-      userCoords.value = { lat: latitude, lng: longitude, accuracy }
       isLocating.value = false
       isTrackingLocation.value = true
 
+      // Actualizar marcador y círculo en el mapa inmediatamente en tiempo real
       updateUserMapLayers(latitude, longitude, accuracy, isFirstFix)
+
+      // Actualizar estado reactivo de distancia cuando cambia >= 1 metro o en el primer fix
+      if (
+        isFirstFix ||
+        !userCoords.value ||
+        calculateDistanceMeters(userCoords.value.lat, userCoords.value.lng, latitude, longitude) >= 1
+      ) {
+        userCoords.value = { lat: latitude, lng: longitude, accuracy }
+      }
+
       isFirstFix = false
     },
     (err) => {
@@ -528,7 +549,7 @@ const toggleUserLocation = () => {
     },
     {
       enableHighAccuracy: true,
-      maximumAge: 5000,
+      maximumAge: 0,
       timeout: 15000
     }
   )
@@ -560,10 +581,11 @@ const stopUserLocation = () => {
 
 const centerOnZapatoca = () => {
   if (!map) return
+  // Salto directo a Zapatoca sin descargar tiles intermedios y restaurando límites
+  map.setView([6.816801, -73.268689], 16, { animate: false })
   if (zapatocaBounds) {
     map.setMaxBounds(zapatocaBounds)
   }
-  map.flyTo([6.816801, -73.268689], 16, { duration: 1.2 })
 }
 
 // Repetir posters para que cada mitad del marquee cubra pantallas grandes sin espacios vacíos
@@ -820,16 +842,23 @@ const initMap = () => {
     position: 'topright'
   }).addTo(map)
 
-  // Capa Base del Mapa: Usamos nuestro servidor local con Precarga Activa real
+  // Capa Base del Mapa: Usamos nuestro servidor local con Precarga Balanceada
   L.tileLayer('/map-cache/{z}/{x}/{y}.jpg', {
     maxZoom: 22,
     maxNativeZoom: 19,
     attribution: ' Zapatoqueando Map Cache',
-    keepBuffer: 10, 
-    edgeBufferTiles: 2, // PRECARGA REAL: Carga 2 imágenes invisibles por cada lado (balance perfecto)
-    updateWhenIdle: false, 
-    updateWhenZooming: false 
+    keepBuffer: 4,
+    edgeBufferTiles: 1,
+    updateWhenIdle: true,
+    updateWhenZooming: false
   }).addTo(map)
+
+  map.on('movestart', () => {
+    isMapMoving.value = true
+  })
+  map.on('moveend', () => {
+    isMapMoving.value = false
+  })
 
   // Capa para marcadores (NO se añade al mapa de inmediato si el zoom es lejano)
   markersLayer = L.featureGroup()
@@ -1055,33 +1084,62 @@ const loadBoundary = async () => {
   }
 }
 
-onMounted(async () => {
-  await nextTick()
-  initMap()
+let realtimeSyncInterval = null
+let lastPlacesSnapshot = ''
+let lastPostersSnapshot = ''
 
+const refreshMapData = async () => {
+  if (document.hidden) return
   try {
-    // Cargar Posters y Lugares en paralelo
     const [postersResponse, placesResponse] = await Promise.all([
-      fetch('/api/posters').catch(() => null),
-      fetch('/api/places').catch(() => null)
+      fetch('/api/posters', { cache: 'no-store' }).catch(() => null),
+      fetch('/api/places', { cache: 'no-store' }).catch(() => null)
     ])
 
     if (postersResponse && postersResponse.ok) {
       const postersData = await postersResponse.json()
       if (postersData.message === 'success' && Array.isArray(postersData.data)) {
-        posters.value = postersData.data
+        const nextPostersJson = JSON.stringify(postersData.data)
+        if (nextPostersJson !== lastPostersSnapshot) {
+          lastPostersSnapshot = nextPostersJson
+          posters.value = postersData.data
+          if (selectedPoster.value) {
+            const updatedPoster = postersData.data.find(p => p.id === selectedPoster.value.id)
+            selectedPoster.value = updatedPoster || null
+          }
+        }
       }
     }
 
     if (placesResponse && placesResponse.ok) {
       const data = await placesResponse.json()
       if (data.message === 'success' && Array.isArray(data.data)) {
-        places.value = data.data
-        if (places.value.length > 0) {
-          addMarkers(places.value)
+        const nextPlacesJson = JSON.stringify(data.data)
+        if (nextPlacesJson !== lastPlacesSnapshot) {
+          lastPlacesSnapshot = nextPlacesJson
+          places.value = data.data
+          addMarkers()
+          syncMarkersVisibility()
+          if (selectedPlace.value) {
+            const updatedPlace = data.data.find(
+              p => String(p.place_id) === String(selectedPlace.value.place_id)
+            )
+            selectedPlace.value = updatedPlace || null
+          }
         }
       }
     }
+  } catch (err) {
+    // Silencioso en sincronización de fondo
+  }
+}
+
+onMounted(async () => {
+  await nextTick()
+  initMap()
+
+  try {
+    await refreshMapData()
 
     // Cargar capas del mapa
     await Promise.all([
@@ -1099,6 +1157,8 @@ onMounted(async () => {
   // Escuchar eventos de selección de rutas desde el panel lateral
   window.addEventListener('route-selected', handleRouteSelected)
   window.addEventListener('route-unselected', handleRouteUnselected)
+  window.addEventListener('focus', refreshMapData)
+  realtimeSyncInterval = setInterval(refreshMapData, 8000)
 })
 
 const handleRouteSelected = (e) => {
@@ -1149,6 +1209,11 @@ const handleRouteUnselected = () => {
 onBeforeUnmount(() => {
   window.removeEventListener('route-selected', handleRouteSelected)
   window.removeEventListener('route-unselected', handleRouteUnselected)
+  window.removeEventListener('focus', refreshMapData)
+  if (realtimeSyncInterval) {
+    clearInterval(realtimeSyncInterval)
+    realtimeSyncInterval = null
+  }
   if (geoWatchId !== null && 'geolocation' in navigator) {
     navigator.geolocation.clearWatch(geoWatchId)
     geoWatchId = null
