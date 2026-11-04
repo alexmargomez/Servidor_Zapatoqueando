@@ -1,8 +1,8 @@
 <template>
-  <div class="flex flex-col min-h-screen">
+  <div class="flex flex-col min-h-screen min-h-dvh">
     <Navbar v-if="!isAdminRoute" />
     
-    <main class="flex-1 relative w-full h-screen overflow-hidden">
+    <main class="flex-1 relative w-full h-screen h-dvh overflow-hidden">
       <router-view />
     </main>
   </div>
