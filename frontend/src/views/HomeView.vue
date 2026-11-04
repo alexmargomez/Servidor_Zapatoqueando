@@ -228,19 +228,19 @@
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
 
-        <!-- Imagen Destacada del Cartel -->
-        <div class="w-full aspect-video relative shrink-0 bg-slate-100 border-b border-gray-200">
-          <img :src="getPosterImage(selectedPoster)" :alt="selectedPoster.title" class="w-full h-full object-cover" />
+        <!-- Imagen Destacada del Cartel (Altura controlada en móvil y web) -->
+        <div class="w-full h-44 sm:h-52 max-h-[28vh] relative shrink-0 overflow-hidden bg-slate-100 border-b border-gray-200">
+          <img :src="getPosterImage(selectedPoster)" :alt="selectedPoster.title" class="w-full h-full object-cover object-center" />
         </div>
 
         <!-- Contenido Detallado -->
-        <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-4 hide-scrollbar bg-slate-50">
+        <div class="flex-1 overflow-y-auto p-5 sm:p-6 flex flex-col gap-3.5 hide-scrollbar bg-slate-50">
           <div class="flex items-center gap-2">
             <span class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider" :class="selectedPoster.type === 'event' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'">
               {{ selectedPoster.type === 'event' ? 'Evento' : 'Destacado' }}
             </span>
           </div>
-          <h2 class="text-2xl font-black text-green-950 leading-tight">{{ selectedPoster.title }}</h2>
+          <h2 class="text-xl sm:text-2xl font-black text-green-950 leading-tight">{{ selectedPoster.title }}</h2>
           
           <!-- Descripción -->
           <div>
@@ -250,7 +250,7 @@
           </div>
 
           <!-- Botones de Acción (WhatsApp y Cómo llegar) -->
-          <div class="mt-auto pt-6 flex flex-col sm:flex-row gap-3">
+          <div class="mt-auto pt-4 flex flex-col sm:flex-row gap-3">
             <button 
               @click="openPosterDirections(selectedPoster)" 
               type="button"
@@ -282,13 +282,13 @@
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
 
-        <!-- Imagen Destacada del Lugar -->
-        <div class="w-full aspect-video relative shrink-0 bg-slate-100 border-b border-gray-200">
-          <img :src="selectedPlace.image_url || '/logo.png'" :alt="selectedPlace.name" class="w-full h-full object-cover" />
+        <!-- Imagen Destacada del Lugar (Altura controlada en móvil y web para que no ocupe toda la pantalla) -->
+        <div class="w-full h-44 sm:h-52 max-h-[28vh] relative shrink-0 overflow-hidden bg-slate-100 border-b border-gray-200">
+          <img :src="selectedPlace.image_url || '/logo.png'" :alt="selectedPlace.name" class="w-full h-full object-cover object-center" />
         </div>
 
         <!-- Contenido Detallado -->
-        <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-4 hide-scrollbar bg-slate-50">
+        <div class="flex-1 overflow-y-auto p-5 sm:p-6 flex flex-col gap-3.5 hide-scrollbar bg-slate-50">
           <div class="flex flex-wrap items-center gap-2">
             <span v-if="selectedPlace.category" class="px-3 py-1 rounded-full text-xs font-bold text-white" :style="{ backgroundColor: getCategoryColor(selectedPlace.category) }">
               {{ selectedPlace.category }}
@@ -522,21 +522,18 @@ const toggleUserLocation = () => {
       isLocating.value = false
       isTrackingLocation.value = true
 
-      // Ignorar micro-variaciones del GPS (< 3 metros) después del primer fix para evitar re-renders innecesarios
-      if (!isFirstFix && userCoords.value) {
-        const movedMeters = calculateDistanceMeters(
-          userCoords.value.lat,
-          userCoords.value.lng,
-          latitude,
-          longitude
-        )
-        if (movedMeters < 3) {
-          return
-        }
+      // Actualizar marcador y círculo en el mapa inmediatamente en tiempo real
+      updateUserMapLayers(latitude, longitude, accuracy, isFirstFix)
+
+      // Actualizar estado reactivo de distancia cuando cambia >= 1 metro o en el primer fix
+      if (
+        isFirstFix ||
+        !userCoords.value ||
+        calculateDistanceMeters(userCoords.value.lat, userCoords.value.lng, latitude, longitude) >= 1
+      ) {
+        userCoords.value = { lat: latitude, lng: longitude, accuracy }
       }
 
-      userCoords.value = { lat: latitude, lng: longitude, accuracy }
-      updateUserMapLayers(latitude, longitude, accuracy, isFirstFix)
       isFirstFix = false
     },
     (err) => {
@@ -552,7 +549,7 @@ const toggleUserLocation = () => {
     },
     {
       enableHighAccuracy: true,
-      maximumAge: 5000,
+      maximumAge: 0,
       timeout: 15000
     }
   )
@@ -1087,33 +1084,62 @@ const loadBoundary = async () => {
   }
 }
 
-onMounted(async () => {
-  await nextTick()
-  initMap()
+let realtimeSyncInterval = null
+let lastPlacesSnapshot = ''
+let lastPostersSnapshot = ''
 
+const refreshMapData = async () => {
+  if (document.hidden) return
   try {
-    // Cargar Posters y Lugares en paralelo
     const [postersResponse, placesResponse] = await Promise.all([
-      fetch('/api/posters').catch(() => null),
-      fetch('/api/places').catch(() => null)
+      fetch('/api/posters', { cache: 'no-store' }).catch(() => null),
+      fetch('/api/places', { cache: 'no-store' }).catch(() => null)
     ])
 
     if (postersResponse && postersResponse.ok) {
       const postersData = await postersResponse.json()
       if (postersData.message === 'success' && Array.isArray(postersData.data)) {
-        posters.value = postersData.data
+        const nextPostersJson = JSON.stringify(postersData.data)
+        if (nextPostersJson !== lastPostersSnapshot) {
+          lastPostersSnapshot = nextPostersJson
+          posters.value = postersData.data
+          if (selectedPoster.value) {
+            const updatedPoster = postersData.data.find(p => p.id === selectedPoster.value.id)
+            selectedPoster.value = updatedPoster || null
+          }
+        }
       }
     }
 
     if (placesResponse && placesResponse.ok) {
       const data = await placesResponse.json()
       if (data.message === 'success' && Array.isArray(data.data)) {
-        places.value = data.data
-        if (places.value.length > 0) {
-          addMarkers(places.value)
+        const nextPlacesJson = JSON.stringify(data.data)
+        if (nextPlacesJson !== lastPlacesSnapshot) {
+          lastPlacesSnapshot = nextPlacesJson
+          places.value = data.data
+          addMarkers()
+          syncMarkersVisibility()
+          if (selectedPlace.value) {
+            const updatedPlace = data.data.find(
+              p => String(p.place_id) === String(selectedPlace.value.place_id)
+            )
+            selectedPlace.value = updatedPlace || null
+          }
         }
       }
     }
+  } catch (err) {
+    // Silencioso en sincronización de fondo
+  }
+}
+
+onMounted(async () => {
+  await nextTick()
+  initMap()
+
+  try {
+    await refreshMapData()
 
     // Cargar capas del mapa
     await Promise.all([
@@ -1131,6 +1157,8 @@ onMounted(async () => {
   // Escuchar eventos de selección de rutas desde el panel lateral
   window.addEventListener('route-selected', handleRouteSelected)
   window.addEventListener('route-unselected', handleRouteUnselected)
+  window.addEventListener('focus', refreshMapData)
+  realtimeSyncInterval = setInterval(refreshMapData, 8000)
 })
 
 const handleRouteSelected = (e) => {
@@ -1181,6 +1209,11 @@ const handleRouteUnselected = () => {
 onBeforeUnmount(() => {
   window.removeEventListener('route-selected', handleRouteSelected)
   window.removeEventListener('route-unselected', handleRouteUnselected)
+  window.removeEventListener('focus', refreshMapData)
+  if (realtimeSyncInterval) {
+    clearInterval(realtimeSyncInterval)
+    realtimeSyncInterval = null
+  }
   if (geoWatchId !== null && 'geolocation' in navigator) {
     navigator.geolocation.clearWatch(geoWatchId)
     geoWatchId = null
