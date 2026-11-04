@@ -35,18 +35,19 @@ describe('RouteColorVO & RouteEntity', () => {
         coordinates: geometry,
       });
 
-      expect(entity.toGeoJsonFeature()).toEqual({
-        type: 'Feature',
-        geometry,
-        properties: {
-          id: 7,
-          route_id: 7,
-          name: 'Camino de Lengerke',
-          description: 'Ruta histórica empedrada',
-          duration: '3h',
-          difficulty: 'Media',
-          color: '#10b981',
-        },
+      const feature = entity.toGeoJsonFeature();
+      expect(feature.type).toBe('Feature');
+      expect(feature.geometry).toEqual(geometry);
+      expect(feature.properties).toEqual({
+        id: 7,
+        route_id: 7,
+        name: 'Camino de Lengerke',
+        description: 'Ruta histórica empedrada',
+        duration: '3h',
+        distance_km: 0.47,
+        distance_label: '470 m',
+        difficulty: 'Media',
+        color: '#10b981',
       });
     });
   });

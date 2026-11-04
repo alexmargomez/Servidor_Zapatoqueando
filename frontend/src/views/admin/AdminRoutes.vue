@@ -30,7 +30,8 @@
             <tr class="bg-slate-50 border-b border-gray-100 text-gray-500 text-sm">
               <th class="p-4 font-bold">Nombre</th>
               <th class="p-4 font-bold">Descripción</th>
-              <th class="p-4 font-bold text-center">Duración</th>
+              <th class="p-4 font-bold text-center">Distancia (Auto)</th>
+              <th class="p-4 font-bold text-center">Tiempo Est.</th>
               <th class="p-4 font-bold text-center">Dificultad</th>
               <th class="p-4 font-bold text-right">Acciones</th>
             </tr>
@@ -42,6 +43,7 @@
                 {{ route.name }}
               </td>
               <td class="p-4 text-sm text-gray-600">{{ route.description }}</td>
+              <td class="p-4 text-center font-bold text-blue-700">{{ route.distance_label || getPathDistanceLabel(route.geometry?.coordinates) }}</td>
               <td class="p-4 text-center">{{ route.duration }} min</td>
               <td class="p-4 text-center">
                 <span class="px-2 py-1 bg-gray-100 rounded text-xs font-bold">{{ route.difficulty }}</span>
@@ -68,7 +70,10 @@
               </div>
             </div>
             <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ route.description }}</p>
-            <div class="flex gap-4 text-sm font-medium">
+            <div class="flex flex-wrap gap-3 text-sm font-medium">
+              <div class="flex items-center gap-1 text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded-full text-xs">
+                <span>📏 {{ route.distance_label || getPathDistanceLabel(route.geometry?.coordinates) }}</span>
+              </div>
               <div class="flex items-center gap-1 text-gray-500">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 {{ route.duration }} min
@@ -121,21 +126,32 @@
               <label class="block text-sm font-medium text-gray-500 text-sm mb-1">Descripción</label>
               <textarea v-model="form.description" rows="3" class="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 rounded-xl outline-none transition-all transition-colors"></textarea>
             </div>
-            <div class="flex gap-4">
-              <div class="flex-1">
-                <label class="block text-sm font-medium text-gray-500 text-sm mb-1">Duración (min)</label>
-                <input v-model="form.duration" type="number" :class="['w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 rounded-xl outline-none transition-all transition-colors', errors.duration ? 'border-red-500 bg-red-50 focus:ring-red-500' : '']">
-                <p v-if="errors.duration" class="text-xs text-red-500 mt-1 font-bold">{{ errors.duration }}</p>
+            <div>
+              <label class="block text-sm font-medium text-gray-500 text-sm mb-1">Dificultad</label>
+              <select v-model="form.difficulty" class="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 rounded-xl outline-none transition-all bg-white transition-colors">
+                <option value="Fácil">Fácil (Amarillo)</option>
+                <option value="Media">Media (Naranja Claro)</option>
+                <option value="Difícil">Difícil (Naranja Oscuro)</option>
+                <option value="Experto">Experto (Rojo)</option>
+              </select>
+            </div>
+
+            <!-- Tarjeta de Distancia y Tiempo Calculados Automáticamente -->
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2">
+              <div class="text-xs font-bold uppercase tracking-wider text-gray-400">Cálculo Automático por Trazado</div>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white rounded-lg p-2.5 border border-gray-100">
+                  <div class="text-[11px] text-gray-400 font-medium">Distancia Total</div>
+                  <div class="text-base font-black text-blue-700">{{ computedDistanceLabel }}</div>
+                </div>
+                <div class="bg-white rounded-lg p-2.5 border border-gray-100">
+                  <div class="text-[11px] text-gray-400 font-medium">Tiempo Estimado</div>
+                  <div class="text-base font-black text-green-800">{{ computedDurationMinutes }} min</div>
+                </div>
               </div>
-              <div class="flex-1">
-                <label class="block text-sm font-medium text-gray-500 text-sm mb-1">Dificultad</label>
-                <select v-model="form.difficulty" class="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 rounded-xl outline-none transition-all bg-white transition-colors">
-                  <option value="Fácil">Fácil (Amarillo)</option>
-                  <option value="Media">Media (Naranja Claro)</option>
-                  <option value="Difícil">Difícil (Naranja Oscuro)</option>
-                  <option value="Experto">Experto (Rojo)</option>
-                </select>
-              </div>
+              <p class="text-[11px] text-gray-500 leading-snug">
+                Se calcula automáticamente al marcar los puntos de la ruta en el mapa ({{ currentPath.length }} puntos trazados).
+              </p>
             </div>
             </div>
           </form>
@@ -169,7 +185,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { apiFetch } from '../../utils/api'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -185,12 +201,62 @@ const form = ref({
   id: null,
   name: '',
   description: '',
-  duration: 60,
+  duration: 5,
   difficulty: 'Fácil',
   color: '#eab308' // Default Amarillo for Fácil
 })
 
 const errors = ref({})
+
+// Lista de puntos [lng, lat] para GeoJSON LineString
+const currentPath = ref([])
+
+// Calcular distancia en km de cualquier arreglo de coordenadas [[lng, lat], ...]
+const calculatePathKm = (coords) => {
+  if (!Array.isArray(coords) || coords.length < 2) return 0
+  const toRad = (deg) => (deg * Math.PI) / 180
+  const R = 6371 // km
+  let totalKm = 0
+  for (let i = 0; i < coords.length - 1; i++) {
+    const [lng1, lat1] = coords[i]
+    const [lng2, lat2] = coords[i + 1]
+    if (typeof lat1 !== 'number' || typeof lng1 !== 'number' || typeof lat2 !== 'number' || typeof lng2 !== 'number') {
+      continue
+    }
+    const dLat = toRad(lat2 - lat1)
+    const dLng = toRad(lng2 - lng1)
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2)
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+    totalKm += R * c
+  }
+  return totalKm
+}
+
+const getPathDistanceLabel = (coords) => {
+  const km = calculatePathKm(coords)
+  if (km <= 0) return '0 m'
+  if (km < 1) return `${Math.round(km * 1000)} m`
+  return `${km.toFixed(2)} km`
+}
+
+const computedDistanceKm = computed(() => calculatePathKm(currentPath.value))
+const computedDistanceLabel = computed(() => getPathDistanceLabel(currentPath.value))
+
+// Velocidad promedio en caminata según dificultad (km/h)
+const computedDurationMinutes = computed(() => {
+  const km = computedDistanceKm.value
+  if (km <= 0) return 5
+  const speedMap = {
+    'Fácil': 4.5,
+    'Media': 4.0,
+    'Difícil': 3.2,
+    'Experto': 2.5
+  }
+  const speed = speedMap[form.value.difficulty] || 4.0
+  return Math.max(5, Math.round((km / speed) * 60))
+})
 
 // Watcher para cambiar el color según la dificultad
 watch(() => form.value.difficulty, (newDiff) => {
@@ -210,9 +276,6 @@ watch(() => form.value.difficulty, (newDiff) => {
   }
 })
 
-// Lista de puntos [lng, lat] para GeoJSON LineString
-const currentPath = ref([])
-
 let map = null
 let polylineLayer = null
 let markersGroup = null
@@ -228,6 +291,8 @@ const loadData = async () => {
       name: f.properties.name,
       description: f.properties.description,
       duration: f.properties.duration,
+      distance_km: f.properties.distance_km,
+      distance_label: f.properties.distance_label,
       difficulty: f.properties.difficulty,
       color: f.properties.color,
       geometry: f.geometry // LineString
@@ -306,21 +371,21 @@ const initAdminMap = () => {
 
 const openModal = async (item = null) => {
   if (item) {
+    // Cargar line string. GeoJSON es [lng, lat]
+    currentPath.value = [...item.geometry.coordinates]
     form.value = {
       id: item.id,
       name: item.name,
       description: item.description,
-      duration: item.duration,
+      duration: computedDurationMinutes.value || item.duration || 5,
       difficulty: item.difficulty,
       color: item.color
     }
-    // Cargar line string. GeoJSON es [lng, lat]
-    currentPath.value = [...item.geometry.coordinates]
   } else {
-    form.value = {
-      id: null, name: '', description: '', duration: 60, difficulty: 'Fácil', color: '#eab308'
-    }
     currentPath.value = []
+    form.value = {
+      id: null, name: '', description: '', duration: 5, difficulty: 'Fácil', color: '#eab308'
+    }
   }
   errors.value = {}
   showModal.value = true
@@ -345,9 +410,6 @@ const saveItem = async () => {
   if (!form.value.name || form.value.name.trim() === '') {
     errors.value.name = 'El nombre es obligatorio'
   }
-  if (!form.value.duration || form.value.duration <= 0) {
-    errors.value.duration = 'La duración debe ser mayor a 0'
-  }
 
   if (Object.keys(errors.value).length > 0) {
     isFormExpanded.value = true
@@ -358,6 +420,9 @@ const saveItem = async () => {
     alert('Una ruta debe tener al menos 2 puntos dibujados en el mapa.')
     return
   }
+
+  // Calcular automáticamente la duración estimada según la distancia y dificultad del trazado
+  form.value.duration = computedDurationMinutes.value
 
   const payload = {
     ...form.value,
