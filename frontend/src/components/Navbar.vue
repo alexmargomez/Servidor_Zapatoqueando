@@ -58,19 +58,40 @@
         <svg class="w-4 h-4 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
         <span>Eventos</span>
       </router-link>
+
+      <!-- Botón Pasaporte Turístico Zapatoca -->
+      <button
+        @click="openPassport"
+        type="button"
+        class="font-extrabold text-xs px-3.5 py-2 rounded-full transition-all duration-200 bg-emerald-950 hover:bg-emerald-900 text-amber-400 flex items-center gap-1.5 cursor-pointer shadow-xs"
+        title="Abrir mi Pasaporte Turístico de Zapatoca y beneficios desbloqueados"
+      >
+        <span>🛂 Pasaporte</span>
+        <span class="bg-amber-400 text-emerald-950 px-1.5 py-0.2 rounded-full text-[10px] font-black tabular-metrics">{{ stampsCount }}</span>
+      </button>
+
+      <!-- Botón Vincular Negocio B2B -->
+      <button
+        @click="openPartnerApply"
+        type="button"
+        class="font-extrabold text-xs px-3.5 py-2 rounded-full transition-all duration-200 bg-amber-100/90 hover:bg-amber-300 text-emerald-950 border border-amber-300 flex items-center gap-1.5 cursor-pointer"
+        title="¿Tienes un comercio, restaurante u hotel en Zapatoca? Vincúlate"
+      >
+        <span>🏪 Vincular Negocio</span>
+      </button>
       
       <router-link 
         to="/descargar" 
-        class="ml-1 bg-amber-400 hover:bg-amber-300 text-emerald-950 font-extrabold py-2 px-5 rounded-full shadow-[0_4px_14px_rgba(234,179,8,0.35)] hover:shadow-[0_6px_20px_rgba(234,179,8,0.45)] hover:-translate-y-0.5 transition-all duration-200 active:scale-95 text-xs uppercase tracking-wider flex items-center gap-1.5"
+        class="ml-0.5 bg-amber-400 hover:bg-amber-300 text-emerald-950 font-extrabold py-2 px-4 rounded-full shadow-[0_4px_14px_rgba(234,179,8,0.35)] hover:shadow-[0_6px_20px_rgba(234,179,8,0.45)] hover:-translate-y-0.5 transition-all duration-200 active:scale-95 text-xs uppercase tracking-wider flex items-center gap-1.5"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-        <span>Descargar</span>
+        <span>App</span>
       </router-link>
 
       <!-- Acceso Admin Discreto -->
       <router-link 
         :to="isLoggedIn ? '/admin' : '/admin/login'" 
-        class="ml-1 text-emerald-950/75 hover:text-emerald-950 bg-emerald-950/5 hover:bg-emerald-950/10 border border-emerald-950/10 px-3 py-2 rounded-full transition-all duration-200 text-xs font-bold flex items-center gap-1"
+        class="ml-0.5 text-emerald-950/75 hover:text-emerald-950 bg-emerald-950/5 hover:bg-emerald-950/10 border border-emerald-950/10 px-3 py-2 rounded-full transition-all duration-200 text-xs font-bold flex items-center gap-1"
         :title="isLoggedIn ? 'Ir al Panel Admin' : 'Iniciar Sesión'"
       >
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,7 +108,7 @@
           <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-900 flex items-center justify-center shrink-0">🗺️</div>
           <div>
             <div class="font-extrabold text-emerald-950 text-sm">Mapa Interactivo</div>
-            <div class="text-xs text-slate-500">Explora comercios, hoteles y atractivos</div>
+            <div class="text-xs text-slate-500">Explora comercios aliados, hoteles y atractivos</div>
           </div>
         </router-link>
 
@@ -95,7 +116,7 @@
           <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center shrink-0">🥾</div>
           <div>
             <div class="font-extrabold text-emerald-950 text-sm">Rutas y Senderos</div>
-            <div class="text-xs text-slate-500">Caminatas ecológicas con distancia y tiempo</div>
+            <div class="text-xs text-slate-500">Caminatas por tramos de dificultad y paradas</div>
           </div>
         </router-link>
 
@@ -106,6 +127,23 @@
             <div class="text-xs text-slate-500">Ferias, festivales y destacados del pueblo</div>
           </div>
         </router-link>
+
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button
+            @click="openPassport"
+            type="button"
+            class="flex items-center justify-center gap-2 p-3 rounded-2xl bg-emerald-950 text-amber-400 font-extrabold text-xs cursor-pointer shadow-sm"
+          >
+            <span>🛂 Pasaporte ({{ stampsCount }})</span>
+          </button>
+          <button
+            @click="openPartnerApply"
+            type="button"
+            class="flex items-center justify-center gap-1.5 p-3 rounded-2xl bg-amber-100 text-emerald-950 border border-amber-300 font-extrabold text-xs cursor-pointer"
+          >
+            <span>🏪 Vincular Negocio</span>
+          </button>
+        </div>
 
         <div class="pt-2 mt-1 border-t border-slate-100 flex items-center gap-2">
           <router-link @click="isMobileMenuOpen = false" to="/descargar" class="flex-1 bg-amber-400 hover:bg-amber-300 text-emerald-950 font-extrabold py-3 px-4 rounded-2xl shadow-md text-xs uppercase tracking-wider text-center">
@@ -125,16 +163,58 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
+const router = useRouter()
 const isMobileMenuOpen = ref(false)
+const stampsCount = ref(0)
+
+const refreshStampsCount = () => {
+  try {
+    const raw = localStorage.getItem('zapatoqueando_passport_v1')
+    const arr = raw ? JSON.parse(raw) : []
+    stampsCount.value = Array.isArray(arr) ? arr.length : 0
+  } catch {
+    stampsCount.value = 0
+  }
+}
+
+const openPassport = () => {
+  isMobileMenuOpen.value = false
+  if (route.path !== '/') {
+    router.push('/').then(() => {
+      setTimeout(() => window.dispatchEvent(new CustomEvent('open-passport-modal')), 120)
+    })
+  } else {
+    window.dispatchEvent(new CustomEvent('open-passport-modal'))
+  }
+}
+
+const openPartnerApply = () => {
+  isMobileMenuOpen.value = false
+  if (route.path !== '/') {
+    router.push('/').then(() => {
+      setTimeout(() => window.dispatchEvent(new CustomEvent('open-partner-apply-modal')), 120)
+    })
+  } else {
+    window.dispatchEvent(new CustomEvent('open-partner-apply-modal'))
+  }
+}
 
 const isLoggedIn = computed(() => {
-  // Reacts when route changes
   route.fullPath
   return Boolean(localStorage.getItem('admin_token'))
+})
+
+onMounted(() => {
+  refreshStampsCount()
+  window.addEventListener('passport-updated', refreshStampsCount)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('passport-updated', refreshStampsCount)
 })
 </script>
 

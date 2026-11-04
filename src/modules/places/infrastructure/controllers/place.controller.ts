@@ -4,6 +4,7 @@ import { CreatePlaceUseCase } from '../../application/use-cases/create-place.use
 import { UpdatePlaceUseCase } from '../../application/use-cases/update-place.use-case';
 import { DeletePlaceUseCase } from '../../application/use-cases/delete-place.use-case';
 import { PlaceDto } from '../dtos/place.dto';
+import { PlaceMetricType, PlaceRepositoryPort } from '../../application/ports/repositories/place-repository.port';
 import { DomainException } from '../../../../shared/domain/exceptions/domain.exception';
 
 export class PlaceController {
@@ -11,7 +12,8 @@ export class PlaceController {
     private readonly getPlacesUseCase: GetPlacesUseCase,
     private readonly createPlaceUseCase: CreatePlaceUseCase,
     private readonly updatePlaceUseCase: UpdatePlaceUseCase,
-    private readonly deletePlaceUseCase: DeletePlaceUseCase
+    private readonly deletePlaceUseCase: DeletePlaceUseCase,
+    private readonly placeRepository?: PlaceRepositoryPort
   ) {}
 
   getPlaces = async (_req: Request, res: Response): Promise<void> => {
@@ -76,6 +78,33 @@ export class PlaceController {
         res.status(err.statusCode).json({ error: err.message });
         return;
       }
+      res.status(500).json({ error: err?.message || 'Internal server error' });
+    }
+  };
+
+  trackPlaceMetric = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0) {
+        res.status(400).json({ error: 'Invalid place ID' });
+        return;
+      }
+      const rawType = String(req.body?.type || 'view').toLowerCase();
+      const metric: PlaceMetricType =
+        rawType === 'whatsapp' ? 'whatsapp' : rawType === 'checkin' ? 'checkin' : 'view';
+
+      if (!this.placeRepository?.trackMetric) {
+        res.json({ message: 'success' });
+        return;
+      }
+
+      const updated = await this.placeRepository.trackMetric(id, metric);
+      if (!updated) {
+        res.status(404).json({ error: 'Place not found' });
+        return;
+      }
+      res.json({ message: 'success', data: updated.toPublicResponse() });
+    } catch (err: any) {
       res.status(500).json({ error: err?.message || 'Internal server error' });
     }
   };

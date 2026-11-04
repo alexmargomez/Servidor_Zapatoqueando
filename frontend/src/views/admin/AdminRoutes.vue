@@ -68,9 +68,19 @@
           </thead>
           <tbody>
             <tr v-for="route in routesList" :key="route.id" class="border-b border-slate-100 hover:bg-emerald-50/30 transition-colors">
-              <td class="p-4 font-extrabold text-emerald-950 flex items-center gap-2.5">
-                <span class="w-4 h-4 rounded-full shrink-0 ring-2 ring-slate-200" :style="{ backgroundColor: route.color }"></span>
-                <span>{{ route.name }}</span>
+              <td class="p-4 font-extrabold text-emerald-950">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-4 h-4 rounded-full shrink-0 ring-2 ring-slate-200" :style="{ backgroundColor: route.color }"></span>
+                  <span>{{ route.name }}</span>
+                </div>
+                <div v-if="route.difficulty_breakdown && route.difficulty_breakdown.length > 0" class="mt-1.5 flex h-1.5 w-32 rounded-full overflow-hidden bg-slate-100">
+                  <div
+                    v-for="seg in route.difficulty_breakdown"
+                    :key="seg.difficulty"
+                    :style="{ width: seg.percentage + '%', backgroundColor: seg.color }"
+                    :title="`${seg.difficulty}: ${seg.percentage}%`"
+                  ></div>
+                </div>
               </td>
               <td class="p-4 text-sm text-slate-600 max-w-xs truncate">{{ route.description }}</td>
               <td class="p-4 text-center font-extrabold text-emerald-900 tabular-metrics">
@@ -80,7 +90,9 @@
               </td>
               <td class="p-4 text-center text-sm font-bold text-slate-700 tabular-metrics">{{ route.duration }} min</td>
               <td class="p-4 text-center">
-                <span class="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-extrabold">{{ route.difficulty }}</span>
+                <span class="px-2.5 py-1 rounded-full text-xs font-extrabold border" :class="getDifficultyBadgeClass(route.difficulty)">
+                  {{ route.difficulty }}
+                </span>
               </td>
               <td class="p-4 text-right space-x-2 whitespace-nowrap">
                 <button @click="openModal(route)" type="button" class="text-emerald-800 hover:text-emerald-950 font-bold text-xs px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors cursor-pointer">Editar</button>
@@ -111,7 +123,7 @@
               <div class="flex items-center gap-1 text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full">
                 <span>⏱️ {{ route.duration }} min</span>
               </div>
-              <div class="flex items-center gap-1 text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-full">
+              <div class="flex items-center gap-1 px-2.5 py-0.5 rounded-full border" :class="getDifficultyBadgeClass(route.difficulty)">
                 <span>{{ route.difficulty }}</span>
               </div>
             </div>
@@ -124,7 +136,10 @@
     <div v-if="showModal" class="fixed inset-0 bg-emerald-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
       <div class="bg-white rounded-3xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden border border-slate-200">
         <div class="bg-stone-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center shrink-0">
-          <h3 class="text-lg font-extrabold text-emerald-950">{{ form.id ? 'Editar Ruta' : 'Nueva Ruta' }}</h3>
+          <div>
+            <h3 class="text-lg font-extrabold text-emerald-950">{{ form.id ? 'Editar Ruta por Tramos' : 'Nueva Ruta por Tramos' }}</h3>
+            <p class="text-xs text-slate-500">Elige el color del tramo mientras marcas puntos en el mapa; la dificultad final se calcula automáticamente.</p>
+          </div>
           <button @click="showModal = false" type="button" class="text-slate-400 hover:text-slate-600 cursor-pointer">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
@@ -134,9 +149,9 @@
           <!-- Formulario Lado Izquierdo (o Bottom Sheet en móvil) -->
           <form @submit.prevent="saveItem" id="routeForm" 
             :class="[
-              'bg-white z-10 md:static md:w-1/3 md:h-full md:border-r border-slate-200 flex flex-col transition-all duration-300',
+              'bg-white z-10 md:static md:w-[360px] lg:w-[390px] md:h-full md:border-r border-slate-200 flex flex-col transition-all duration-300 shrink-0',
               'absolute bottom-0 left-0 right-0 rounded-t-3xl shadow-[0_-10px_20px_rgba(0,0,0,0.15)] md:shadow-none md:rounded-none',
-              isFormExpanded ? 'h-[75vh]' : 'h-[65px] md:h-full'
+              isFormExpanded ? 'h-[78vh]' : 'h-[65px] md:h-full'
             ]"
           >
             <!-- Toggle Móvil -->
@@ -144,57 +159,134 @@
               <div class="flex flex-col items-center text-emerald-800">
                 <svg v-if="!isFormExpanded" class="w-6 h-6 animate-bounce mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
                 <svg v-else class="w-6 h-6 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                <span class="text-xs font-extrabold uppercase tracking-wider">{{ isFormExpanded ? 'Ocultar Formulario' : 'Llenar Datos de la Ruta' }}</span>
+                <span class="text-xs font-extrabold uppercase tracking-wider">{{ isFormExpanded ? 'Ocultar Formulario' : 'Llenar Datos y Ver Cálculo' }}</span>
               </div>
             </div>
 
             <!-- Contenido del formulario -->
-            <div class="p-4 md:p-6 space-y-4 overflow-y-auto flex-1">
-            <div>
-              <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-600 mb-1">Nombre</label>
-              <input v-model="form.name" type="text" :class="['w-full px-4 py-2.5 bg-stone-50 border border-slate-300 focus:border-emerald-700 focus:bg-white focus:ring-4 focus:ring-emerald-600/10 rounded-xl outline-none transition-all text-emerald-950 font-medium', errors.name ? 'border-rose-500 bg-rose-50 focus:ring-rose-500' : '']">
-              <p v-if="errors.name" class="text-xs text-rose-600 mt-1 font-bold">{{ errors.name }}</p>
-            </div>
-            <div>
-              <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-600 mb-1">Descripción</label>
-              <textarea v-model="form.description" rows="3" class="w-full px-4 py-2.5 bg-stone-50 border border-slate-300 focus:border-emerald-700 focus:bg-white focus:ring-4 focus:ring-emerald-600/10 rounded-xl outline-none transition-all text-emerald-950"></textarea>
-            </div>
-            <div>
-              <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-600 mb-1">Dificultad</label>
-              <select v-model="form.difficulty" class="w-full px-4 py-2.5 bg-stone-50 border border-slate-300 focus:border-emerald-700 focus:bg-white focus:ring-4 focus:ring-emerald-600/10 rounded-xl outline-none transition-all font-bold text-emerald-950">
-                <option value="Fácil">Fácil (Amarillo)</option>
-                <option value="Media">Media (Naranja Claro)</option>
-                <option value="Difícil">Difícil (Naranja Oscuro)</option>
-                <option value="Experto">Experto (Rojo)</option>
-              </select>
-            </div>
-
-            <!-- Tarjeta de Distancia y Tiempo Calculados Automáticamente -->
-            <div class="bg-stone-50 border border-slate-200 rounded-2xl p-4 space-y-2.5">
-              <div class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Cálculo Automático por Trazado</div>
-              <div class="grid grid-cols-2 gap-3">
-                <div class="bg-white rounded-xl p-3 border border-slate-200/80 shadow-2xs">
-                  <div class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Distancia Total</div>
-                  <div class="text-base font-extrabold text-emerald-950 tabular-metrics mt-0.5">📏 {{ computedDistanceLabel }}</div>
-                </div>
-                <div class="bg-white rounded-xl p-3 border border-slate-200/80 shadow-2xs">
-                  <div class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Tiempo Estimado</div>
-                  <div class="text-base font-extrabold text-emerald-800 tabular-metrics mt-0.5">⏱️ {{ computedDurationMinutes }} min</div>
-                </div>
+            <div class="p-4 md:p-5 space-y-4 overflow-y-auto flex-1">
+              <div>
+                <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-600 mb-1">Nombre del Sendero</label>
+                <input v-model="form.name" type="text" placeholder="Ej. Camino de Lengerke - Mirador" :class="['w-full px-4 py-2.5 bg-stone-50 border border-slate-300 focus:border-emerald-700 focus:bg-white focus:ring-4 focus:ring-emerald-600/10 rounded-xl outline-none transition-all text-emerald-950 font-medium', errors.name ? 'border-rose-500 bg-rose-50 focus:ring-rose-500' : '']">
+                <p v-if="errors.name" class="text-xs text-rose-600 mt-1 font-bold">{{ errors.name }}</p>
               </div>
-              <p class="text-[11px] text-slate-500 leading-snug tabular-metrics">
-                Se calcula automáticamente al marcar los puntos de la ruta en el mapa ({{ currentPath.length }} puntos trazados).
-              </p>
-            </div>
+
+              <div>
+                <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-600 mb-1">Descripción y Recomendaciones</label>
+                <textarea v-model="form.description" rows="2" placeholder="Describe el paisaje, puntos de agua o recomendaciones..." class="w-full px-4 py-2.5 bg-stone-50 border border-slate-300 focus:border-emerald-700 focus:bg-white focus:ring-4 focus:ring-emerald-600/10 rounded-xl outline-none transition-all text-emerald-950 text-sm"></textarea>
+              </div>
+
+              <!-- Selector de Pincel de Color para el Próximo Tramo -->
+              <div class="bg-stone-50 border border-slate-200 rounded-2xl p-3.5 space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <label class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-950">🎨 Color del Tramo al Trazar</label>
+                  <span class="text-[10px] font-bold text-slate-500">Pincel activo</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <button
+                    v-for="opt in difficultyOptions"
+                    :key="opt.level"
+                    type="button"
+                    @click="activeBrushDifficulty = opt.level"
+                    :class="[
+                      'px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-2 border transition-all cursor-pointer',
+                      activeBrushDifficulty === opt.level
+                        ? 'bg-emerald-950 text-white border-emerald-950 shadow-md scale-[1.02]'
+                        : 'bg-white text-slate-700 border-slate-200 hover:border-emerald-600/40'
+                    ]"
+                  >
+                    <span class="w-3.5 h-3.5 rounded-full shrink-0 border border-white/80 shadow-2xs" :style="{ backgroundColor: opt.color }"></span>
+                    <div class="text-left leading-tight">
+                      <div>{{ opt.level }}</div>
+                      <div :class="['text-[10px] font-semibold', activeBrushDifficulty === opt.level ? 'text-amber-300' : 'text-slate-400']">{{ opt.hint }}</div>
+                    </div>
+                  </button>
+                </div>
+                <p class="text-[11px] text-slate-500 leading-snug">
+                  💡 Cambia de color mientras marcas puntos en el mapa o <strong>haz clic sobre un tramo ya dibujado</strong> para cambiarle su dificultad.
+                </p>
+              </div>
+
+              <!-- Termómetro de Dificultad Global y Métricas Calculadas Automáticamente -->
+              <div class="bg-emerald-950 text-white rounded-2xl p-4 space-y-3 shadow-md">
+                <div class="flex items-center justify-between gap-2">
+                  <div>
+                    <div class="text-[10px] font-extrabold uppercase tracking-widest text-amber-400">Resultado Final Automático</div>
+                    <div class="text-xs text-emerald-100/80">Calculado según los colores de tus tramos</div>
+                  </div>
+                  <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider shadow-sm border border-white/20" :style="{ backgroundColor: computedGlobalColor, color: '#fff' }">
+                    {{ computedGlobalDifficulty }}
+                  </span>
+                </div>
+
+                <!-- Barra Termómetro Proporcional Multicolor -->
+                <div class="space-y-1.5">
+                  <div class="h-3 w-full rounded-full bg-white/15 overflow-hidden flex p-0.5 gap-0.5">
+                    <div
+                      v-for="item in computedDifficultyBreakdown"
+                      :key="item.difficulty"
+                      class="h-full first:rounded-l-full last:rounded-r-full transition-all duration-300"
+                      :style="{ width: item.percentage + '%', backgroundColor: item.color }"
+                      :title="`${item.difficulty}: ${item.distance_km} km (${item.percentage}%)`"
+                    ></div>
+                  </div>
+                  <div class="flex flex-wrap gap-1.5 pt-0.5">
+                    <span
+                      v-for="item in computedDifficultyBreakdown"
+                      :key="'lbl-'+item.difficulty"
+                      class="text-[10px] font-bold bg-white/10 px-2 py-0.5 rounded-full flex items-center gap-1 tabular-metrics"
+                    >
+                      <span class="w-2 h-2 rounded-full" :style="{ backgroundColor: item.color }"></span>
+                      <span>{{ item.difficulty }}: {{ item.percentage }}%</span>
+                    </span>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5 pt-1">
+                  <div class="bg-white/10 rounded-xl p-2.5 border border-white/10">
+                    <div class="text-[10px] text-emerald-200 font-bold uppercase tracking-wider">Distancia Total</div>
+                    <div class="text-base font-extrabold text-white tabular-metrics mt-0.5">📏 {{ computedDistanceLabel }}</div>
+                  </div>
+                  <div class="bg-white/10 rounded-xl p-2.5 border border-white/10">
+                    <div class="text-[10px] text-emerald-200 font-bold uppercase tracking-wider">Tiempo Ponderado</div>
+                    <div class="text-base font-extrabold text-amber-300 tabular-metrics mt-0.5">⏱️ {{ computedDurationMinutes }} min</div>
+                  </div>
+                </div>
+                <p class="text-[10px] text-emerald-200/80 leading-snug tabular-metrics">
+                  {{ currentPath.length }} puntos marcados · {{ Math.max(0, currentPath.length - 1) }} tramos evaluados.
+                </p>
+              </div>
             </div>
           </form>
 
           <!-- Mapa Lado Derecho (Fondo en móvil) -->
-          <div class="w-full md:w-2/3 h-full flex flex-col relative bg-slate-100 z-0 pb-[65px] md:pb-0">
+          <div class="flex-1 h-full flex flex-col relative bg-slate-100 z-0 pb-[65px] md:pb-0">
             <div id="admin-route-map" class="w-full h-full z-10"></div>
+
+            <!-- Barra Flotante de Pincel de Color Directo en el Mapa -->
+            <div class="absolute top-3 left-3 right-16 z-[1000] pointer-events-none flex flex-wrap items-center gap-1.5">
+              <div class="bg-white/95 backdrop-blur-md p-1.5 rounded-2xl shadow-lg border border-slate-200/80 flex items-center gap-1 pointer-events-auto flex-wrap">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 px-2 hidden sm:inline">Tramo:</span>
+                <button
+                  v-for="opt in difficultyOptions"
+                  :key="'map-brush-'+opt.level"
+                  type="button"
+                  @click="activeBrushDifficulty = opt.level"
+                  :class="[
+                    'px-2.5 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer',
+                    activeBrushDifficulty === opt.level
+                      ? 'bg-emerald-950 text-white shadow-xs scale-[1.03]'
+                      : 'text-slate-700 hover:bg-slate-100'
+                  ]"
+                >
+                  <span class="w-3 h-3 rounded-full shrink-0 border border-white" :style="{ backgroundColor: opt.color }"></span>
+                  <span>{{ opt.level }}</span>
+                </button>
+              </div>
+            </div>
             
-            <!-- Controles Flotantes del Mapa -->
-            <div class="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
+            <!-- Controles Flotantes del Mapa (Deshacer / Limpiar) -->
+            <div class="absolute top-3 right-3 z-[1000] flex flex-col gap-2">
               <button type="button" @click="undoLastPoint" :disabled="currentPath.length === 0" class="bg-white p-2.5 rounded-xl shadow-lg text-emerald-950 hover:text-emerald-700 disabled:opacity-50 transition-colors cursor-pointer" title="Deshacer último punto">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
               </button>
@@ -235,6 +327,34 @@ watch(isFormExpanded, async () => {
   }
 })
 
+const difficultyOptions = [
+  { level: 'Fácil', color: '#eab308', weight: 1, speedKmh: 4.5, hint: 'Plano · Amarillo' },
+  { level: 'Media', color: '#f97316', weight: 2, speedKmh: 4.0, hint: 'Moderado · Naranja' },
+  { level: 'Difícil', color: '#ea580c', weight: 3, speedKmh: 3.2, hint: 'Exigente · Naranja Osc.' },
+  { level: 'Experto', color: '#dc2626', weight: 4, speedKmh: 2.5, hint: 'Alta pendiente · Rojo' }
+]
+
+const getDifficultyMeta = (level) => {
+  return difficultyOptions.find(o => o.level === level) || difficultyOptions[0]
+}
+
+const getDifficultyBadgeClass = (difficulty) => {
+  switch (difficulty) {
+    case 'Fácil':
+      return 'bg-amber-50 text-amber-800 border-amber-200'
+    case 'Media':
+      return 'bg-orange-50 text-orange-800 border-orange-200'
+    case 'Difícil':
+      return 'bg-orange-100 text-orange-900 border-orange-300'
+    case 'Experto':
+      return 'bg-rose-50 text-rose-800 border-rose-200'
+    default:
+      return 'bg-slate-100 text-slate-700 border-slate-200'
+  }
+}
+
+const activeBrushDifficulty = ref('Fácil')
+
 const routesList = ref([])
 const loading = ref(true)
 const saving = ref(false)
@@ -246,33 +366,39 @@ const form = ref({
   description: '',
   duration: 5,
   difficulty: 'Fácil',
-  color: '#eab308' // Default Amarillo for Fácil
+  color: '#eab308'
 })
 
 const errors = ref({})
 
-// Lista de puntos [lng, lat] para GeoJSON LineString
+// Lista de puntos [lng, lat] y dificultad de cada tramo [i -> i+1]
 const currentPath = ref([])
+const segmentDifficulties = ref([])
+
+const haversinePairKm = (pt1, pt2) => {
+  if (!Array.isArray(pt1) || !Array.isArray(pt2) || pt1.length < 2 || pt2.length < 2) return 0
+  const [lng1, lat1] = pt1
+  const [lng2, lat2] = pt2
+  if (typeof lat1 !== 'number' || typeof lng1 !== 'number' || typeof lat2 !== 'number' || typeof lng2 !== 'number') {
+    return 0
+  }
+  const toRad = (deg) => (deg * Math.PI) / 180
+  const R = 6371
+  const dLat = toRad(lat2 - lat1)
+  const dLng = toRad(lng2 - lng1)
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return R * c
+}
 
 // Calcular distancia en km de cualquier arreglo de coordenadas [[lng, lat], ...]
 const calculatePathKm = (coords) => {
   if (!Array.isArray(coords) || coords.length < 2) return 0
-  const toRad = (deg) => (deg * Math.PI) / 180
-  const R = 6371 // km
   let totalKm = 0
   for (let i = 0; i < coords.length - 1; i++) {
-    const [lng1, lat1] = coords[i]
-    const [lng2, lat2] = coords[i + 1]
-    if (typeof lat1 !== 'number' || typeof lng1 !== 'number' || typeof lat2 !== 'number' || typeof lng2 !== 'number') {
-      continue
-    }
-    const dLat = toRad(lat2 - lat1)
-    const dLng = toRad(lng2 - lng1)
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2)
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-    totalKm += R * c
+    totalKm += haversinePairKm(coords[i], coords[i + 1])
   }
   return totalKm
 }
@@ -284,43 +410,105 @@ const getPathDistanceLabel = (coords) => {
   return `${km.toFixed(2)} km`
 }
 
-const computedDistanceKm = computed(() => calculatePathKm(currentPath.value))
-const computedDistanceLabel = computed(() => getPathDistanceLabel(currentPath.value))
-
-// Velocidad promedio en caminata según dificultad (km/h)
-const computedDurationMinutes = computed(() => {
-  const km = computedDistanceKm.value
-  if (km <= 0) return 5
-  const speedMap = {
-    'Fácil': 4.5,
-    'Media': 4.0,
-    'Difícil': 3.2,
-    'Experto': 2.5
+// Segmentos detallados con distancia y duración individual
+const detailedSegments = computed(() => {
+  const pts = currentPath.value
+  if (!Array.isArray(pts) || pts.length < 2) return []
+  const list = []
+  for (let i = 0; i < pts.length - 1; i++) {
+    const level = segmentDifficulties.value[i] || 'Fácil'
+    const meta = getDifficultyMeta(level)
+    const distKm = haversinePairKm(pts[i], pts[i + 1])
+    const durationMin = (distKm / meta.speedKmh) * 60
+    list.push({
+      index: i,
+      coords: [pts[i], pts[i + 1]],
+      difficulty: meta.level,
+      color: meta.color,
+      weight: meta.weight,
+      distance_km: distKm,
+      duration_min: durationMin
+    })
   }
-  const speed = speedMap[form.value.difficulty] || 4.0
-  return Math.max(5, Math.round((km / speed) * 60))
+  return list
 })
 
-// Watcher para cambiar el color según la dificultad
-watch(() => form.value.difficulty, (newDiff) => {
-  switch(newDiff) {
-    case 'Fácil':
-      form.value.color = '#eab308' // Amarillo
-      break
-    case 'Media':
-      form.value.color = '#f97316' // Naranja claro
-      break
-    case 'Difícil':
-      form.value.color = '#ea580c' // Naranja oscuro
-      break
-    case 'Experto':
-      form.value.color = '#dc2626' // Rojo
-      break
+const computedDistanceKm = computed(() => {
+  return detailedSegments.value.reduce((acc, s) => acc + s.distance_km, 0)
+})
+
+const computedDistanceLabel = computed(() => getPathDistanceLabel(currentPath.value))
+
+// Duración ponderada sumando el tiempo real de cada tramo según su dificultad
+const computedDurationMinutes = computed(() => {
+  if (detailedSegments.value.length === 0) return 5
+  const totalMin = detailedSegments.value.reduce((acc, s) => acc + s.duration_min, 0)
+  return Math.max(5, Math.round(totalMin))
+})
+
+// Cálculo automático de la Dificultad Global al finalizar o trazar los segmentos
+const computedGlobalDifficulty = computed(() => {
+  const segs = detailedSegments.value
+  const totalKm = computedDistanceKm.value
+  if (segs.length === 0 || totalKm <= 0) {
+    return activeBrushDifficulty.value || 'Fácil'
   }
+
+  let weightedSum = 0
+  let expertKm = 0
+  let hardKm = 0
+
+  for (const s of segs) {
+    weightedSum += s.distance_km * s.weight
+    if (s.difficulty === 'Experto') expertKm += s.distance_km
+    if (s.difficulty === 'Difícil') hardKm += s.distance_km
+  }
+
+  let effectiveScore = weightedSum / totalKm
+  const expertRatio = expertKm / totalKm
+  const hardPlusExpertRatio = (hardKm + expertKm) / totalKm
+
+  if (expertRatio >= 0.3 || expertKm >= 0.6) {
+    effectiveScore = Math.max(effectiveScore, 3.3)
+  } else if (expertRatio >= 0.15 || hardPlusExpertRatio >= 0.35) {
+    effectiveScore = Math.max(effectiveScore, 2.45)
+  }
+
+  if (effectiveScore >= 3.25) return 'Experto'
+  if (effectiveScore >= 2.4) return 'Difícil'
+  if (effectiveScore >= 1.55) return 'Media'
+  return 'Fácil'
+})
+
+const computedGlobalColor = computed(() => {
+  return getDifficultyMeta(computedGlobalDifficulty.value).color
+})
+
+const computedDifficultyBreakdown = computed(() => {
+  const segs = detailedSegments.value
+  const totalKm = computedDistanceKm.value
+  if (segs.length === 0 || totalKm <= 0) {
+    const meta = getDifficultyMeta(activeBrushDifficulty.value)
+    return [{ difficulty: meta.level, color: meta.color, distance_km: 0, percentage: 100 }]
+  }
+
+  const totals = { 'Fácil': 0, 'Media': 0, 'Difícil': 0, 'Experto': 0 }
+  for (const s of segs) {
+    totals[s.difficulty] = (totals[s.difficulty] || 0) + s.distance_km
+  }
+
+  return difficultyOptions
+    .filter(opt => totals[opt.level] > 0)
+    .map(opt => ({
+      difficulty: opt.level,
+      color: opt.color,
+      distance_km: Number(totals[opt.level].toFixed(2)),
+      percentage: Math.max(1, Math.round((totals[opt.level] / totalKm) * 100))
+    }))
 })
 
 let map = null
-let polylineLayer = null
+let segmentsLayerGroup = null
 let markersGroup = null
 
 const loadData = async () => {
@@ -328,7 +516,6 @@ const loadData = async () => {
     loading.value = true
     const res = await apiFetch('/api/routes')
     const data = await res.json()
-    // El backend devuelve FeatureCollection
     routesList.value = data.features.map(f => ({
       id: f.properties.id,
       name: f.properties.name,
@@ -338,7 +525,9 @@ const loadData = async () => {
       distance_label: f.properties.distance_label,
       difficulty: f.properties.difficulty,
       color: f.properties.color,
-      geometry: f.geometry // LineString
+      segments: f.properties.segments || f.geometry?.segments || [],
+      difficulty_breakdown: f.properties.difficulty_breakdown || [],
+      geometry: f.geometry
     }))
   } catch (err) {
     console.error(err)
@@ -349,8 +538,10 @@ const loadData = async () => {
 
 const renderPath = () => {
   if (!map) return
-  if (polylineLayer) {
-    map.removeLayer(polylineLayer)
+  if (segmentsLayerGroup) {
+    segmentsLayerGroup.clearLayers()
+  } else {
+    segmentsLayerGroup = L.layerGroup().addTo(map)
   }
   if (markersGroup) {
     markersGroup.clearLayers()
@@ -358,37 +549,56 @@ const renderPath = () => {
     markersGroup = L.layerGroup().addTo(map)
   }
 
-  // Convertir [lng, lat] a [lat, lng] para Leaflet polyline
-  const latlngs = currentPath.value.map(pt => [pt[1], pt[0]])
-  
-  polylineLayer = L.polyline(latlngs, {
-    color: form.value.color,
-    weight: 4,
-    opacity: 0.8
-  }).addTo(map)
+  // Dibujar cada tramo con su propio color de dificultad
+  detailedSegments.value.forEach((seg) => {
+    const latlngs = [
+      [seg.coords[0][1], seg.coords[0][0]],
+      [seg.coords[1][1], seg.coords[1][0]]
+    ]
 
-  // Dibujar puntos para verlos
+    // Halo oscuro exterior para alto contraste sobre imagen satelital
+    L.polyline(latlngs, {
+      color: '#052e16',
+      weight: 8,
+      opacity: 0.45,
+      interactive: false
+    }).addTo(segmentsLayerGroup)
+
+    const segLine = L.polyline(latlngs, {
+      color: seg.color,
+      weight: 5,
+      opacity: 0.95
+    }).addTo(segmentsLayerGroup)
+
+    // Permitir cambiar el color de un tramo haciendo clic sobre él
+    segLine.on('click', (ev) => {
+      L.DomEvent.stopPropagation(ev)
+      segmentDifficulties.value[seg.index] = activeBrushDifficulty.value
+      renderPath()
+    })
+  })
+
+  // Dibujar vértices
+  const latlngs = currentPath.value.map(pt => [pt[1], pt[0]])
   latlngs.forEach((latlng, index) => {
-    const circle = L.circleMarker(latlng, {
-      radius: 4,
+    const segColor = index === 0
+      ? '#10b981'
+      : getDifficultyMeta(segmentDifficulties.value[index - 1] || activeBrushDifficulty.value).color
+    L.circleMarker(latlng, {
+      radius: index === 0 || index === latlngs.length - 1 ? 6 : 4,
       fillColor: index === 0 ? '#10b981' : (index === latlngs.length - 1 ? '#ef4444' : '#ffffff'),
-      color: form.value.color,
-      weight: 2,
+      color: segColor,
+      weight: 2.5,
       opacity: 1,
       fillOpacity: 1
     }).addTo(markersGroup)
   })
 }
 
-// Observar el color para repintar la línea en tiempo real
-watch(() => form.value.color, () => {
-  if (polylineLayer) {
-    polylineLayer.setStyle({ color: form.value.color })
-  }
-})
-
 const initAdminMap = () => {
   if (map) map.remove()
+  segmentsLayerGroup = null
+  markersGroup = null
   
   const center = [6.8168, -73.2687]
   map = L.map('admin-route-map').setView(center, 15)
@@ -398,14 +608,15 @@ const initAdminMap = () => {
   }).addTo(map)
 
   map.on('click', (e) => {
-    // Agregar punto [lng, lat]
+    if (currentPath.value.length >= 1) {
+      segmentDifficulties.value.push(activeBrushDifficulty.value)
+    }
     currentPath.value.push([e.latlng.lng, e.latlng.lat])
     renderPath()
   })
   
   renderPath()
   
-  // Si hay ruta, hacer zoom a ella
   if (currentPath.value.length > 0) {
     const latlngs = currentPath.value.map(pt => [pt[1], pt[0]])
     map.fitBounds(L.polyline(latlngs).getBounds(), { padding: [50, 50] })
@@ -414,18 +625,27 @@ const initAdminMap = () => {
 
 const openModal = async (item = null) => {
   if (item) {
-    // Cargar line string. GeoJSON es [lng, lat]
-    currentPath.value = [...item.geometry.coordinates]
+    const coords = Array.isArray(item.geometry?.coordinates) ? [...item.geometry.coordinates] : []
+    currentPath.value = coords
+    const rawSegs = item.geometry?.segments || item.segments || []
+    const loadedDiffs = []
+    for (let i = 0; i < Math.max(0, coords.length - 1); i++) {
+      loadedDiffs.push(rawSegs[i]?.difficulty || item.difficulty || 'Fácil')
+    }
+    segmentDifficulties.value = loadedDiffs
+    activeBrushDifficulty.value = loadedDiffs[loadedDiffs.length - 1] || item.difficulty || 'Fácil'
     form.value = {
       id: item.id,
       name: item.name,
       description: item.description,
       duration: computedDurationMinutes.value || item.duration || 5,
-      difficulty: item.difficulty,
-      color: item.color
+      difficulty: item.difficulty || 'Fácil',
+      color: item.color || '#eab308'
     }
   } else {
     currentPath.value = []
+    segmentDifficulties.value = []
+    activeBrushDifficulty.value = 'Fácil'
     form.value = {
       id: null, name: '', description: '', duration: 5, difficulty: 'Fácil', color: '#eab308'
     }
@@ -438,12 +658,17 @@ const openModal = async (item = null) => {
 }
 
 const undoLastPoint = () => {
+  if (currentPath.value.length === 0) return
   currentPath.value.pop()
+  if (segmentDifficulties.value.length > Math.max(0, currentPath.value.length - 1)) {
+    segmentDifficulties.value.pop()
+  }
   renderPath()
 }
 
 const clearPath = () => {
   currentPath.value = []
+  segmentDifficulties.value = []
   renderPath()
 }
 
@@ -464,14 +689,21 @@ const saveItem = async () => {
     return
   }
 
-  // Calcular automáticamente la duración estimada según la distancia y dificultad del trazado
   form.value.duration = computedDurationMinutes.value
+  form.value.difficulty = computedGlobalDifficulty.value
+  form.value.color = computedGlobalColor.value
+
+  const segmentsMetadata = detailedSegments.value.map(s => ({
+    difficulty: s.difficulty,
+    color: s.color
+  }))
 
   const payload = {
     ...form.value,
     geojson: {
-      type: "LineString",
-      coordinates: currentPath.value // Formato [lng, lat]
+      type: 'LineString',
+      coordinates: currentPath.value,
+      segments: segmentsMetadata
     }
   }
 

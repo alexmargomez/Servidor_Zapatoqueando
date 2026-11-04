@@ -77,7 +77,17 @@ export async function runMigrations(): Promise<void> {
 
     await prisma.$executeRawUnsafe(`
       ALTER TABLE places
-      ADD COLUMN IF NOT EXISTS description TEXT;
+      ADD COLUMN IF NOT EXISTS description TEXT,
+      ADD COLUMN IF NOT EXISTS is_partner BOOLEAN DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS whatsapp VARCHAR(40),
+      ADD COLUMN IF NOT EXISTS offer_title VARCHAR(180),
+      ADD COLUMN IF NOT EXISTS offer_code VARCHAR(40),
+      ADD COLUMN IF NOT EXISTS specialty VARCHAR(180),
+      ADD COLUMN IF NOT EXISTS schedule VARCHAR(120),
+      ADD COLUMN IF NOT EXISTS price_range VARCHAR(30),
+      ADD COLUMN IF NOT EXISTS views_count INTEGER DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS whatsapp_clicks INTEGER DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS checkins_count INTEGER DEFAULT 0;
     `);
 
     await prisma.$executeRawUnsafe(`

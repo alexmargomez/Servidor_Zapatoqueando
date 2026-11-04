@@ -30,17 +30,27 @@ model Poster {
 }
 
 model Place {
-  id                 Int     @id @default(autoincrement())
-  place_id           String  @unique @map("place_id") @db.Text
-  name               String  @db.Text
-  rating             Float?  @db.Real
-  user_ratings_total Int?    @map("user_ratings_total")
-  formatted_address  String? @map("formatted_address") @db.Text
-  image_url          String? @map("image_url") @db.Text
-  lat                Float?  @db.Real
-  lng                Float?  @db.Real
-  category           String? @default("Lugares turísticos") @db.VarChar(50)
-  description        String? @db.Text
+  id                 Int      @id @default(autoincrement())
+  place_id           String   @unique @map("place_id") @db.Text
+  name               String   @db.Text
+  rating             Float?   @db.Real
+  user_ratings_total Int?     @map("user_ratings_total")
+  formatted_address  String?  @map("formatted_address") @db.Text
+  image_url          String?  @map("image_url") @db.Text
+  lat                Float?   @db.Real
+  lng                Float?   @db.Real
+  category           String?  @default("Lugares turísticos") @db.VarChar(50)
+  description        String?  @db.Text
+  is_partner         Boolean? @default(false) @map("is_partner")
+  whatsapp           String?  @db.VarChar(40)
+  offer_title        String?  @map("offer_title") @db.VarChar(180)
+  offer_code         String?  @map("offer_code") @db.VarChar(40)
+  specialty          String?  @db.VarChar(180)
+  schedule           String?  @db.VarChar(120)
+  price_range        String?  @map("price_range") @db.VarChar(30)
+  views_count        Int?     @default(0) @map("views_count")
+  whatsapp_clicks    Int?     @default(0) @map("whatsapp_clicks")
+  checkins_count     Int?     @default(0) @map("checkins_count")
 
   @@map("places")
 }

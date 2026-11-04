@@ -51,10 +51,20 @@ describe('CoordinatesVO & PlaceEntity', () => {
           lng: -73.27,
         },
         category: 'Lugares turísticos',
+        is_partner: false,
+        whatsapp: null,
+        offer_title: null,
+        offer_code: null,
+        specialty: null,
+        schedule: null,
+        price_range: null,
+        views_count: 0,
+        whatsapp_clicks: 0,
+        checkins_count: 0,
       });
     });
 
-    it('should map toRawRecord with flat database columns', () => {
+    it('should map toRawRecord with flat database columns including B2B partner fields', () => {
       const entity = new PlaceEntity({
         id: 5,
         placeId: 'uuid-5',
@@ -67,6 +77,16 @@ describe('CoordinatesVO & PlaceEntity', () => {
         lng: -73.268,
         category: 'Hospedajes',
         description: null,
+        isPartner: true,
+        whatsapp: '573001234567',
+        offerTitle: '10% dto + Café de bienvenida',
+        offerCode: 'ZAPATOCA10',
+        specialty: 'Arquitectura colonial y descanso',
+        schedule: '24 horas',
+        priceRange: '$$$',
+        viewsCount: 42,
+        whatsappClicks: 9,
+        checkinsCount: 5,
       });
 
       expect(entity.toRawRecord()).toEqual({
@@ -81,6 +101,16 @@ describe('CoordinatesVO & PlaceEntity', () => {
         lng: -73.268,
         category: 'Hospedajes',
         description: null,
+        is_partner: true,
+        whatsapp: '573001234567',
+        offer_title: '10% dto + Café de bienvenida',
+        offer_code: 'ZAPATOCA10',
+        specialty: 'Arquitectura colonial y descanso',
+        schedule: '24 horas',
+        price_range: '$$$',
+        views_count: 42,
+        whatsapp_clicks: 9,
+        checkins_count: 5,
       });
     });
   });
@@ -108,6 +138,7 @@ describe('CoordinatesVO & PlaceEntity', () => {
         create: jest.fn(),
         update: updateSpy,
         delete: jest.fn(),
+        trackMetric: jest.fn(),
       });
 
       await useCase.execute(10, {
@@ -129,4 +160,5 @@ describe('CoordinatesVO & PlaceEntity', () => {
     });
   });
 });
+
 

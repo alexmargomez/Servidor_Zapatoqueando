@@ -80,8 +80,17 @@
               : 'border-slate-200/80 hover:border-emerald-700/40 shadow-sm hover:shadow-md'
           ]"
         >
-          <!-- Franja cromática superior del color del trazado -->
-          <div class="absolute top-0 inset-x-0 h-1.5" :style="{ backgroundColor: ruta.color || '#eab308' }"></div>
+          <!-- Franja cromática superior multicolor por tramos de dificultad -->
+          <div v-if="ruta.difficulty_breakdown && ruta.difficulty_breakdown.length > 0" class="absolute top-0 inset-x-0 h-1.5 flex overflow-hidden">
+            <div
+              v-for="seg in ruta.difficulty_breakdown"
+              :key="seg.difficulty"
+              class="h-full transition-all duration-300"
+              :style="{ width: `${seg.percent ?? seg.percentage ?? 100}%`, backgroundColor: seg.color }"
+              :title="`${seg.difficulty}: ${seg.percent ?? seg.percentage ?? 100}%`"
+            ></div>
+          </div>
+          <div v-else class="absolute top-0 inset-x-0 h-1.5" :style="{ backgroundColor: ruta.color || '#eab308' }"></div>
 
           <div class="pt-1">
             <div class="flex justify-between items-start gap-2 mb-1.5">
@@ -91,13 +100,34 @@
                   {{ ruta.name || `Ruta Ecológica ${index + 1}` }}
                 </h3>
               </div>
-              <span :class="['text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider shrink-0 border', getDifficultyBadgeClass(ruta.difficulty)]">
+              <span :class="['text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider shrink-0 border', getDifficultyBadgeClass(ruta.difficulty)]" title="Dificultad calculada automáticamente según los tramos del sendero">
                 {{ ruta.difficulty || 'Fácil' }}
               </span>
             </div>
-            <p class="text-xs text-slate-500 mb-3 line-clamp-2 leading-relaxed">
+            <p class="text-xs text-slate-500 mb-2.5 line-clamp-2 leading-relaxed">
               {{ ruta.description || 'Explora los hermosos paisajes y senderos históricos de Zapatoca.' }}
             </p>
+
+            <!-- Termómetro de esfuerzo por tramos + Paradas Comerciales Cercanas -->
+            <div class="mb-2.5 flex flex-wrap items-center gap-1.5">
+              <template v-if="ruta.difficulty_breakdown && ruta.difficulty_breakdown.length > 0">
+                <span
+                  v-for="seg in ruta.difficulty_breakdown"
+                  :key="seg.difficulty"
+                  class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100/90 px-2 py-0.5 rounded-md border border-slate-200/70 tabular-metrics"
+                >
+                  <span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: seg.color }"></span>
+                  <span>{{ seg.difficulty }} {{ seg.percent ?? seg.percentage ?? 100 }}%</span>
+                </span>
+              </template>
+              <span
+                v-if="ruta.nearbyStopsCount > 0"
+                class="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-950 bg-amber-100/90 px-2 py-0.5 rounded-md border border-amber-300/80 tabular-metrics"
+                title="Negocios locales de hidratación, café y gastronomía cerca del sendero"
+              >
+                🍹 {{ ruta.nearbyStopsCount }} {{ ruta.nearbyStopsCount === 1 ? 'parada aliada' : 'paradas aliadas' }}
+              </span>
+            </div>
           </div>
 
           <div class="flex items-center justify-between pt-2.5 border-t border-slate-100 gap-2">
@@ -105,7 +135,7 @@
               <span class="flex items-center gap-1 font-bold text-emerald-900 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200/60" title="Distancia calculada automáticamente">
                 📏 {{ ruta.distance_label || '0 m' }}
               </span>
-              <span class="flex items-center gap-1 text-slate-600 bg-slate-100 px-2 py-0.5 rounded-lg" title="Tiempo estimado de caminata">
+              <span class="flex items-center gap-1 text-slate-600 bg-slate-100 px-2 py-0.5 rounded-lg" title="Tiempo estimado de caminata según pendiente de cada tramo">
                 ⏱️ {{ formatDuration(ruta.duration) }}
               </span>
             </div>
@@ -114,10 +144,10 @@
                 v-if="ruta.startCoord"
                 @click.stop="openStartDirections(ruta)"
                 type="button"
-                title="Cómo llegar al punto de inicio de la ruta"
+                title="Guiarme al punto de inicio en el mapa"
                 class="text-[11px] font-bold px-2 py-1 rounded-full bg-slate-100 hover:bg-emerald-100 text-emerald-900 transition-colors cursor-pointer"
               >
-                🧭 Inicio
+                🟢 Inicio
               </button>
               <span 
                 :class="[
@@ -150,6 +180,13 @@ const loading = ref(true)
 const selectedRutaId = ref(null)
 const difficultyFilter = ref('Todas')
 
+const DIFFICULTY_COLORS = {
+  'Fácil': '#eab308',
+  'Media': '#f97316',
+  'Difícil': '#ea580c',
+  'Experto': '#dc2626'
+}
+
 const filteredRutas = computed(() => {
   if (difficultyFilter.value === 'Todas') return rutas.value
   return rutas.value.filter(r => (r.difficulty || 'Fácil') === difficultyFilter.value)
@@ -158,16 +195,27 @@ const filteredRutas = computed(() => {
 const getDifficultyBadgeClass = (difficulty) => {
   switch (difficulty) {
     case 'Fácil':
-      return 'bg-emerald-100 text-emerald-800 border-emerald-200'
+      return 'bg-amber-100 text-amber-900 border-amber-300'
     case 'Media':
-      return 'bg-amber-100 text-amber-800 border-amber-200'
+      return 'bg-orange-100 text-orange-800 border-orange-300'
     case 'Difícil':
-      return 'bg-orange-100 text-orange-800 border-orange-200'
+      return 'bg-orange-200/80 text-orange-950 border-orange-400'
     case 'Experto':
-      return 'bg-rose-100 text-rose-800 border-rose-200'
+      return 'bg-rose-100 text-rose-800 border-rose-300'
     default:
-      return 'bg-emerald-100 text-emerald-800 border-emerald-200'
+      return 'bg-amber-100 text-amber-900 border-amber-300'
   }
+}
+
+const distanceMetersBetween = (lat1, lng1, lat2, lng2) => {
+  const toRad = (deg) => (deg * Math.PI) / 180
+  const R = 6371000
+  const dLat = toRad(lat2 - lat1)
+  const dLng = toRad(lng2 - lng1)
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2)
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
 // Cálculo automático de distancia (Haversine) desde coordenadas [lng, lat]
@@ -208,8 +256,8 @@ const formatDuration = (duration) => {
 
 const openStartDirections = (ruta) => {
   if (!ruta?.startCoord) return
-  const [lng, lat] = ruta.startCoord
-  window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank', 'noopener')
+  selectedRutaId.value = ruta.id || ruta.name
+  window.dispatchEvent(new CustomEvent('route-focus-start', { detail: ruta }))
 }
 
 const exploreOnMap = () => {
@@ -231,20 +279,59 @@ const selectRuta = (ruta) => {
 
 onMounted(async () => {
   try {
-    const response = await fetch('/api/routes')
-    const data = await response.json()
+    const [routesRes, placesRes] = await Promise.all([
+      fetch('/api/routes'),
+      fetch('/api/places').catch(() => null)
+    ])
+    const data = await routesRes.json()
+    let allPlaces = []
+    if (placesRes && placesRes.ok) {
+      const placesJson = await placesRes.json().catch(() => ({}))
+      allPlaces = Array.isArray(placesJson.data) ? placesJson.data : []
+    }
     
     if (data.type === 'FeatureCollection' && data.features) {
       rutas.value = data.features.map(f => {
         const coords = f.geometry?.coordinates || []
         const km = f.properties?.distance_km ?? calculateDistanceKm(coords)
         const distance_label = f.properties?.distance_label || formatDistanceLabel(km)
+        const fallbackDiff = f.properties?.difficulty || 'Fácil'
+        const fallbackColor = DIFFICULTY_COLORS[fallbackDiff] || f.properties?.color || '#eab308'
+        const segments = f.properties?.segments || f.geometry?.segments || []
+        const rawBreakdown = f.properties?.difficulty_breakdown || [
+          { difficulty: fallbackDiff, color: fallbackColor, distance_km: km, percentage: 100 }
+        ]
+        const difficulty_breakdown = rawBreakdown.map(b => ({
+          ...b,
+          percent: b.percentage ?? b.percent ?? 100,
+          percentage: b.percentage ?? b.percent ?? 100
+        }))
+        const startCoord = coords.length > 0 ? coords[0] : null
+        const endCoord = coords.length > 1 ? coords[coords.length - 1] : null
+
+        // Contar negocios/paradas cercanos al inicio o meta del sendero (radio 750m)
+        let nearbyStopsCount = 0
+        if (allPlaces.length > 0 && (startCoord || endCoord)) {
+          nearbyStopsCount = allPlaces.filter(p => {
+            const pLat = Number(p.location?.lat)
+            const pLng = Number(p.location?.lng)
+            if (!Number.isFinite(pLat) || !Number.isFinite(pLng)) return false
+            const nearStart = startCoord ? distanceMetersBetween(startCoord[1], startCoord[0], pLat, pLng) <= 750 : false
+            const nearEnd = endCoord ? distanceMetersBetween(endCoord[1], endCoord[0], pLat, pLng) <= 750 : false
+            return nearStart || nearEnd
+          }).length
+        }
+
         return {
           ...f.properties,
+          coordinates: coords,
+          segments,
+          difficulty_breakdown,
           distance_km: km,
           distance_label,
-          startCoord: coords.length > 0 ? coords[0] : null,
-          endCoord: coords.length > 1 ? coords[coords.length - 1] : null
+          startCoord,
+          endCoord,
+          nearbyStopsCount
         }
       })
     }

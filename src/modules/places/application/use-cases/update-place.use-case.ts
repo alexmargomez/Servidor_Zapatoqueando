@@ -2,6 +2,13 @@ import { PlaceDto, PlaceRepositoryPort } from '../ports/repositories/place-repos
 import { CoordinatesVO } from '../../domain/value-objects/coordinates.vo';
 import { PlaceNotFoundException } from '../../domain/exceptions/place-not-found.exception';
 
+const parseOptionalBool = (val: unknown): boolean | undefined => {
+  if (val === undefined || val === null) return undefined;
+  if (typeof val === 'boolean') return val;
+  if (typeof val === 'string') return val.toLowerCase() === 'true' || val === '1';
+  return undefined;
+};
+
 export class UpdatePlaceUseCase {
   constructor(private readonly placeRepository: PlaceRepositoryPort) {}
 
@@ -20,6 +27,13 @@ export class UpdatePlaceUseCase {
       lng: coords.lng,
       category: dto.category || 'Lugares turísticos',
       description: dto.description ?? null,
+      is_partner: parseOptionalBool(dto.is_partner),
+      whatsapp: dto.whatsapp !== undefined ? (dto.whatsapp?.trim() || null) : undefined,
+      offer_title: dto.offer_title !== undefined ? (dto.offer_title?.trim() || null) : undefined,
+      offer_code: dto.offer_code !== undefined ? (dto.offer_code?.trim().toUpperCase() || null) : undefined,
+      specialty: dto.specialty !== undefined ? (dto.specialty?.trim() || null) : undefined,
+      schedule: dto.schedule !== undefined ? (dto.schedule?.trim() || null) : undefined,
+      price_range: dto.price_range !== undefined ? (dto.price_range?.trim() || null) : undefined,
     });
 
     if (!updated) {

@@ -1,5 +1,7 @@
 import { PlaceEntity } from '../../../domain/entities/place.entity';
 
+export type PlaceMetricType = 'view' | 'whatsapp' | 'checkin';
+
 export interface PlaceDto {
   place_id?: string;
   name: string;
@@ -11,6 +13,13 @@ export interface PlaceDto {
   lng?: number | string | null;
   category?: string;
   description?: string | null;
+  is_partner?: boolean | string | null;
+  whatsapp?: string | null;
+  offer_title?: string | null;
+  offer_code?: string | null;
+  specialty?: string | null;
+  schedule?: string | null;
+  price_range?: string | null;
 }
 
 export interface CreatePlaceData {
@@ -24,6 +33,13 @@ export interface CreatePlaceData {
   lng?: number | null;
   category?: string;
   description?: string | null;
+  is_partner?: boolean | null;
+  whatsapp?: string | null;
+  offer_title?: string | null;
+  offer_code?: string | null;
+  specialty?: string | null;
+  schedule?: string | null;
+  price_range?: string | null;
 }
 
 export interface PlaceRepositoryPort {
@@ -31,5 +47,6 @@ export interface PlaceRepositoryPort {
   create(data: CreatePlaceData): Promise<PlaceEntity>;
   update(id: number, data: CreatePlaceData): Promise<PlaceEntity | null>;
   delete(id: number): Promise<PlaceEntity | null>;
+  trackMetric?(id: number, metric: PlaceMetricType): Promise<PlaceEntity | null>;
 }
 
