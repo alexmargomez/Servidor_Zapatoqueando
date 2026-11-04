@@ -58,7 +58,12 @@
           >
             <img :src="place.image_url || '/logo.png'" :alt="place.name" class="w-10 h-10 rounded-xl object-cover shrink-0 bg-gray-100 border border-gray-200" />
             <div class="min-w-0 flex-1">
-              <div class="font-bold text-sm text-green-950 truncate">{{ place.name }}</div>
+              <div class="flex items-center justify-between gap-2">
+                <div class="font-bold text-sm text-green-950 truncate">{{ place.name }}</div>
+                <span v-if="getDistanceFromUser(place)" class="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full shrink-0">
+                  {{ getDistanceFromUser(place) }}
+                </span>
+              </div>
               <div class="text-xs text-gray-500 truncate flex items-center gap-1.5">
                 <span class="inline-block w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: getCategoryColor(place.category) }"></span>
                 <span>{{ place.category || 'Lugar' }}</span>
@@ -83,6 +88,63 @@
         </button>
       </div>
     </div>
+
+    <!-- Controles Flotantes de Geolocalización GPS (Debajo de los botones de Zoom en top-right) -->
+    <div class="absolute top-[182px] right-[20px] z-[1000] flex flex-col items-end gap-2 pointer-events-auto">
+      <button
+        @click="toggleUserLocation"
+        type="button"
+        :title="isTrackingLocation ? 'Centrar en mi ubicación actual' : 'Mostrar mi ubicación en el mapa'"
+        :class="[
+          'w-[34px] h-[34px] rounded-md shadow-md border flex items-center justify-center transition-all cursor-pointer',
+          isTrackingLocation
+            ? 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700 ring-2 ring-blue-300'
+            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+        ]"
+      >
+        <svg v-if="isLocating" class="w-4 h-4 animate-spin text-current" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        </svg>
+        <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06z"></path>
+        </svg>
+      </button>
+
+      <!-- Botón para desactivar GPS cuando está activo -->
+      <button
+        v-if="isTrackingLocation"
+        @click="stopUserLocation"
+        type="button"
+        title="Desactivar ubicación GPS"
+        class="bg-white/95 backdrop-blur-sm text-gray-700 hover:text-red-600 border border-gray-200 shadow-md rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1"
+      >
+        <span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
+        <span>GPS Activo · Salir</span>
+      </button>
+
+      <!-- Botón rápido para volver a Zapatoca si el usuario está fuera del municipio -->
+      <button
+        v-if="isTrackingLocation && isUserOutsideZapatoca"
+        @click="centerOnZapatoca"
+        type="button"
+        class="bg-green-900 hover:bg-green-800 text-yellow-400 border border-green-700 shadow-lg rounded-full px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+      >
+        <span>📍 Volver a Zapatoca</span>
+      </button>
+    </div>
+
+    <!-- Aviso Flotante de Geolocalización -->
+    <transition name="slide-fade">
+      <div
+        v-if="locationNotice"
+        class="absolute top-24 right-16 z-[1001] max-w-xs bg-white/95 backdrop-blur-md border border-blue-100 shadow-xl rounded-2xl px-4 py-3 text-xs text-gray-700 flex items-start gap-2.5 pointer-events-auto"
+      >
+        <span class="text-base leading-none mt-0.5">📡</span>
+        <div class="flex-1 font-medium leading-snug">{{ locationNotice }}</div>
+        <button @click="locationNotice = null" class="text-gray-400 hover:text-gray-600 font-bold cursor-pointer">✕</button>
+      </div>
+    </transition>
 
     <!-- Slider Flotante de Publicidad (Posters) -->
     <transition name="slide-up">
@@ -217,9 +279,13 @@
 
         <!-- Contenido Detallado -->
         <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-4 hide-scrollbar bg-slate-50">
-          <div v-if="selectedPlace.category" class="flex items-center gap-2">
-            <span class="px-3 py-1 rounded-full text-xs font-bold text-white" :style="{ backgroundColor: getCategoryColor(selectedPlace.category) }">
+          <div class="flex flex-wrap items-center gap-2">
+            <span v-if="selectedPlace.category" class="px-3 py-1 rounded-full text-xs font-bold text-white" :style="{ backgroundColor: getCategoryColor(selectedPlace.category) }">
               {{ selectedPlace.category }}
+            </span>
+            <span v-if="getDistanceFromUser(selectedPlace)" class="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1">
+              <span>📍</span>
+              <span>A {{ getDistanceFromUser(selectedPlace) }} de tu ubicación</span>
             </span>
           </div>
 
@@ -270,6 +336,11 @@ let markersLayer = null;
 let sliderInterval = null;
 let zapatocaMarker = null;
 let laFuenteMarker = null;
+let userLocationMarker = null;
+let userAccuracyCircle = null;
+let geoWatchId = null;
+let locationNoticeTimeout = null;
+let zapatocaBounds = null;
 
 let currentSelectedRouteId = null;
 let currentSelectedRouteName = null; // Guardar ruta activa
@@ -293,6 +364,22 @@ const createMinimalDot = (colorHex) => {
   });
 };
 
+// Icono pulsante para la ubicación GPS del usuario
+const createUserLocationIcon = () => {
+  return L.divIcon({
+    className: 'user-gps-marker',
+    html: `
+      <div class="gps-marker-wrapper">
+        <div class="gps-pulse-ring"></div>
+        <div class="gps-core-dot"></div>
+      </div>
+    `,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+    popupAnchor: [0, -14]
+  })
+}
+
 const places = ref([])
 const posters = ref([])
 const loading = ref(true)
@@ -306,7 +393,178 @@ const searchQuery = ref('')
 const isSearchFocused = ref(false)
 const showCategoryChips = ref(true)
 const searchInputRef = ref(null)
+const userCoords = ref(null)
+const isLocating = ref(false)
+const isTrackingLocation = ref(false)
+const isUserOutsideZapatoca = ref(false)
+const locationNotice = ref(null)
 let map = null
+
+const showLocationNotice = (msg, durationMs = 5000) => {
+  locationNotice.value = msg
+  if (locationNoticeTimeout) clearTimeout(locationNoticeTimeout)
+  if (durationMs > 0) {
+    locationNoticeTimeout = setTimeout(() => {
+      locationNotice.value = null
+    }, durationMs)
+  }
+}
+
+// Fórmula Haversine para calcular distancia en metros entre dos coordenadas
+const calculateDistanceMeters = (lat1, lng1, lat2, lng2) => {
+  const toRad = (deg) => (deg * Math.PI) / 180
+  const R = 6371000 // Radio de la Tierra en metros
+  const dLat = toRad(lat2 - lat1)
+  const dLng = toRad(lng2 - lng1)
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return R * c
+}
+
+const getDistanceFromUser = (place) => {
+  if (!userCoords.value || !place?.location?.lat || !place?.location?.lng) return null
+  const meters = calculateDistanceMeters(
+    userCoords.value.lat,
+    userCoords.value.lng,
+    Number(place.location.lat),
+    Number(place.location.lng)
+  )
+  if (!Number.isFinite(meters)) return null
+  if (meters < 1000) {
+    return `${Math.round(meters)} m`
+  }
+  return `${(meters / 1000).toFixed(1)} km`
+}
+
+const updateUserMapLayers = (lat, lng, accuracy, shouldFly = false) => {
+  if (!map) return
+  const latLng = [lat, lng]
+  const radius = Math.min(Math.max(accuracy || 25, 10), 250)
+
+  if (!userAccuracyCircle) {
+    userAccuracyCircle = L.circle(latLng, {
+      radius,
+      color: '#3b82f6',
+      fillColor: '#3b82f6',
+      fillOpacity: 0.14,
+      weight: 1.5
+    }).addTo(map)
+  } else {
+    userAccuracyCircle.setLatLng(latLng)
+    userAccuracyCircle.setRadius(radius)
+  }
+
+  if (!userLocationMarker) {
+    userLocationMarker = L.marker(latLng, {
+      icon: createUserLocationIcon(),
+      zIndexOffset: 1000
+    }).addTo(map)
+    userLocationMarker.bindPopup(
+      `<div class="px-3 py-1 font-bold text-xs text-blue-900 whitespace-nowrap">📍 Tu ubicación actual</div>`,
+      { closeButton: false, className: 'custom-minimal-popup', offset: [0, -6] }
+    )
+  } else {
+    userLocationMarker.setLatLng(latLng)
+  }
+
+  const distToZapatoca = calculateDistanceMeters(lat, lng, 6.816801, -73.268689)
+  const outsideBounds = zapatocaBounds ? !zapatocaBounds.contains(latLng) : distToZapatoca > 35000
+  isUserOutsideZapatoca.value = outsideBounds
+
+  if (shouldFly) {
+    if (outsideBounds) {
+      // Permitir centrar en la ubicación del usuario aunque esté en otra ciudad
+      map.setMaxBounds(null)
+      map.flyTo(latLng, 15, { duration: 1.4 })
+      const kmAway = (distToZapatoca / 1000).toFixed(1)
+      showLocationNotice(
+        `Estás a ${kmAway} km de Zapatoca. Usa el botón "📍 Volver a Zapatoca" cuando quieras regresar al mapa del municipio.`,
+        7000
+      )
+    } else {
+      map.flyTo(latLng, Math.max(map.getZoom(), 17), { duration: 1.2 })
+      showLocationNotice('Ubicación GPS activa en tiempo real.', 3500)
+    }
+  }
+}
+
+const toggleUserLocation = () => {
+  if (!('geolocation' in navigator)) {
+    showLocationNotice('Tu navegador no soporta geolocalización GPS.', 5000)
+    return
+  }
+
+  // Si ya está activo y tenemos coordenadas, re-centrar en el usuario
+  if (isTrackingLocation.value && userCoords.value) {
+    updateUserMapLayers(userCoords.value.lat, userCoords.value.lng, userCoords.value.accuracy, true)
+    return
+  }
+
+  isLocating.value = true
+  let isFirstFix = true
+
+  geoWatchId = navigator.geolocation.watchPosition(
+    (position) => {
+      const { latitude, longitude, accuracy } = position.coords
+      userCoords.value = { lat: latitude, lng: longitude, accuracy }
+      isLocating.value = false
+      isTrackingLocation.value = true
+
+      updateUserMapLayers(latitude, longitude, accuracy, isFirstFix)
+      isFirstFix = false
+    },
+    (err) => {
+      isLocating.value = false
+      if (err.code === 1) {
+        showLocationNotice('Permiso de ubicación denegado. Actívalo en tu navegador para ver tu posición.', 6000)
+      } else if (err.code === 2) {
+        showLocationNotice('No se pudo determinar tu ubicación GPS actual.', 5000)
+      } else {
+        showLocationNotice('Tiempo de espera agotado al obtener tu señal GPS.', 5000)
+      }
+      stopUserLocation()
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 5000,
+      timeout: 15000
+    }
+  )
+}
+
+const stopUserLocation = () => {
+  if (geoWatchId !== null && 'geolocation' in navigator) {
+    navigator.geolocation.clearWatch(geoWatchId)
+    geoWatchId = null
+  }
+  isTrackingLocation.value = false
+  isLocating.value = false
+  userCoords.value = null
+  if (map) {
+    if (userLocationMarker) {
+      map.removeLayer(userLocationMarker)
+      userLocationMarker = null
+    }
+    if (userAccuracyCircle) {
+      map.removeLayer(userAccuracyCircle)
+      userAccuracyCircle = null
+    }
+    if (zapatocaBounds) {
+      map.setMaxBounds(zapatocaBounds)
+    }
+  }
+  isUserOutsideZapatoca.value = false
+}
+
+const centerOnZapatoca = () => {
+  if (!map) return
+  if (zapatocaBounds) {
+    map.setMaxBounds(zapatocaBounds)
+  }
+  map.flyTo([6.816801, -73.268689], 16, { duration: 1.2 })
+}
 
 // Repetir posters para que cada mitad del marquee cubra pantallas grandes sin espacios vacíos
 const repeatedPosters = computed(() => {
@@ -334,7 +592,14 @@ const openDirections = (place) => {
   if (!place) return
   focusPlace(place)
   if (place.location && place.location.lat && place.location.lng) {
-    window.open(`https://www.google.com/maps/dir/?api=1&destination=${place.location.lat},${place.location.lng}`, '_blank', 'noopener')
+    const originParam = userCoords.value
+      ? `&origin=${userCoords.value.lat},${userCoords.value.lng}`
+      : ''
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&destination=${place.location.lat},${place.location.lng}${originParam}`,
+      '_blank',
+      'noopener'
+    )
   }
 }
 
@@ -516,6 +781,7 @@ const initMap = () => {
     [6.50, -73.60], // Suroeste (mucho margen hacia abajo y la izquierda)
     [7.10, -72.90]  // Noreste (mucho margen hacia arriba y la derecha)
   )
+  zapatocaBounds = bounds
 
   // PARCHE MANUAL: Forzar a Leaflet a cargar tiles fuera del viewport real
   if (!L.GridLayer.prototype._patchedEdgeBuffer) {
@@ -883,6 +1149,14 @@ const handleRouteUnselected = () => {
 onBeforeUnmount(() => {
   window.removeEventListener('route-selected', handleRouteSelected)
   window.removeEventListener('route-unselected', handleRouteUnselected)
+  if (geoWatchId !== null && 'geolocation' in navigator) {
+    navigator.geolocation.clearWatch(geoWatchId)
+    geoWatchId = null
+  }
+  if (locationNoticeTimeout) {
+    clearTimeout(locationNoticeTimeout)
+    locationNoticeTimeout = null
+  }
   if (map) {
     map.remove()
     map = null
@@ -897,6 +1171,48 @@ onBeforeUnmount(() => {
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Marcador GPS en tiempo real del usuario */
+:deep(.user-gps-marker) {
+  background: transparent;
+  border: none;
+}
+:deep(.gps-marker-wrapper) {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+:deep(.gps-core-dot) {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background-color: #2563eb;
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.6);
+  z-index: 2;
+}
+:deep(.gps-pulse-ring) {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  background-color: rgba(59, 130, 246, 0.45);
+  animation: gps-pulse 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+  z-index: 1;
+}
+@keyframes gps-pulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
 }
 
 /* Diseño UI/UX Minimalista para el Popup del Mapa */
