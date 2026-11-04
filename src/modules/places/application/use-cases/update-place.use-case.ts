@@ -1,7 +1,6 @@
-import { PlaceRepositoryPort } from '../ports/repositories/place-repository.port';
+import { PlaceDto, PlaceRepositoryPort } from '../ports/repositories/place-repository.port';
 import { CoordinatesVO } from '../../domain/value-objects/coordinates.vo';
 import { PlaceNotFoundException } from '../../domain/exceptions/place-not-found.exception';
-import { PlaceDto } from '../../infrastructure/dtos/place.dto';
 
 export class UpdatePlaceUseCase {
   constructor(private readonly placeRepository: PlaceRepositoryPort) {}
@@ -16,7 +15,7 @@ export class UpdatePlaceUseCase {
           ? Number(dto.user_ratings_total)
           : null,
       formatted_address: dto.formatted_address ?? null,
-      image_url: dto.image_url ?? null,
+      image_url: dto.image_url !== undefined ? dto.image_url : undefined,
       lat: coords.lat,
       lng: coords.lng,
       category: dto.category || 'Lugares turísticos',
@@ -30,3 +29,4 @@ export class UpdatePlaceUseCase {
     return updated.toRawRecord();
   }
 }
+

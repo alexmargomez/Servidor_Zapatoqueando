@@ -1,10 +1,17 @@
 import fs from 'fs';
 import path from 'path';
+import https from 'https';
+import crypto from 'crypto';
 import axios from 'axios';
 import { TileCoordinateVO } from '../../domain/value-objects/tile-coordinate.vo';
 
 const CACHE_DIR = path.resolve(process.cwd(), 'public/map-cache');
 const MAX_TILE_BYTES = 2 * 1024 * 1024; // 2 MB límite duro anti-OOM por tesela
+
+const tileHttpsAgent = new https.Agent({
+  keepAlive: true,
+  maxSockets: 24,
+});
 
 if (!fs.existsSync(CACHE_DIR)) {
   fs.mkdirSync(CACHE_DIR, { recursive: true });
@@ -56,6 +63,7 @@ export class TileCacheService {
   ): Promise<Buffer> {
     const response = await axios.get<ArrayBuffer>(upstreamUrl, {
       responseType: 'arraybuffer',
+      httpsAgent: tileHttpsAgent,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       },
@@ -73,7 +81,8 @@ export class TileCacheService {
     }
 
     await fs.promises.mkdir(tileDir, { recursive: true });
-    const tmpPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+    const randomSuffix = crypto.randomBytes(6).toString('hex');
+    const tmpPath = `${filePath}.${process.pid}.${Date.now()}.${randomSuffix}.tmp`;
     try {
       await fs.promises.writeFile(tmpPath, buffer);
       await fs.promises.rename(tmpPath, filePath);
@@ -84,3 +93,4 @@ export class TileCacheService {
     return buffer;
   }
 }
+

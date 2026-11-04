@@ -3,89 +3,118 @@
     <!-- El Mapa (Protagonista 100% Pantalla) -->
     <div id="osm-map" class="absolute inset-0 w-full h-full z-0" @click="isSearchFocused = false"></div>
     
-    <!-- Buscador Flotante Estilo Plataforma (Search / Filtros) -->
-    <div class="absolute top-24 md:top-28 left-4 right-4 md:left-8 md:right-auto md:w-[420px] z-[1000] pointer-events-none flex flex-col gap-2.5">
+    <!-- Buscador Flotante Estilo Plataforma (Search / Filtros / Ruta Activa) -->
+    <div class="absolute top-[72px] md:top-24 left-3 right-3 md:left-6 md:right-auto md:w-[440px] z-[1000] pointer-events-none flex flex-col gap-2">
       
       <!-- Input de Búsqueda Principal -->
       <div class="relative pointer-events-auto">
-        <div class="bg-white rounded-full shadow-xl border border-gray-100 flex items-center px-4 py-2.5 transition-transform focus-within:ring-2 ring-yellow-400">
-          <svg class="w-5 h-5 text-gray-400 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <div class="bg-white/95 backdrop-blur-xl rounded-full shadow-[0_10px_30px_rgba(5,46,22,0.15)] border border-white/80 flex items-center px-4 py-2.5 transition-all focus-within:ring-2 ring-amber-400">
+          <svg class="w-5 h-5 text-emerald-800/60 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
           <input 
             ref="searchInputRef"
             v-model="searchQuery" 
             @focus="isSearchFocused = true"
             @input="onSearchInput"
             type="text" 
-            placeholder="¿Qué buscas en Zapatoca?" 
-            class="bg-transparent border-none outline-none w-full text-gray-700 font-semibold placeholder-gray-400 text-sm md:text-base" 
+            placeholder="Buscar hoteles, cafés, atractivos..." 
+            class="bg-transparent border-none outline-none w-full text-emerald-950 font-semibold placeholder-slate-400 text-sm md:text-base" 
           />
           <button 
             v-if="searchQuery || activeCategories.length > 0" 
             @click="clearFilters" 
             type="button"
             title="Limpiar filtros"
-            class="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100 transition-colors shrink-0 mr-1"
+            class="text-slate-400 hover:text-rose-600 p-1.5 rounded-full hover:bg-rose-50 transition-colors shrink-0 mr-1 cursor-pointer"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
           <button 
             @click="showCategoryChips = !showCategoryChips" 
             type="button"
             :title="showCategoryChips ? 'Ocultar categorías' : 'Mostrar categorías'"
             :class="[
-              'rounded-full p-2 transition-colors shrink-0 ml-1 shadow-sm cursor-pointer',
-              activeCategories.length > 0 ? 'bg-yellow-400 text-green-950 hover:bg-yellow-300' : 'bg-green-900 text-white hover:bg-green-800'
+              'rounded-full p-2 transition-all shrink-0 ml-1 shadow-sm cursor-pointer flex items-center gap-1',
+              activeCategories.length > 0 ? 'bg-amber-400 text-emerald-950 hover:bg-amber-300 font-extrabold px-2.5' : 'bg-emerald-950 text-white hover:bg-emerald-900'
             ]"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+            <span v-if="activeCategories.length > 0" class="text-[11px] tabular-metrics">{{ activeCategories.length }}</span>
           </button>
         </div>
 
         <!-- Dropdown de Resultados de Búsqueda -->
         <div 
           v-if="isSearchFocused && searchQuery.trim().length > 0" 
-          class="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-100 max-h-72 overflow-y-auto z-50 divide-y divide-gray-50"
+          class="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_20px_40px_rgba(5,46,22,0.18)] border border-emerald-950/10 max-h-72 overflow-y-auto z-50 divide-y divide-slate-100"
         >
-          <div v-if="searchResults.length === 0" class="p-4 text-center text-sm text-gray-500">
-            No se encontraron lugares para "<span class="font-bold text-gray-700">{{ searchQuery }}</span>"
+          <div v-if="searchResults.length === 0" class="p-4 text-center text-sm text-slate-500">
+            No encontramos lugares para "<span class="font-bold text-emerald-950">{{ searchQuery }}</span>"
           </div>
           <button 
             v-for="place in searchResults" 
             :key="place.place_id"
             type="button"
             @click="selectSearchResult(place)"
-            class="w-full px-4 py-3 text-left hover:bg-green-50/70 transition-colors flex items-center gap-3 cursor-pointer"
+            class="w-full px-4 py-3 text-left hover:bg-emerald-50/70 transition-colors flex items-center gap-3 cursor-pointer"
           >
-            <img :src="place.image_url || '/logo.png'" :alt="place.name" class="w-10 h-10 rounded-xl object-cover shrink-0 bg-gray-100 border border-gray-200" />
+            <img :src="place.image_url || '/logo.png'" :alt="place.name" class="w-10 h-10 rounded-xl object-cover shrink-0 bg-slate-100 border border-slate-200" />
             <div class="min-w-0 flex-1">
               <div class="flex items-center justify-between gap-2">
-                <div class="font-bold text-sm text-green-950 truncate">{{ place.name }}</div>
-                <span v-if="getDistanceFromUser(place)" class="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full shrink-0">
+                <div class="font-extrabold text-sm text-emerald-950 truncate">{{ place.name }}</div>
+                <span v-if="getDistanceFromUser(place)" class="text-[11px] font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full shrink-0 tabular-metrics">
                   {{ getDistanceFromUser(place) }}
                 </span>
               </div>
-              <div class="text-xs text-gray-500 truncate flex items-center gap-1.5">
-                <span class="inline-block w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: getCategoryColor(place.category) }"></span>
-                <span>{{ place.category || 'Lugar' }}</span>
-                <span v-if="place.formatted_address" class="text-gray-400">· {{ place.formatted_address }}</span>
+              <div class="text-xs text-slate-500 truncate flex items-center gap-1.5 mt-0.5">
+                <span class="inline-block w-2.5 h-2.5 rounded-full shrink-0" :style="{ backgroundColor: getCategoryColor(place.category) }"></span>
+                <span class="font-medium text-slate-600">{{ place.category || 'Lugar' }}</span>
+                <span v-if="place.formatted_address" class="text-slate-400">· {{ place.formatted_address }}</span>
               </div>
             </div>
           </button>
         </div>
       </div>
 
-      <!-- Chips de Filtros Rápidos (flex-wrap para que ninguno quede cortado) -->
-      <div v-show="showCategoryChips" class="flex flex-wrap items-center gap-2 pointer-events-auto pb-1 px-1">
+      <!-- Chips de Filtros Rápidos con Punto de Color y Contador -->
+      <div v-show="showCategoryChips" class="flex flex-wrap items-center gap-1.5 pointer-events-auto pb-0.5">
         <button v-for="cat in categories" :key="cat.name" @click="toggleCategory(cat.name)"
+          type="button"
           :class="[
-            'px-3.5 py-1.5 rounded-full shadow-md text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer border',
+            'px-3 py-1.5 rounded-full shadow-sm text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer border',
             activeCategories.includes(cat.name) 
-              ? 'bg-green-600 text-white border-green-700 scale-105' 
-              : 'bg-white/95 backdrop-blur-sm text-gray-700 hover:bg-gray-50 border-gray-100'
+              ? 'bg-emerald-950 text-white border-emerald-900 shadow-md scale-[1.03]' 
+              : 'bg-white/92 backdrop-blur-md text-slate-700 hover:bg-white border-white/80'
           ]">
-          <span>{{ cat.icon }}</span>
-          <span>{{ cat.name }}</span>
+          <span class="w-2.5 h-2.5 rounded-full shrink-0" :style="{ backgroundColor: cat.color }"></span>
+          <span>{{ cat.icon }} {{ cat.name }}</span>
+          <span v-if="getCategoryCount(cat.name) > 0" :class="['text-[10px] px-1.5 py-0.2 rounded-full tabular-metrics', activeCategories.includes(cat.name) ? 'bg-white/20 text-amber-300' : 'bg-slate-100 text-slate-500']">
+            {{ getCategoryCount(cat.name) }}
+          </span>
         </button>
+      </div>
+
+      <!-- Píldoras de Estado: Filtro Activo o HUD de Ruta Seleccionada -->
+      <div v-if="hasActiveFilter || activeRouteBanner" class="flex flex-wrap items-center gap-2 pointer-events-auto">
+        <div v-if="hasActiveFilter" class="bg-emerald-950/90 backdrop-blur-md text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-2 border border-white/15">
+          <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+          <span class="tabular-metrics">{{ filteredPlacesCount }} lugares en el mapa</span>
+          <button @click="clearFilters" type="button" class="text-amber-300 hover:text-amber-200 underline ml-1 cursor-pointer">Ver todos</button>
+        </div>
+
+        <div v-if="activeRouteBanner" class="bg-white/95 backdrop-blur-md text-emerald-950 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-2 border-2 border-amber-400">
+          <span class="w-3 h-3 rounded-full shrink-0" :style="{ backgroundColor: activeRouteBanner.color || '#eab308' }"></span>
+          <span class="truncate max-w-[140px] sm:max-w-[180px] font-extrabold">🥾 {{ activeRouteBanner.name }}</span>
+          <span v-if="activeRouteBanner.distance_label" class="text-[11px] bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-full tabular-metrics border border-emerald-200/60">
+            {{ activeRouteBanner.distance_label }}
+          </span>
+          <button @click="centerActiveRoute" type="button" title="Centrar ruta en el mapa" class="text-emerald-800 hover:text-emerald-950 bg-emerald-100/80 px-2 py-0.5 rounded-full text-[11px] cursor-pointer">
+            🎯
+          </button>
+          <button v-if="activeRouteBanner.startCoord" @click="openActiveRouteStart" type="button" title="Cómo llegar al inicio del sendero" class="text-emerald-900 hover:bg-amber-300 bg-amber-200/80 px-2 py-0.5 rounded-full text-[11px] cursor-pointer">
+            🧭 Inicio
+          </button>
+          <button @click="clearSelectedRoute" type="button" title="Salir de la ruta" class="text-slate-400 hover:text-rose-600 font-bold px-1 cursor-pointer">✕</button>
+        </div>
       </div>
     </div>
 
@@ -105,7 +134,7 @@
         v-if="isTrackingLocation && isUserOutsideZapatoca"
         @click="centerOnZapatoca"
         type="button"
-        class="bg-green-900 hover:bg-green-800 text-yellow-400 border border-green-700 shadow-lg rounded-full px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+        class="bg-emerald-950 hover:bg-emerald-900 text-amber-400 border border-emerald-800 shadow-lg rounded-full px-3.5 py-1.5 text-xs font-extrabold transition-colors cursor-pointer flex items-center gap-1.5"
       >
         <span>📍 Volver a Zapatoca</span>
       </button>
@@ -116,9 +145,9 @@
         @click="stopUserLocation"
         type="button"
         title="Desactivar ubicación GPS"
-        class="bg-white/95 text-gray-700 hover:text-red-600 border border-gray-200 shadow-md rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+        class="bg-white/95 text-slate-700 hover:text-rose-600 border border-slate-200 shadow-md rounded-full px-3 py-1 text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1.5"
       >
-        <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+        <span class="w-2 h-2 rounded-full bg-blue-600 animate-ping"></span>
         <span>GPS Activo · Salir</span>
       </button>
 
@@ -131,7 +160,7 @@
           'w-12 h-12 rounded-full shadow-xl border flex items-center justify-center transition-transform active:scale-95 cursor-pointer',
           isTrackingLocation
             ? 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700 ring-4 ring-blue-400/30'
-            : 'bg-white text-green-950 border-gray-200 hover:bg-gray-50'
+            : 'bg-white text-emerald-950 border-slate-200 hover:bg-emerald-50'
         ]"
       >
         <svg v-if="isLocating" class="w-5 h-5 animate-spin text-current" fill="none" viewBox="0 0 24 24">
@@ -144,71 +173,78 @@
       </button>
     </div>
 
-    <!-- Aviso Flotante de Geolocalización -->
+    <!-- Aviso Flotante de Geolocalización / Compartir -->
     <transition name="slide-fade">
       <div
         v-if="locationNotice"
-        class="absolute bottom-20 right-20 z-[1006] max-w-xs bg-white border border-blue-100 shadow-xl rounded-2xl px-4 py-3 text-xs text-gray-700 flex items-start gap-2.5 pointer-events-auto"
+        class="absolute bottom-20 right-16 sm:right-20 z-[1006] max-w-xs bg-white/95 backdrop-blur-md border border-emerald-200 shadow-xl rounded-2xl px-4 py-3 text-xs text-emerald-950 flex items-start gap-2.5 pointer-events-auto"
       >
         <span class="text-base leading-none mt-0.5">📡</span>
-        <div class="flex-1 font-medium leading-snug">{{ locationNotice }}</div>
-        <button @click="locationNotice = null" class="text-gray-400 hover:text-gray-600 font-bold cursor-pointer">✕</button>
+        <div class="flex-1 font-semibold leading-snug">{{ locationNotice }}</div>
+        <button @click="locationNotice = null" class="text-slate-400 hover:text-slate-600 font-bold cursor-pointer">✕</button>
       </div>
     </transition>
 
     <!-- Slider Flotante de Publicidad (Posters) -->
     <transition name="slide-up">
-      <div v-show="route.path !== '/rutas' && (loading || error || posters.length > 0)" class="absolute bottom-0 left-0 w-full z-[1000] pointer-events-none pb-6 md:pb-8">
+      <div v-show="route.path !== '/rutas' && (loading || error || posters.length > 0)" class="absolute bottom-0 left-0 w-full z-[1000] pointer-events-none pb-4 md:pb-6">
       
-        <!-- Fondo oscuro opcional para resaltar las tarjetas -->
-        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent -z-10 pointer-events-none h-64 bottom-0 top-auto"></div>
+        <!-- Gradiente suave inferior -->
+        <div class="absolute inset-0 bg-gradient-to-t from-emerald-950/75 via-emerald-950/25 to-transparent -z-10 pointer-events-none h-52 bottom-0 top-auto"></div>
         
         <div class="w-full pointer-events-auto">
-          <div v-if="loading" class="flex justify-center py-10">
-            <div class="w-10 h-10 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+          <div v-if="loading" class="flex justify-center py-8">
+            <div class="w-10 h-10 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
           </div>
 
-          <div v-else-if="error" class="p-4 mx-4 bg-red-50 rounded-xl text-center">
-            <p class="text-red-500 font-bold">{{ error }}</p>
+          <div v-else-if="error" class="p-4 mx-4 bg-rose-50 rounded-xl text-center">
+            <p class="text-rose-600 font-bold">{{ error }}</p>
           </div>
 
           <div v-else-if="posters.length > 0" class="relative w-full flex flex-col items-center justify-end pointer-events-none">
             <!-- Contenedor del Slider -->
-            <div class="relative w-full overflow-hidden py-4 pointer-events-auto" @mouseenter="isHoveringSlider = true" @mouseleave="isHoveringSlider = false">
+            <div class="relative w-full overflow-hidden py-3.5 pointer-events-auto" @mouseenter="isHoveringSlider = true" @mouseleave="isHoveringSlider = false">
             
               <!-- Botón Alternar Vista Centrado -->
               <div class="absolute top-0 left-1/2 transform -translate-x-1/2 z-30">
-                <button @click="isSliderCompact = !isSliderCompact" class="bg-black/40 backdrop-blur-md text-white/90 py-1.5 px-5 rounded-full hover:bg-black/60 transition-colors shadow flex items-center gap-2 text-xs font-medium cursor-pointer" title="Cambiar tamaño">
-                  {{ isSliderCompact ? 'Ampliar' : 'Reducir' }}
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path v-if="isSliderCompact" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
-                    <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                <button @click="isSliderCompact = !isSliderCompact" type="button" class="bg-emerald-950/85 backdrop-blur-md text-white py-1.5 px-4 rounded-full hover:bg-emerald-950 transition-colors shadow-lg border border-white/15 flex items-center gap-2 text-xs font-bold cursor-pointer" title="Cambiar tamaño de la cartelera">
+                  <span class="text-amber-400">✨</span>
+                  <span>{{ isSliderCompact ? 'Explorar Destacados' : 'Compactar Cartelera' }}</span>
+                  <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path v-if="isSliderCompact" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"></path>
+                    <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
                   </svg>
                 </button>
               </div>
 
               <!-- Marquee Container -->
-              <div class="flex mt-3 overflow-hidden">
+              <div class="flex mt-3.5 overflow-hidden">
                 <div class="marquee-content flex" :class="{ 'paused': isHoveringSlider || isMapMoving }">
                   <!-- Mitad 1 -->
-                  <div class="flex gap-6 pr-6 shrink-0">
+                  <div class="flex gap-5 pr-5 shrink-0">
                     <div v-for="(poster, idx) in repeatedPosters" :key="'m1-'+idx+'-'+poster.id" @click="selectedPoster = poster; selectedPlace = null" 
-                         class="shrink-0 aspect-video bg-white rounded-2xl overflow-hidden shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 border border-white/40 cursor-pointer group hover:-translate-y-2 relative"
-                         :class="isSliderCompact ? 'w-36 md:w-48' : 'w-72 md:w-[420px]'">
+                         class="shrink-0 aspect-video bg-white rounded-2xl overflow-hidden shadow-xl hover:shadow-amber-400/25 transition-all duration-300 border border-white/60 cursor-pointer group hover:-translate-y-1.5 relative"
+                         :class="isSliderCompact ? 'w-40 md:w-52' : 'w-68 md:w-[380px]'">
                       <img :src="getPosterImage(poster)" :alt="poster.title" class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" />
-                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <p class="text-white font-bold text-xs md:text-sm truncate">{{ poster.title }}</p>
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent p-2.5 sm:p-3 flex items-end justify-between gap-2">
+                        <p class="text-white font-bold text-xs md:text-sm truncate drop-shadow-xs">{{ poster.title }}</p>
+                        <span v-if="!isSliderCompact" class="shrink-0 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full" :class="poster.type === 'event' ? 'bg-amber-400 text-emerald-950' : 'bg-white/90 text-emerald-950'">
+                          {{ poster.type === 'event' ? 'Evento' : 'Destacado' }}
+                        </span>
                       </div>
                     </div>
                   </div>
                   <!-- Mitad 2 (Idéntica para loop infinito perfecto al -50%) -->
-                  <div class="flex gap-6 pr-6 shrink-0">
+                  <div class="flex gap-5 pr-5 shrink-0">
                     <div v-for="(poster, idx) in repeatedPosters" :key="'m2-'+idx+'-'+poster.id" @click="selectedPoster = poster; selectedPlace = null" 
-                         class="shrink-0 aspect-video bg-white rounded-2xl overflow-hidden shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 border border-white/40 cursor-pointer group hover:-translate-y-2 relative"
-                         :class="isSliderCompact ? 'w-36 md:w-48' : 'w-72 md:w-[420px]'">
+                         class="shrink-0 aspect-video bg-white rounded-2xl overflow-hidden shadow-xl hover:shadow-amber-400/25 transition-all duration-300 border border-white/60 cursor-pointer group hover:-translate-y-1.5 relative"
+                         :class="isSliderCompact ? 'w-40 md:w-52' : 'w-68 md:w-[380px]'">
                       <img :src="getPosterImage(poster)" :alt="poster.title" class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" />
-                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <p class="text-white font-bold text-xs md:text-sm truncate">{{ poster.title }}</p>
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent p-2.5 sm:p-3 flex items-end justify-between gap-2">
+                        <p class="text-white font-bold text-xs md:text-sm truncate drop-shadow-xs">{{ poster.title }}</p>
+                        <span v-if="!isSliderCompact" class="shrink-0 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full" :class="poster.type === 'event' ? 'bg-amber-400 text-emerald-950' : 'bg-white/90 text-emerald-950'">
+                          {{ poster.type === 'event' ? 'Evento' : 'Destacado' }}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -222,53 +258,49 @@
 
     <!-- Panel Lateral Derecho (Detalles del Cartel / Publicidad) -->
     <transition name="slide-fade">
-      <div v-if="selectedPoster" class="fixed inset-y-0 right-0 w-full md:w-[420px] bg-white shadow-2xl z-[9999] flex flex-col border-l border-gray-100">
+      <div v-if="selectedPoster" class="fixed inset-y-0 right-0 w-full md:w-[420px] bg-white shadow-2xl z-[9999] flex flex-col border-l border-slate-100">
         <!-- Botón Cerrar -->
-        <button @click="selectedPoster = null" class="absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white p-2 rounded-full shadow-md hover:bg-black/70 transition-colors z-10 cursor-pointer">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <button @click="selectedPoster = null" type="button" class="absolute top-4 right-4 bg-emerald-950/70 backdrop-blur-md text-white p-2 rounded-full shadow-md hover:bg-emerald-950 transition-colors z-10 cursor-pointer">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
 
         <!-- Imagen Destacada del Cartel (Altura controlada en móvil y web) -->
-        <div class="w-full h-44 sm:h-52 max-h-[28vh] relative shrink-0 overflow-hidden bg-slate-100 border-b border-gray-200">
+        <div class="w-full h-44 sm:h-52 max-h-[28vh] relative shrink-0 overflow-hidden bg-slate-100 border-b border-slate-200">
           <img :src="getPosterImage(selectedPoster)" :alt="selectedPoster.title" class="w-full h-full object-cover object-center" />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+          <span class="absolute bottom-3 left-4 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider shadow-sm" :class="selectedPoster.type === 'event' ? 'bg-amber-400 text-emerald-950' : 'bg-emerald-950 text-amber-300'">
+            {{ selectedPoster.type === 'event' ? '🎉 Evento Cultural' : '⭐ Comercio Destacado' }}
+          </span>
         </div>
 
         <!-- Contenido Detallado -->
-        <div class="flex-1 overflow-y-auto p-5 sm:p-6 flex flex-col gap-3.5 hide-scrollbar bg-slate-50">
-          <div class="flex items-center gap-2">
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider" :class="selectedPoster.type === 'event' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'">
-              {{ selectedPoster.type === 'event' ? 'Evento' : 'Destacado' }}
-            </span>
-          </div>
-          <h2 class="text-xl sm:text-2xl font-black text-green-950 leading-tight">{{ selectedPoster.title }}</h2>
+        <div class="flex-1 overflow-y-auto p-5 sm:p-6 flex flex-col gap-4 hide-scrollbar bg-stone-50">
+          <h2 class="text-xl sm:text-2xl font-extrabold text-emerald-950 leading-tight">{{ selectedPoster.title }}</h2>
           
-          <!-- Descripción -->
-          <div>
-            <p class="text-gray-600 leading-relaxed text-sm text-justify whitespace-pre-wrap">
-              {{ selectedPoster.description || 'Descubre más sobre esta experiencia en Zapatoca.' }}
+          <div class="bg-white p-4 rounded-2xl border border-slate-200/70 shadow-2xs">
+            <p class="text-slate-600 leading-relaxed text-sm whitespace-pre-wrap">
+              {{ selectedPoster.description || 'Descubre más sobre esta experiencia recomendada en Zapatoca.' }}
             </p>
           </div>
 
-          <!-- Botones de Acción (WhatsApp y Cómo llegar) -->
-          <div class="mt-auto pt-4 flex flex-col sm:flex-row gap-3">
+          <!-- Botones de Acción -->
+          <div class="mt-auto pt-4 flex flex-col sm:flex-row gap-2.5">
             <button 
               @click="openPosterDirections(selectedPoster)" 
               type="button"
-              class="flex-1 bg-yellow-400 hover:bg-yellow-500 text-green-950 font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex justify-center items-center gap-2 cursor-pointer"
+              class="flex-1 bg-amber-400 hover:bg-amber-300 text-emerald-950 font-extrabold py-3 px-4 rounded-xl shadow-sm transition-colors flex justify-center items-center gap-2 cursor-pointer text-sm"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
               ¿Cómo llegar?
             </button>
             
-            <a 
-              :href="getWhatsAppUrl(selectedPoster.title)" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex justify-center items-center gap-2"
+            <button 
+              @click="sharePosterItem(selectedPoster)" 
+              type="button"
+              class="bg-emerald-950 hover:bg-emerald-900 text-white font-bold py-3 px-4 rounded-xl shadow-sm transition-colors flex justify-center items-center gap-2 cursor-pointer text-sm"
             >
-              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.012c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
-              WhatsApp
-            </a>
+              <span>📤 Compartir</span>
+            </button>
           </div>
         </div>
       </div>
@@ -276,49 +308,57 @@
 
     <!-- Panel Lateral Derecho (Detalles del Lugar del Mapa) -->
     <transition name="slide-fade">
-      <div v-if="selectedPlace" class="fixed inset-y-0 right-0 w-full md:w-[420px] bg-white shadow-2xl z-[9999] flex flex-col border-l border-gray-100">
+      <div v-if="selectedPlace" class="fixed inset-y-0 right-0 w-full md:w-[420px] bg-white shadow-2xl z-[9999] flex flex-col border-l border-slate-100">
         <!-- Botón Cerrar -->
-        <button @click="selectedPlace = null" class="absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white p-2 rounded-full shadow-md hover:bg-black/70 transition-colors z-10 cursor-pointer">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <button @click="selectedPlace = null" type="button" class="absolute top-4 right-4 bg-emerald-950/70 backdrop-blur-md text-white p-2 rounded-full shadow-md hover:bg-emerald-950 transition-colors z-10 cursor-pointer">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
 
-        <!-- Imagen Destacada del Lugar (Altura controlada en móvil y web para que no ocupe toda la pantalla) -->
-        <div class="w-full h-44 sm:h-52 max-h-[28vh] relative shrink-0 overflow-hidden bg-slate-100 border-b border-gray-200">
+        <!-- Imagen Destacada del Lugar (Altura controlada en móvil y web) -->
+        <div class="w-full h-44 sm:h-52 max-h-[28vh] relative shrink-0 overflow-hidden bg-slate-100 border-b border-slate-200">
           <img :src="selectedPlace.image_url || '/logo.png'" :alt="selectedPlace.name" class="w-full h-full object-cover object-center" />
-        </div>
-
-        <!-- Contenido Detallado -->
-        <div class="flex-1 overflow-y-auto p-5 sm:p-6 flex flex-col gap-3.5 hide-scrollbar bg-slate-50">
-          <div class="flex flex-wrap items-center gap-2">
-            <span v-if="selectedPlace.category" class="px-3 py-1 rounded-full text-xs font-bold text-white" :style="{ backgroundColor: getCategoryColor(selectedPlace.category) }">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent"></div>
+          <div class="absolute bottom-3 left-4 right-4 flex flex-wrap items-center justify-between gap-2">
+            <span v-if="selectedPlace.category" class="px-3 py-1 rounded-full text-[11px] font-extrabold text-white shadow-sm" :style="{ backgroundColor: getCategoryColor(selectedPlace.category) }">
               {{ selectedPlace.category }}
             </span>
-            <span v-if="getDistanceFromUser(selectedPlace)" class="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1">
+            <span v-if="getDistanceFromUser(selectedPlace)" class="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-white/95 text-emerald-950 shadow-sm flex items-center gap-1 tabular-metrics">
               <span>📍</span>
-              <span>A {{ getDistanceFromUser(selectedPlace) }} de tu ubicación</span>
+              <span>A {{ getDistanceFromUser(selectedPlace) }}</span>
             </span>
           </div>
+        </div>
 
-          <h2 class="text-2xl font-black text-green-950 leading-tight">{{ selectedPlace.name }}</h2>
+        <!-- Contenido Detallado Editorial -->
+        <div class="flex-1 overflow-y-auto p-5 sm:p-6 flex flex-col gap-3.5 hide-scrollbar bg-stone-50">
+          <h2 class="text-xl sm:text-2xl font-extrabold text-emerald-950 leading-tight">{{ selectedPlace.name }}</h2>
 
-          <p v-if="selectedPlace.formatted_address" class="text-gray-600 text-sm flex items-start">
-            <svg class="w-4 h-4 mr-2 shrink-0 text-gray-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
-            {{ selectedPlace.formatted_address }}
-          </p>
+          <div v-if="selectedPlace.formatted_address" class="bg-white p-3.5 rounded-2xl border border-slate-200/80 flex items-start gap-2.5 shadow-2xs">
+            <svg class="w-4 h-4 shrink-0 text-emerald-700 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+            <span class="text-slate-700 text-xs sm:text-sm font-medium">{{ selectedPlace.formatted_address }}</span>
+          </div>
 
-          <div v-if="selectedPlace.description" class="mt-2">
-            <p class="text-gray-700 text-base leading-relaxed whitespace-pre-wrap">{{ selectedPlace.description }}</p>
+          <div v-if="selectedPlace.description" class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+            <p class="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">{{ selectedPlace.description }}</p>
           </div>
 
           <!-- Botones de Acción -->
-          <div class="mt-auto pt-6 flex flex-col sm:flex-row gap-3">
+          <div class="mt-auto pt-4 flex flex-col sm:flex-row gap-2.5">
             <button 
               @click="openDirections(selectedPlace)" 
               type="button"
-              class="flex-1 bg-yellow-400 hover:bg-yellow-500 text-green-950 font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex justify-center items-center gap-2 cursor-pointer"
+              class="flex-1 bg-amber-400 hover:bg-amber-300 text-emerald-950 font-extrabold py-3 px-4 rounded-xl shadow-sm transition-colors flex justify-center items-center gap-2 cursor-pointer text-sm"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
               ¿Cómo llegar?
+            </button>
+            <button
+              @click="sharePlaceItem(selectedPlace)"
+              type="button"
+              class="bg-emerald-950 hover:bg-emerald-900 text-white font-bold py-3 px-4 rounded-xl shadow-sm transition-colors flex justify-center items-center gap-2 cursor-pointer text-sm"
+              title="Compartir ubicación de este lugar"
+            >
+              <span>📤 Compartir</span>
             </button>
           </div>
         </div>
@@ -631,6 +671,45 @@ const openPosterDirections = (poster) => {
   window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank', 'noopener')
 }
 
+const sharePlaceItem = async (place) => {
+  if (!place) return
+  const shareUrl = `${window.location.origin}/?place=${encodeURIComponent(place.place_id)}`
+  const shareText = `📍 Mira "${place.name}" en Zapatoca (Zapatoqueando): ${place.formatted_address || ''}`.trim()
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: place.name, text: shareText, url: shareUrl })
+      return
+    } catch {
+      // Fallback a copiar o WhatsApp
+    }
+  }
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(`${shareText} ${shareUrl}`)
+      showLocationNotice('Enlace del lugar copiado al portapapeles.', 3500)
+      return
+    } catch {
+      // Fallback a WhatsApp
+    }
+  }
+  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`, '_blank', 'noopener')
+}
+
+const sharePosterItem = async (poster) => {
+  if (!poster) return
+  const shareUrl = window.location.origin
+  const shareText = `✨ Mira "${poster.title}" en Zapatoca (Zapatoqueando): ${poster.description || ''}`.trim()
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: poster.title, text: shareText, url: shareUrl })
+      return
+    } catch {
+      // Fallback a WhatsApp
+    }
+  }
+  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`, '_blank', 'noopener')
+}
+
 // Resultados filtrados para el autocompletado del buscador
 const searchResults = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
@@ -678,6 +757,7 @@ watch(() => route.path, (newPath, oldPath) => {
 })
 
 const activeCategories = ref([])
+const activeRouteBanner = ref(null)
 const categories = [
   { name: 'Hospedajes', icon: '🏨', color: '#3b82f6' },
   { name: 'Restaurantes', icon: '🍽️', color: '#f97316' },
@@ -686,6 +766,24 @@ const categories = [
   { name: 'Lugares turísticos', icon: '📸', color: '#ec4899' },
   { name: 'Puntos de interés', icon: '⭐', color: '#64748b' }
 ]
+
+const getCategoryCount = (catName) => {
+  return places.value.filter(p => p.category === catName).length
+}
+
+const filteredPlacesCount = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  return places.value.filter(p => {
+    const matchesCategory = activeCategories.value.length === 0 || activeCategories.value.includes(p.category)
+    const matchesQuery = !q || (
+      (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.category && p.category.toLowerCase().includes(q)) ||
+      (p.formatted_address && p.formatted_address.toLowerCase().includes(q)) ||
+      (p.description && p.description.toLowerCase().includes(q))
+    )
+    return matchesCategory && matchesQuery
+  }).length
+})
 
 const hasActiveFilter = computed(() => {
   return activeCategories.value.length > 0 || searchQuery.value.trim().length > 0
@@ -736,6 +834,15 @@ window.openPlaceSidebar = (placeId) => {
   }
 }
 
+const escapeHtml = (value) => {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 // Función para actualizar y dibujar los marcadores
 const updateMarkers = () => {
   if (markersLayer) {
@@ -761,13 +868,16 @@ const updateMarkers = () => {
       const markerColor = getCategoryColor(place.category)
       const marker = L.marker([place.location.lat, place.location.lng], { icon: createMinimalDot(markerColor) }).addTo(markersLayer)
 
-      // Mini-modal (Popup) minimalista estilo cápsula (sin 'X')
+      // Mini-modal (Popup) minimalista estilo cápsula (sin 'X') con escape HTML seguro
+      const safePlaceId = escapeHtml(place.place_id)
+      const safeImageUrl = escapeHtml(place.image_url || '/logo.png')
+      const safePlaceName = escapeHtml(place.name)
       const popupContent = `
-        <div onclick="window.openPlaceSidebar('${place.place_id}')" class="flex items-center gap-3 pr-3 cursor-pointer">
+        <div onclick="window.openPlaceSidebar('${safePlaceId}')" class="flex items-center gap-3 pr-3 cursor-pointer">
           <div class="w-10 h-10 shrink-0 rounded-full overflow-hidden border-2 border-white shadow-sm bg-gray-100">
-            <img src="${place.image_url || '/logo.png'}" alt="${place.name}" class="w-full h-full object-cover" />
+            <img src="${safeImageUrl}" alt="${safePlaceName}" class="w-full h-full object-cover" />
           </div>
-          <span class="font-bold text-gray-800 text-sm whitespace-nowrap">${place.name}</span>
+          <span class="font-bold text-gray-800 text-sm whitespace-nowrap">${safePlaceName}</span>
         </div>
       `
       marker.bindPopup(popupContent, {
@@ -1031,25 +1141,37 @@ const loadStreets = async () => {
   }
 }
 
+const applyRoutesGeoJson = (data) => {
+  if (!map || data?.type !== 'FeatureCollection') return
+  if (routesLayer) {
+    map.removeLayer(routesLayer)
+    routesLayer = null
+  }
+  if (!Array.isArray(data.features) || data.features.length === 0) return
+
+  routesLayer = L.geoJSON(data, {
+    style: function (feature) {
+      const props = feature?.properties || {}
+      const isSelected = (currentSelectedRouteId && props.id === currentSelectedRouteId) ||
+                         (currentSelectedRouteName && props.name === currentSelectedRouteName)
+      return {
+        color: props.color || '#fbbf24',
+        weight: isSelected ? (map.getZoom() >= 17 ? 6 : 5) : 4,
+        opacity: isSelected ? 1 : 0, // Ocultas por defecto salvo la ruta activa
+        dashArray: 'none',
+        className: ''
+      }
+    }
+  }).addTo(map)
+}
+
 const loadRoutes = async () => {
   if (!map) return;
   try {
-    const response = await fetch('/api/routes');
+    const response = await fetch('/api/routes', { cache: 'no-store' });
     const data = await response.json();
-    
-    if (map && data.type === 'FeatureCollection' && data.features.length > 0) {
-      routesLayer = L.geoJSON(data, {
-        style: function (feature) {
-          return {
-            color: feature?.properties?.color || '#fbbf24',
-            weight: 4,
-            opacity: 0, // Ocultas por defecto
-            dashArray: 'none',
-            className: ''
-          };
-        }
-      }).addTo(map);
-    }
+    lastRoutesSnapshot = JSON.stringify(data.features || []);
+    applyRoutesGeoJson(data);
   } catch (err) {
     console.error('Error fetching routes:', err);
   }
@@ -1087,13 +1209,15 @@ const loadBoundary = async () => {
 let realtimeSyncInterval = null
 let lastPlacesSnapshot = ''
 let lastPostersSnapshot = ''
+let lastRoutesSnapshot = ''
 
 const refreshMapData = async () => {
   if (document.hidden) return
   try {
-    const [postersResponse, placesResponse] = await Promise.all([
+    const [postersResponse, placesResponse, routesResponse] = await Promise.all([
       fetch('/api/posters', { cache: 'no-store' }).catch(() => null),
-      fetch('/api/places', { cache: 'no-store' }).catch(() => null)
+      fetch('/api/places', { cache: 'no-store' }).catch(() => null),
+      fetch('/api/routes', { cache: 'no-store' }).catch(() => null)
     ])
 
     if (postersResponse && postersResponse.ok) {
@@ -1129,10 +1253,24 @@ const refreshMapData = async () => {
         }
       }
     }
+
+    if (routesResponse && routesResponse.ok) {
+      const routesData = await routesResponse.json()
+      if (routesData.type === 'FeatureCollection' && Array.isArray(routesData.features)) {
+        const nextRoutesJson = JSON.stringify(routesData.features)
+        if (nextRoutesJson !== lastRoutesSnapshot) {
+          lastRoutesSnapshot = nextRoutesJson
+          applyRoutesGeoJson(routesData)
+        }
+      }
+    }
   } catch (err) {
     // Silencioso en sincronización de fondo
   }
 }
+
+let routeEndpointsLayer = null
+let activeRouteBounds = null
 
 onMounted(async () => {
   await nextTick()
@@ -1147,6 +1285,16 @@ onMounted(async () => {
       loadRoutes(),
       loadBoundary()
     ])
+
+    // Si viene un deep link ?place=ID, enfocar y abrir el lugar automáticamente
+    const placeQueryId = route.query?.place
+    if (placeQueryId) {
+      const targetPlace = places.value.find(p => String(p.place_id) === String(placeQueryId))
+      if (targetPlace) {
+        selectedPlace.value = targetPlace
+        focusPlace(targetPlace)
+      }
+    }
   } catch (err) {
     console.error('Error fetching data:', err)
     error.value = 'Error de conexión con el servidor.'
@@ -1161,6 +1309,63 @@ onMounted(async () => {
   realtimeSyncInterval = setInterval(refreshMapData, 8000)
 })
 
+const clearRouteEndpoints = () => {
+  if (routeEndpointsLayer && map) {
+    map.removeLayer(routeEndpointsLayer)
+    routeEndpointsLayer = null
+  }
+}
+
+const renderRouteEndpoints = (coords, routeName) => {
+  clearRouteEndpoints()
+  if (!map || !Array.isArray(coords) || coords.length < 2) return
+  routeEndpointsLayer = L.layerGroup().addTo(map)
+
+  const [startLng, startLat] = coords[0]
+  const [endLng, endLat] = coords[coords.length - 1]
+
+  const startIcon = L.divIcon({
+    className: 'route-endpoint-marker',
+    html: `<div style="background:#059669;color:#fff;font-weight:800;font-size:10px;padding:2px 7px;border-radius:9999px;border:2px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,0.35);white-space:nowrap;">🟢 Inicio</div>`,
+    iconSize: [64, 22],
+    iconAnchor: [32, 11]
+  })
+
+  const endIcon = L.divIcon({
+    className: 'route-endpoint-marker',
+    html: `<div style="background:#e11d48;color:#fff;font-weight:800;font-size:10px;padding:2px 7px;border-radius:9999px;border:2px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,0.35);white-space:nowrap;">🏁 Meta</div>`,
+    iconSize: [60, 22],
+    iconAnchor: [30, 11]
+  })
+
+  L.marker([startLat, startLng], { icon: startIcon, zIndexOffset: 900 })
+    .bindPopup(`<div class="px-3 py-1 font-bold text-xs text-emerald-950">🟢 Punto de partida: ${escapeHtml(routeName || 'Ruta')}</div>`, { closeButton: false, className: 'custom-minimal-popup' })
+    .addTo(routeEndpointsLayer)
+
+  L.marker([endLat, endLng], { icon: endIcon, zIndexOffset: 900 })
+    .bindPopup(`<div class="px-3 py-1 font-bold text-xs text-rose-900">🏁 Meta: ${escapeHtml(routeName || 'Ruta')}</div>`, { closeButton: false, className: 'custom-minimal-popup' })
+    .addTo(routeEndpointsLayer)
+}
+
+const centerActiveRoute = () => {
+  if (map && activeRouteBounds) {
+    map.fitBounds(activeRouteBounds, { padding: [60, 60], duration: 1.0 })
+  }
+}
+
+const openActiveRouteStart = () => {
+  if (!activeRouteBanner.value?.startCoord) return
+  const [lng, lat] = activeRouteBanner.value.startCoord
+  const originParam = userCoords.value
+    ? `&origin=${userCoords.value.lat},${userCoords.value.lng}`
+    : ''
+  window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}${originParam}`, '_blank', 'noopener')
+}
+
+const clearSelectedRoute = () => {
+  window.dispatchEvent(new CustomEvent('route-unselected'))
+}
+
 const handleRouteSelected = (e) => {
   const selectedRoute = e.detail
   if (!selectedRoute) return
@@ -1170,10 +1375,10 @@ const handleRouteSelected = (e) => {
   
   routesLayer.eachLayer((layer) => {
     const props = layer.feature?.properties || {}
+    const coords = layer.feature?.geometry?.coordinates || []
     const isMatch = (currentSelectedRouteId && props.id === currentSelectedRouteId) ||
                     (currentSelectedRouteName && props.name === currentSelectedRouteName)
     if (isMatch) {
-      // Mostrar y resaltar SÓLO la ruta seleccionada con su color configurado
       layer.setStyle({
         color: props.color || '#facc15',
         weight: map.getZoom() >= 17 ? 6 : 5,
@@ -1181,12 +1386,20 @@ const handleRouteSelected = (e) => {
         dashArray: 'none',
         className: ''
       })
-      // Hacer zoom a los límites de esta ruta
+      activeRouteBanner.value = {
+        id: props.id,
+        name: props.name || selectedRoute.name,
+        color: props.color || selectedRoute.color || '#eab308',
+        distance_label: selectedRoute.distance_label || props.distance_label || '',
+        duration: selectedRoute.duration || props.duration,
+        startCoord: coords.length > 0 ? coords[0] : (selectedRoute.startCoord || null)
+      }
+      renderRouteEndpoints(coords, props.name || selectedRoute.name)
       if (typeof layer.getBounds === 'function') {
-        map.fitBounds(layer.getBounds(), { padding: [60, 60], duration: 1.5 })
+        activeRouteBounds = layer.getBounds()
+        map.fitBounds(activeRouteBounds, { padding: [60, 60], duration: 1.2 })
       }
     } else {
-      // Mantener invisibles las demás rutas
       layer.setStyle({
         opacity: 0
       })
@@ -1197,11 +1410,13 @@ const handleRouteSelected = (e) => {
 const handleRouteUnselected = () => {
   currentSelectedRouteId = null
   currentSelectedRouteName = null
+  activeRouteBanner.value = null
+  activeRouteBounds = null
+  clearRouteEndpoints()
   if (!map || !routesLayer) return
-  // Ocultar de nuevo todas las rutas
   routesLayer.eachLayer((layer) => {
     layer.setStyle({
-      opacity: 0 // Volver a ocultar todas
+      opacity: 0
     })
   })
 }
@@ -1210,6 +1425,8 @@ onBeforeUnmount(() => {
   window.removeEventListener('route-selected', handleRouteSelected)
   window.removeEventListener('route-unselected', handleRouteUnselected)
   window.removeEventListener('focus', refreshMapData)
+  delete window.openPlaceSidebar
+  clearRouteEndpoints()
   if (realtimeSyncInterval) {
     clearInterval(realtimeSyncInterval)
     realtimeSyncInterval = null

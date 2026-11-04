@@ -51,13 +51,16 @@ export class PrismaPosterRepository implements PosterRepositoryPort {
     const existing = await prisma.poster.findUnique({ where: { id } });
     if (!existing) return null;
 
+    const nextImage =
+      data.imageUrl !== undefined ? data.imageUrl : existing.imageurl || existing.image_url;
+
     const row = await prisma.poster.update({
       where: { id },
       data: {
         title: data.title,
         description: data.description ?? null,
-        imageurl: data.imageUrl ?? null,
-        image_url: data.imageUrl ?? null,
+        imageurl: nextImage,
+        image_url: nextImage,
         type: data.type || 'event',
       },
     });

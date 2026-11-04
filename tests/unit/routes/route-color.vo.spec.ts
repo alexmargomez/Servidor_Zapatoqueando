@@ -1,5 +1,6 @@
 import { RouteColorVO } from '../../../src/modules/routes/domain/value-objects/route-color.vo';
 import { RouteEntity } from '../../../src/modules/routes/domain/entities/route.entity';
+import { UpdateRouteUseCase } from '../../../src/modules/routes/application/use-cases/update-route.use-case';
 
 describe('RouteColorVO & RouteEntity', () => {
   describe('RouteColorVO', () => {
@@ -50,5 +51,83 @@ describe('RouteColorVO & RouteEntity', () => {
         color: '#10b981',
       });
     });
+
+    it('should compute estimated duration according to difficulty speed', () => {
+      const longGeometry = {
+        type: 'LineString',
+        coordinates: [
+          [-73.268, 6.815],
+          [-73.24, 6.84],
+        ],
+      };
+      const easyRoute = new RouteEntity({
+        id: 1,
+        name: 'Ruta Fácil',
+        description: null,
+        duration: null,
+        difficulty: 'Fácil',
+        color: '#eab308',
+        coordinates: longGeometry,
+      });
+      const expertRoute = new RouteEntity({
+        id: 2,
+        name: 'Ruta Experto',
+        description: null,
+        duration: null,
+        difficulty: 'Experto',
+        color: '#dc2626',
+        coordinates: longGeometry,
+      });
+
+      expect(expertRoute.getEstimatedDurationMinutes()).toBeGreaterThan(
+        easyRoute.getEstimatedDurationMinutes()
+      );
+    });
+  });
+
+  describe('UpdateRouteUseCase', () => {
+    it('should preserve undefined geojson when coordinates are omitted during partial update', async () => {
+      const updateSpy = jest.fn().mockResolvedValue(
+        new RouteEntity({
+          id: 9,
+          name: 'Sendero Actualizado',
+          description: 'Con trazado intacto',
+          duration: '45',
+          difficulty: 'Media',
+          color: '#f97316',
+          coordinates: {
+            type: 'LineString',
+            coordinates: [
+              [-73.268, 6.815],
+              [-73.265, 6.818],
+            ],
+          },
+        })
+      );
+
+      const useCase = new UpdateRouteUseCase({
+        findAll: jest.fn(),
+        create: jest.fn(),
+        update: updateSpy,
+        delete: jest.fn(),
+      });
+
+      await useCase.execute(9, {
+        name: 'Sendero Actualizado',
+        description: 'Con trazado intacto',
+        duration: 45,
+        difficulty: 'Media',
+        color: '#f97316',
+      });
+
+      expect(updateSpy).toHaveBeenCalledWith(
+        9,
+        expect.objectContaining({
+          name: 'Sendero Actualizado',
+          geojson: undefined,
+        })
+      );
+    });
   });
 });
+

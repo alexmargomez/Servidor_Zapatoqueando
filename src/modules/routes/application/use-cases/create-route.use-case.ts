@@ -1,6 +1,5 @@
-import { RouteRepositoryPort } from '../ports/repositories/route-repository.port';
+import { RouteDto, RouteRepositoryPort } from '../ports/repositories/route-repository.port';
 import { RouteColorVO } from '../../domain/value-objects/route-color.vo';
-import { RouteDto } from '../../infrastructure/dtos/route.dto';
 
 export class CreateRouteUseCase {
   constructor(private readonly routeRepository: RouteRepositoryPort) {}

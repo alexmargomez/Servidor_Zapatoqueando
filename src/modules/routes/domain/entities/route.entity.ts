@@ -16,6 +16,7 @@ export class RouteEntity {
   public readonly difficulty: string | null;
   public readonly color: string;
   public readonly coordinates: unknown;
+  private cachedDistanceKm?: number;
 
   constructor(props: RouteProps) {
     this.id = props.id;
@@ -28,9 +29,16 @@ export class RouteEntity {
   }
 
   calculateDistanceKm(): number {
+    if (this.cachedDistanceKm !== undefined) {
+      return this.cachedDistanceKm;
+    }
+
     const geo = this.coordinates as { coordinates?: number[][] } | null;
     const pts = Array.isArray(geo?.coordinates) ? geo!.coordinates : [];
-    if (pts.length < 2) return 0;
+    if (pts.length < 2) {
+      this.cachedDistanceKm = 0;
+      return 0;
+    }
 
     const toRad = (deg: number) => (deg * Math.PI) / 180;
     const R = 6371; // Radio de la Tierra en km
@@ -56,7 +64,8 @@ export class RouteEntity {
       totalKm += R * c;
     }
 
-    return Number(totalKm.toFixed(2));
+    this.cachedDistanceKm = Number(totalKm.toFixed(2));
+    return this.cachedDistanceKm;
   }
 
   getDistanceLabel(): string {
@@ -71,7 +80,12 @@ export class RouteEntity {
   getEstimatedDurationMinutes(): number {
     const km = this.calculateDistanceKm();
     if (km <= 0) return 5;
-    return Math.max(5, Math.round((km / 4.5) * 60));
+    let speedKmh = 4.0;
+    if (this.difficulty === 'Fácil') speedKmh = 4.5;
+    else if (this.difficulty === 'Media') speedKmh = 4.0;
+    else if (this.difficulty === 'Difícil') speedKmh = 3.2;
+    else if (this.difficulty === 'Experto') speedKmh = 2.5;
+    return Math.max(5, Math.round((km / speedKmh) * 60));
   }
 
   toGeoJsonFeature() {

@@ -1,7 +1,6 @@
 import crypto from 'crypto';
-import { PlaceRepositoryPort } from '../ports/repositories/place-repository.port';
+import { PlaceDto, PlaceRepositoryPort } from '../ports/repositories/place-repository.port';
 import { CoordinatesVO } from '../../domain/value-objects/coordinates.vo';
-import { PlaceDto } from '../../infrastructure/dtos/place.dto';
 
 export class CreatePlaceUseCase {
   constructor(private readonly placeRepository: PlaceRepositoryPort) {}

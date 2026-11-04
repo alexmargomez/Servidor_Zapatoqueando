@@ -1,6 +1,7 @@
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { InvalidUploadException } from '../../../../modules/uploads/domain/exceptions/invalid-upload.exception';
 
 const uploadDir = path.resolve(process.cwd(), 'public/uploads');
 if (!fs.existsSync(uploadDir)) {
@@ -35,7 +36,11 @@ const fileFilter: multer.Options['fileFilter'] = (_req, file, cb) => {
   if (Object.prototype.hasOwnProperty.call(SAFE_IMAGE_MIME_EXTENSIONS, normalizedMime)) {
     cb(null, true);
   } else {
-    cb(new Error('Formato de imagen no permitido. Solo se aceptan JPEG, PNG, WEBP o GIF.'));
+    cb(
+      new InvalidUploadException(
+        'Formato de imagen no permitido. Solo se aceptan JPEG, PNG, WEBP o GIF.'
+      )
+    );
   }
 };
 

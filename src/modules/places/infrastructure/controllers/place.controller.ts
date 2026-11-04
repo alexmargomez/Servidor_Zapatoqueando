@@ -43,6 +43,10 @@ export class PlaceController {
   updatePlace = async (req: Request, res: Response): Promise<void> => {
     try {
       const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0) {
+        res.status(400).json({ error: 'Invalid place ID' });
+        return;
+      }
       const placeData: PlaceDto = { ...req.body };
       if (req.file) {
         placeData.image_url = `/uploads/${req.file.filename}`;
@@ -61,6 +65,10 @@ export class PlaceController {
   deletePlace = async (req: Request, res: Response): Promise<void> => {
     try {
       const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0) {
+        res.status(400).json({ error: 'Invalid place ID' });
+        return;
+      }
       const data = await this.deletePlaceUseCase.execute(id);
       res.json({ message: 'success', data });
     } catch (err: any) {
@@ -72,3 +80,4 @@ export class PlaceController {
     }
   };
 }
+
