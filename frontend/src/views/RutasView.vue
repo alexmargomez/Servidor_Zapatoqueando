@@ -114,10 +114,10 @@
                 v-if="ruta.startCoord"
                 @click.stop="openStartDirections(ruta)"
                 type="button"
-                title="Cómo llegar al punto de inicio de la ruta"
+                title="Enfocar punto de inicio en el mapa"
                 class="text-[11px] font-bold px-2 py-1 rounded-full bg-slate-100 hover:bg-emerald-100 text-emerald-900 transition-colors cursor-pointer"
               >
-                🧭 Inicio
+                🟢 Inicio
               </button>
               <span 
                 :class="[
@@ -208,8 +208,8 @@ const formatDuration = (duration) => {
 
 const openStartDirections = (ruta) => {
   if (!ruta?.startCoord) return
-  const [lng, lat] = ruta.startCoord
-  window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank', 'noopener')
+  selectedRutaId.value = ruta.id || ruta.name
+  window.dispatchEvent(new CustomEvent('route-focus-start', { detail: ruta }))
 }
 
 const exploreOnMap = () => {

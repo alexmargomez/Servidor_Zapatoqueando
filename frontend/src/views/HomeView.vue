@@ -107,11 +107,11 @@
           <span v-if="activeRouteBanner.distance_label" class="text-[11px] bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-full tabular-metrics border border-emerald-200/60">
             {{ activeRouteBanner.distance_label }}
           </span>
-          <button @click="centerActiveRoute" type="button" title="Centrar ruta en el mapa" class="text-emerald-800 hover:text-emerald-950 bg-emerald-100/80 px-2 py-0.5 rounded-full text-[11px] cursor-pointer">
+          <button @click="centerActiveRoute" type="button" title="Ver ruta completa en el mapa" class="text-emerald-800 hover:text-emerald-950 bg-emerald-100/80 px-2 py-0.5 rounded-full text-[11px] cursor-pointer">
             🎯
           </button>
-          <button v-if="activeRouteBanner.startCoord" @click="openActiveRouteStart" type="button" title="Cómo llegar al inicio del sendero" class="text-emerald-900 hover:bg-amber-300 bg-amber-200/80 px-2 py-0.5 rounded-full text-[11px] cursor-pointer">
-            🧭 Inicio
+          <button v-if="activeRouteBanner.startCoord" @click="openActiveRouteStart" type="button" title="Enfocar punto de inicio en el mapa" class="text-emerald-900 hover:bg-amber-300 bg-amber-200/80 px-2 py-0.5 rounded-full text-[11px] cursor-pointer">
+            🟢 Inicio
           </button>
           <button @click="clearSelectedRoute" type="button" title="Salir de la ruta" class="text-slate-400 hover:text-rose-600 font-bold px-1 cursor-pointer">✕</button>
         </div>
@@ -291,7 +291,7 @@
               class="flex-1 bg-amber-400 hover:bg-amber-300 text-emerald-950 font-extrabold py-3 px-4 rounded-xl shadow-sm transition-colors flex justify-center items-center gap-2 cursor-pointer text-sm"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
-              ¿Cómo llegar?
+              Ver en el mapa
             </button>
             
             <button 
@@ -350,7 +350,7 @@
               class="flex-1 bg-amber-400 hover:bg-amber-300 text-emerald-950 font-extrabold py-3 px-4 rounded-xl shadow-sm transition-colors flex justify-center items-center gap-2 cursor-pointer text-sm"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
-              ¿Cómo llegar?
+              Ubicar en el mapa
             </button>
             <button
               @click="sharePlaceItem(selectedPlace)"
@@ -652,23 +652,48 @@ const getWhatsAppUrl = (title) => {
 
 const openDirections = (place) => {
   if (!place) return
-  focusPlace(place)
-  if (place.location && place.location.lat && place.location.lng) {
-    const originParam = userCoords.value
-      ? `&origin=${userCoords.value.lat},${userCoords.value.lng}`
-      : ''
-    window.open(
-      `https://www.google.com/maps/dir/?api=1&destination=${place.location.lat},${place.location.lng}${originParam}`,
-      '_blank',
-      'noopener'
-    )
+  selectedPlace.value = null
+  if (map && place.location && place.location.lat && place.location.lng) {
+    map.flyTo([place.location.lat, place.location.lng], 18, {
+      duration: 1.2
+    })
+    setTimeout(() => {
+      syncMarkersVisibility()
+      if (markersLayer) {
+        markersLayer.eachLayer((layer) => {
+          const ll = layer.getLatLng?.()
+          if (
+            ll &&
+            Math.abs(ll.lat - Number(place.location.lat)) < 0.00001 &&
+            Math.abs(ll.lng - Number(place.location.lng)) < 0.00001
+          ) {
+            layer.openPopup()
+          }
+        })
+      }
+    }, 450)
   }
 }
 
 const openPosterDirections = (poster) => {
   if (!poster) return
-  const query = encodeURIComponent(`${poster.title || ''} Zapatoca Santander`)
-  window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank', 'noopener')
+  const titleQuery = (poster.title || '').trim().toLowerCase()
+  selectedPoster.value = null
+  if (titleQuery) {
+    const matchedPlace = places.value.find(
+      p =>
+        (p.name && p.name.toLowerCase().includes(titleQuery)) ||
+        (titleQuery.includes((p.name || '').toLowerCase()) && (p.name || '').length > 3)
+    )
+    if (matchedPlace && matchedPlace.location?.lat && matchedPlace.location?.lng) {
+      selectedPlace.value = matchedPlace
+      focusPlace(matchedPlace)
+      return
+    }
+  }
+  if (map) {
+    map.flyTo([6.816801, -73.268689], 17, { duration: 1.0 })
+  }
 }
 
 const sharePlaceItem = async (place) => {
@@ -1305,11 +1330,16 @@ onMounted(async () => {
   // Escuchar eventos de selección de rutas desde el panel lateral
   window.addEventListener('route-selected', handleRouteSelected)
   window.addEventListener('route-unselected', handleRouteUnselected)
+  window.addEventListener('route-focus-start', handleRouteFocusStart)
+  window.addEventListener('poster-locate-on-map', handlePosterLocateOnMap)
   window.addEventListener('focus', refreshMapData)
   realtimeSyncInterval = setInterval(refreshMapData, 8000)
 })
 
+let startEndpointMarker = null
+
 const clearRouteEndpoints = () => {
+  startEndpointMarker = null
   if (routeEndpointsLayer && map) {
     map.removeLayer(routeEndpointsLayer)
     routeEndpointsLayer = null
@@ -1338,7 +1368,7 @@ const renderRouteEndpoints = (coords, routeName) => {
     iconAnchor: [30, 11]
   })
 
-  L.marker([startLat, startLng], { icon: startIcon, zIndexOffset: 900 })
+  startEndpointMarker = L.marker([startLat, startLng], { icon: startIcon, zIndexOffset: 900 })
     .bindPopup(`<div class="px-3 py-1 font-bold text-xs text-emerald-950">🟢 Punto de partida: ${escapeHtml(routeName || 'Ruta')}</div>`, { closeButton: false, className: 'custom-minimal-popup' })
     .addTo(routeEndpointsLayer)
 
@@ -1354,12 +1384,35 @@ const centerActiveRoute = () => {
 }
 
 const openActiveRouteStart = () => {
-  if (!activeRouteBanner.value?.startCoord) return
+  if (!map || !activeRouteBanner.value?.startCoord) return
   const [lng, lat] = activeRouteBanner.value.startCoord
-  const originParam = userCoords.value
-    ? `&origin=${userCoords.value.lat},${userCoords.value.lng}`
-    : ''
-  window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}${originParam}`, '_blank', 'noopener')
+  map.flyTo([lat, lng], 18, { duration: 1.0 })
+  if (startEndpointMarker) {
+    setTimeout(() => {
+      if (startEndpointMarker) startEndpointMarker.openPopup()
+    }, 350)
+  }
+}
+
+const handleRouteFocusStart = (e) => {
+  const ruta = e.detail
+  if (!ruta) return
+  handleRouteSelected({ detail: ruta })
+  if (map && Array.isArray(ruta.startCoord) && ruta.startCoord.length >= 2) {
+    const [lng, lat] = ruta.startCoord
+    map.flyTo([lat, lng], 18, { duration: 1.0 })
+    if (startEndpointMarker) {
+      setTimeout(() => {
+        if (startEndpointMarker) startEndpointMarker.openPopup()
+      }, 350)
+    }
+  }
+}
+
+const handlePosterLocateOnMap = (e) => {
+  const poster = e.detail
+  if (!poster) return
+  openPosterDirections(poster)
 }
 
 const clearSelectedRoute = () => {
@@ -1424,6 +1477,8 @@ const handleRouteUnselected = () => {
 onBeforeUnmount(() => {
   window.removeEventListener('route-selected', handleRouteSelected)
   window.removeEventListener('route-unselected', handleRouteUnselected)
+  window.removeEventListener('route-focus-start', handleRouteFocusStart)
+  window.removeEventListener('poster-locate-on-map', handlePosterLocateOnMap)
   window.removeEventListener('focus', refreshMapData)
   delete window.openPlaceSidebar
   clearRouteEndpoints()

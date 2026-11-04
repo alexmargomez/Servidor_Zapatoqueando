@@ -100,7 +100,7 @@
                   class="flex-1 bg-amber-400 hover:bg-amber-300 text-emerald-950 font-extrabold text-xs py-2.5 px-3 rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                 >
                   <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
-                  <span>¿Cómo llegar?</span>
+                  <span>Ver en el mapa</span>
                 </button>
                 <button 
                   @click="shareEvent(ev)"
@@ -158,8 +158,10 @@ const filteredItems = computed(() => {
 })
 
 const openDirections = (ev) => {
-  const query = encodeURIComponent(`${ev.title || ''} Zapatoca Santander`)
-  window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank', 'noopener')
+  router.push('/')
+  setTimeout(() => {
+    window.dispatchEvent(new CustomEvent('poster-locate-on-map', { detail: ev }))
+  }, 80)
 }
 
 const shareEvent = async (ev) => {
