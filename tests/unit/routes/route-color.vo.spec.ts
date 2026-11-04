@@ -39,17 +39,66 @@ describe('RouteColorVO & RouteEntity', () => {
       const feature = entity.toGeoJsonFeature();
       expect(feature.type).toBe('Feature');
       expect(feature.geometry).toEqual(geometry);
-      expect(feature.properties).toEqual({
-        id: 7,
-        route_id: 7,
-        name: 'Camino de Lengerke',
-        description: 'Ruta histórica empedrada',
-        duration: '3h',
-        distance_km: 0.47,
-        distance_label: '470 m',
-        difficulty: 'Media',
-        color: '#10b981',
+      expect(feature.properties).toEqual(
+        expect.objectContaining({
+          id: 7,
+          route_id: 7,
+          name: 'Camino de Lengerke',
+          description: 'Ruta histórica empedrada',
+          duration: '3h',
+          distance_km: 0.47,
+          distance_label: '470 m',
+          difficulty: 'Media',
+          color: '#10b981',
+          segments: expect.any(Array),
+          difficulty_breakdown: expect.any(Array),
+        })
+      );
+    });
+
+    it('should automatically calculate overall difficulty and breakdown from colored segments', () => {
+      const segmentedGeometry = {
+        type: 'LineString',
+        coordinates: [
+          [-73.268, 6.815],
+          [-73.26, 6.82],
+          [-73.25, 6.83],
+        ],
+        segments: [
+          {
+            coords: [
+              [-73.268, 6.815],
+              [-73.26, 6.82],
+            ],
+            difficulty: 'Fácil',
+            color: '#eab308',
+          },
+          {
+            coords: [
+              [-73.26, 6.82],
+              [-73.25, 6.83],
+            ],
+            difficulty: 'Experto',
+            color: '#dc2626',
+          },
+        ],
+      };
+
+      const route = new RouteEntity({
+        id: 12,
+        name: 'Ascenso Pico de la Cuchilla',
+        description: 'Tramo inicial suave y ascenso técnico final',
+        duration: null,
+        difficulty: null,
+        color: '#eab308',
+        coordinates: segmentedGeometry,
       });
+
+      expect(route.difficulty).toBe('Experto');
+      expect(route.color).toBe('#dc2626');
+      const breakdown = route.getDifficultyBreakdown();
+      expect(breakdown.length).toBe(2);
+      expect(breakdown.map((b) => b.difficulty)).toEqual(['Fácil', 'Experto']);
     });
 
     it('should compute estimated duration according to difficulty speed', () => {
@@ -130,4 +179,5 @@ describe('RouteColorVO & RouteEntity', () => {
     });
   });
 });
+
 

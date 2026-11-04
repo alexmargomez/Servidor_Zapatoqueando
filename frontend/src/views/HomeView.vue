@@ -75,8 +75,76 @@
         </div>
       </div>
 
-      <!-- Chips de Filtros Rápidos con Punto de Color y Contador -->
+      <!-- Chips de Herramientas Diferenciales + Categorías -->
       <div v-show="showCategoryChips" class="flex flex-wrap items-center gap-1.5 pointer-events-auto pb-0.5">
+        <!-- Chip Estrella: Comercios con Beneficio / Cupón -->
+        <button
+          @click="toggleBenefitsFilter"
+          type="button"
+          :class="[
+            'px-3 py-1.5 rounded-full shadow-sm text-xs font-extrabold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer border',
+            onlyWithBenefits
+              ? 'bg-amber-400 text-emerald-950 border-amber-500 shadow-md scale-[1.03]'
+              : 'bg-amber-50/95 backdrop-blur-md text-emerald-950 hover:bg-amber-100 border-amber-300/90'
+          ]"
+          title="Ver comercios aliados que dan descuentos o cortesías por usar Zapatoqueando"
+        >
+          <span>🎁 Beneficios</span>
+          <span class="text-[10px] px-1.5 py-0.2 rounded-full tabular-metrics bg-emerald-950 text-amber-300">
+            {{ partnerBenefitsCount }}
+          </span>
+        </button>
+
+        <!-- Chip: Planes Curados en 1 Clic -->
+        <button
+          @click="showPlansPicker = !showPlansPicker"
+          type="button"
+          :class="[
+            'px-3 py-1.5 rounded-full shadow-sm text-xs font-extrabold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer border',
+            activeCuratedPlanId
+              ? 'bg-emerald-950 text-amber-400 border-emerald-900 shadow-md scale-[1.03]'
+              : 'bg-white/95 backdrop-blur-md text-emerald-950 hover:bg-emerald-50 border-emerald-200'
+          ]"
+          title="Armar plan de recorrido temático en 1 clic"
+        >
+          <span>✨ {{ activeCuratedPlan ? activeCuratedPlan.shortTitle : 'Planes 1 Clic' }}</span>
+        </button>
+
+        <!-- Chip: Ver Red de Senderos en el Mapa -->
+        <button
+          @click="toggleShowAllTrails"
+          type="button"
+          :class="[
+            'px-3 py-1.5 rounded-full shadow-sm text-xs font-extrabold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer border',
+            showAllTrails
+              ? 'bg-emerald-950 text-amber-400 border-emerald-900 shadow-md scale-[1.03]'
+              : 'bg-white/95 backdrop-blur-md text-emerald-950 hover:bg-emerald-50 border-emerald-200'
+          ]"
+          title="Superponer todos los senderos ecológicos por color de dificultad en el mapa"
+        >
+          <span>🥾 Senderos</span>
+        </button>
+
+        <!-- Chip: Mi Plan Personal Guardado -->
+        <button
+          v-if="savedPlaceIds.length > 0"
+          @click="toggleOnlySavedPlan"
+          type="button"
+          :class="[
+            'px-3 py-1.5 rounded-full shadow-sm text-xs font-extrabold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer border',
+            onlySavedPlan
+              ? 'bg-amber-400 text-emerald-950 border-amber-500 shadow-md scale-[1.03]'
+              : 'bg-white/95 backdrop-blur-md text-emerald-950 hover:bg-amber-50 border-amber-300'
+          ]"
+          title="Ver lugares guardados en Mi Plan"
+        >
+          <span>⭐ Mi Plan</span>
+          <span class="text-[10px] px-1.5 py-0.2 rounded-full tabular-metrics bg-emerald-950 text-amber-300">
+            {{ savedPlaceIds.length }}
+          </span>
+        </button>
+
+        <!-- Categorías Tradicionales -->
         <button v-for="cat in categories" :key="cat.name" @click="toggleCategory(cat.name)"
           type="button"
           :class="[
@@ -93,27 +161,157 @@
         </button>
       </div>
 
-      <!-- Píldoras de Estado: Filtro Activo o HUD de Ruta Seleccionada -->
-      <div v-if="hasActiveFilter || activeRouteBanner" class="flex flex-wrap items-center gap-2 pointer-events-auto">
-        <div v-if="hasActiveFilter" class="bg-emerald-950/90 backdrop-blur-md text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-2 border border-white/15">
-          <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-          <span class="tabular-metrics">{{ filteredPlacesCount }} lugares en el mapa</span>
-          <button @click="clearFilters" type="button" class="text-amber-300 hover:text-amber-200 underline ml-1 cursor-pointer">Ver todos</button>
+      <!-- Selector Desplegable de Planes Curados en 1 Clic -->
+      <div
+        v-if="showPlansPicker"
+        class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-emerald-950/10 p-3 pointer-events-auto space-y-2"
+      >
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-extrabold text-emerald-950">🧭 ¿Qué plan quieres hacer hoy en Zapatoca?</span>
+          <button @click="showPlansPicker = false" type="button" class="text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer">✕</button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          <button
+            v-for="plan in curatedPlans"
+            :key="plan.id"
+            type="button"
+            @click="selectCuratedPlan(plan.id)"
+            :class="[
+              'text-left p-2.5 rounded-xl border transition-all cursor-pointer flex items-start gap-2',
+              activeCuratedPlanId === plan.id
+                ? 'bg-emerald-950 text-white border-emerald-900 shadow-sm'
+                : 'bg-stone-50 hover:bg-amber-50/70 text-emerald-950 border-slate-200/80'
+            ]"
+          >
+            <span class="text-base leading-none mt-0.5">{{ plan.icon }}</span>
+            <div class="min-w-0">
+              <div class="text-xs font-extrabold leading-tight">{{ plan.title }}</div>
+              <div :class="['text-[10px] mt-0.5 leading-snug', activeCuratedPlanId === plan.id ? 'text-amber-300' : 'text-slate-500']">
+                {{ plan.subtitle }}
+              </div>
+            </div>
+          </button>
+        </div>
+        <div v-if="activeCuratedPlanId" class="pt-1 flex justify-end">
+          <button @click="selectCuratedPlan(null)" type="button" class="text-[11px] font-bold text-rose-600 hover:underline cursor-pointer">
+            Quitar plan activo
+          </button>
+        </div>
+      </div>
+
+      <!-- Píldoras de Estado: Filtro Activo, Guía Peatonal o HUD de Ruta Seleccionada -->
+      <div v-if="hasActiveFilter || activeRouteBanner || activeGuide" class="flex flex-col gap-2 pointer-events-auto">
+        <div class="flex flex-wrap items-center gap-2">
+          <div v-if="hasActiveFilter" class="bg-emerald-950/90 backdrop-blur-md text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-2 border border-white/15">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+            <span class="tabular-metrics">{{ filteredPlacesCount }} lugares en el mapa</span>
+            <button @click="clearFilters" type="button" class="text-amber-300 hover:text-amber-200 underline ml-1 cursor-pointer">Ver todos</button>
+          </div>
         </div>
 
-        <div v-if="activeRouteBanner" class="bg-white/95 backdrop-blur-md text-emerald-950 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-2 border-2 border-amber-400">
-          <span class="w-3 h-3 rounded-full shrink-0" :style="{ backgroundColor: activeRouteBanner.color || '#eab308' }"></span>
-          <span class="truncate max-w-[140px] sm:max-w-[180px] font-extrabold">🥾 {{ activeRouteBanner.name }}</span>
-          <span v-if="activeRouteBanner.distance_label" class="text-[11px] bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-full tabular-metrics border border-emerald-200/60">
-            {{ activeRouteBanner.distance_label }}
-          </span>
-          <button @click="centerActiveRoute" type="button" title="Ver ruta completa en el mapa" class="text-emerald-800 hover:text-emerald-950 bg-emerald-100/80 px-2 py-0.5 rounded-full text-[11px] cursor-pointer">
-            🎯
-          </button>
-          <button v-if="activeRouteBanner.startCoord" @click="openActiveRouteStart" type="button" title="Enfocar punto de inicio en el mapa" class="text-emerald-900 hover:bg-amber-300 bg-amber-200/80 px-2 py-0.5 rounded-full text-[11px] cursor-pointer">
-            🟢 Inicio
-          </button>
-          <button @click="clearSelectedRoute" type="button" title="Salir de la ruta" class="text-slate-400 hover:text-rose-600 font-bold px-1 cursor-pointer">✕</button>
+        <!-- HUD de Guía Peatonal Interna (Reemplazo total a Google Maps) -->
+        <div
+          v-if="activeGuide"
+          class="bg-emerald-950/95 backdrop-blur-xl text-white text-xs font-bold px-3.5 py-2.5 rounded-2xl shadow-xl flex flex-wrap items-center justify-between gap-2 border border-amber-400/50"
+        >
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="w-6 h-6 rounded-full bg-amber-400 text-emerald-950 flex items-center justify-center text-xs font-black shrink-0">🧭</span>
+            <div class="min-w-0">
+              <div class="text-[10px] uppercase tracking-wider text-amber-300 font-extrabold">
+                {{ activeGuide.fromGps ? 'Guía en vivo desde tu GPS' : 'Desde Parque Principal' }}
+              </div>
+              <div class="truncate font-extrabold text-white text-xs">
+                Hacia: {{ activeGuide.targetName }}
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <span class="bg-white/15 text-amber-300 px-2 py-0.5 rounded-lg text-[11px] font-extrabold tabular-metrics">
+              📏 {{ activeGuide.distanceLabel }} · 🚶 ~{{ activeGuide.walkingMinutes }} min
+            </span>
+            <button
+              v-if="!isTrackingLocation"
+              @click="toggleUserLocation"
+              type="button"
+              class="bg-amber-400 hover:bg-amber-300 text-emerald-950 px-2 py-0.5 rounded-lg text-[10px] font-extrabold cursor-pointer"
+              title="Activar mi ubicación GPS real"
+            >
+              📡 Usar GPS
+            </button>
+            <button @click="clearGuideLine" type="button" title="Cerrar guía peatonal" class="text-slate-300 hover:text-rose-400 font-bold px-1 cursor-pointer">✕</button>
+          </div>
+        </div>
+
+        <!-- HUD de Ruta Ecológica Seleccionada + Termómetro Multicolor + Paradas Aliadas -->
+        <div v-if="activeRouteBanner" class="bg-white/95 backdrop-blur-md text-emerald-950 text-xs font-bold p-3 rounded-2xl shadow-lg flex flex-col gap-2 border-2 border-amber-400">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="w-3 h-3 rounded-full shrink-0" :style="{ backgroundColor: activeRouteBanner.color || '#eab308' }"></span>
+              <span class="truncate max-w-[150px] sm:max-w-[200px] font-extrabold">🥾 {{ activeRouteBanner.name }}</span>
+              <span v-if="activeRouteBanner.difficulty" class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                {{ activeRouteBanner.difficulty }}
+              </span>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span v-if="activeRouteBanner.distance_label" class="text-[11px] bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-full tabular-metrics border border-emerald-200/60">
+                {{ activeRouteBanner.distance_label }}
+              </span>
+              <button @click="centerActiveRoute" type="button" title="Ver ruta completa en el mapa" class="text-emerald-800 hover:text-emerald-950 bg-emerald-100/80 px-2 py-0.5 rounded-full text-[11px] cursor-pointer">
+                🎯
+              </button>
+              <button v-if="activeRouteBanner.startCoord" @click="openActiveRouteStart" type="button" title="Guiarme al punto de inicio en el mapa" class="text-emerald-900 hover:bg-amber-300 bg-amber-200/80 px-2 py-0.5 rounded-full text-[11px] cursor-pointer">
+                🟢 Inicio
+              </button>
+              <button @click="clearSelectedRoute" type="button" title="Salir de la ruta" class="text-slate-400 hover:text-rose-600 font-bold px-1 cursor-pointer">✕</button>
+            </div>
+          </div>
+
+          <!-- Barra de Esfuerzo Multicolor por Tramos -->
+          <div v-if="activeRouteBanner.difficulty_breakdown && activeRouteBanner.difficulty_breakdown.length > 0" class="space-y-1">
+            <div class="w-full h-2 rounded-full overflow-hidden flex bg-slate-100">
+              <div
+                v-for="seg in activeRouteBanner.difficulty_breakdown"
+                :key="seg.difficulty"
+                class="h-full"
+                :style="{ width: `${seg.percent ?? seg.percentage ?? 100}%`, backgroundColor: seg.color }"
+                :title="`${seg.difficulty}: ${seg.percent ?? seg.percentage ?? 100}%`"
+              ></div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 text-[10px] text-slate-600">
+              <span v-for="seg in activeRouteBanner.difficulty_breakdown" :key="seg.difficulty" class="inline-flex items-center gap-1 tabular-metrics">
+                <span class="w-2 h-2 rounded-full" :style="{ backgroundColor: seg.color }"></span>
+                <span>{{ seg.difficulty }} {{ seg.percent ?? seg.percentage ?? 100 }}%</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Paradas y Recompensas Comerciales cercanas al Sendero -->
+          <div v-if="routeNearbyPlaces.length > 0" class="pt-1.5 border-t border-slate-200/80">
+            <div class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-900 mb-1.5 flex items-center justify-between">
+              <span>🍹 Paradas y Recompensas cerca del sendero</span>
+              <span class="text-amber-700">{{ routeNearbyPlaces.length }} disponibles</span>
+            </div>
+            <div class="flex gap-1.5 overflow-x-auto hide-scrollbar pb-0.5">
+              <button
+                v-for="stop in routeNearbyPlaces"
+                :key="stop.place_id"
+                type="button"
+                @click="selectSearchResult(stop)"
+                class="shrink-0 bg-stone-50 hover:bg-amber-50 border border-slate-200/90 hover:border-amber-300 rounded-xl px-2.5 py-1.5 text-left transition-all cursor-pointer flex items-center gap-2 max-w-[210px]"
+              >
+                <img :src="stop.image_url || '/logo.png'" class="w-7 h-7 rounded-lg object-cover shrink-0 border border-slate-200" />
+                <div class="min-w-0">
+                  <div class="text-[11px] font-extrabold text-emerald-950 truncate flex items-center gap-1">
+                    <span v-if="stop.is_partner" class="text-amber-500">★</span>
+                    <span>{{ stop.name }}</span>
+                  </div>
+                  <div class="text-[9px] text-emerald-800 font-bold truncate">
+                    {{ stop.offer_title ? `🎁 ${stop.offer_title}` : stop.category }}
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -290,8 +488,7 @@
               type="button"
               class="flex-1 bg-amber-400 hover:bg-amber-300 text-emerald-950 font-extrabold py-3 px-4 rounded-xl shadow-sm transition-colors flex justify-center items-center gap-2 cursor-pointer text-sm"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
-              Ver en el mapa
+              <span>🧭 Guiarme en el mapa</span>
             </button>
             
             <button 
@@ -306,61 +503,359 @@
       </div>
     </transition>
 
-    <!-- Panel Lateral Derecho (Detalles del Lugar del Mapa) -->
+    <!-- Panel Lateral Derecho (Ficha Comercial y Turística del Lugar) -->
     <transition name="slide-fade">
-      <div v-if="selectedPlace" class="fixed inset-y-0 right-0 w-full md:w-[420px] bg-white shadow-2xl z-[9999] flex flex-col border-l border-slate-100">
+      <div v-if="selectedPlace" class="fixed inset-y-0 right-0 w-full md:w-[430px] bg-white shadow-2xl z-[9999] flex flex-col border-l border-slate-100">
         <!-- Botón Cerrar -->
-        <button @click="selectedPlace = null" type="button" class="absolute top-4 right-4 bg-emerald-950/70 backdrop-blur-md text-white p-2 rounded-full shadow-md hover:bg-emerald-950 transition-colors z-10 cursor-pointer">
+        <button @click="closePlaceDrawer" type="button" class="absolute top-4 right-4 bg-emerald-950/75 backdrop-blur-md text-white p-2 rounded-full shadow-md hover:bg-emerald-950 transition-colors z-10 cursor-pointer">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
 
-        <!-- Imagen Destacada del Lugar (Altura controlada en móvil y web) -->
+        <!-- Imagen Destacada del Lugar + Insignia de Comercio Aliado -->
         <div class="w-full h-44 sm:h-52 max-h-[28vh] relative shrink-0 overflow-hidden bg-slate-100 border-b border-slate-200">
           <img :src="selectedPlace.image_url || '/logo.png'" :alt="selectedPlace.name" class="w-full h-full object-cover object-center" />
-          <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent"></div>
+          <div class="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent"></div>
+
+          <!-- Sello Superior Izquierdo: Comercio Aliado Oficial -->
+          <div v-if="selectedPlace.is_partner || selectedPlace.offer_title" class="absolute top-3.5 left-4">
+            <span class="px-3 py-1 rounded-full text-[11px] font-extrabold bg-amber-400 text-emerald-950 shadow-md flex items-center gap-1 border border-white/70">
+              <span>🤝 Comercio Aliado Oficial</span>
+            </span>
+          </div>
+
           <div class="absolute bottom-3 left-4 right-4 flex flex-wrap items-center justify-between gap-2">
             <span v-if="selectedPlace.category" class="px-3 py-1 rounded-full text-[11px] font-extrabold text-white shadow-sm" :style="{ backgroundColor: getCategoryColor(selectedPlace.category) }">
               {{ selectedPlace.category }}
             </span>
-            <span v-if="getDistanceFromUser(selectedPlace)" class="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-white/95 text-emerald-950 shadow-sm flex items-center gap-1 tabular-metrics">
-              <span>📍</span>
-              <span>A {{ getDistanceFromUser(selectedPlace) }}</span>
-            </span>
+            <div class="flex items-center gap-1.5">
+              <span v-if="getDistanceFromUser(selectedPlace)" class="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-white/95 text-emerald-950 shadow-sm flex items-center gap-1 tabular-metrics">
+                <span>📍</span>
+                <span>A {{ getDistanceFromUser(selectedPlace) }}</span>
+              </span>
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-950/85 text-amber-300 shadow-sm tabular-metrics">
+                🛂 {{ selectedPlace.checkins_count || 0 }} sellos
+              </span>
+            </div>
           </div>
         </div>
 
-        <!-- Contenido Detallado Editorial -->
+        <!-- Contenido Detallado Editorial y Comercial -->
         <div class="flex-1 overflow-y-auto p-5 sm:p-6 flex flex-col gap-3.5 hide-scrollbar bg-stone-50">
-          <h2 class="text-xl sm:text-2xl font-extrabold text-emerald-950 leading-tight">{{ selectedPlace.name }}</h2>
+          <div class="flex items-start justify-between gap-2">
+            <h2 class="text-xl sm:text-2xl font-extrabold text-emerald-950 leading-tight">{{ selectedPlace.name }}</h2>
+            <button
+              @click="toggleSavePlace(selectedPlace)"
+              type="button"
+              :class="[
+                'shrink-0 px-3 py-1.5 rounded-full text-xs font-extrabold border transition-all cursor-pointer flex items-center gap-1',
+                isPlaceInPlan(selectedPlace.place_id)
+                  ? 'bg-amber-400 text-emerald-950 border-amber-500 shadow-xs'
+                  : 'bg-white text-slate-700 hover:bg-amber-50 border-slate-200'
+              ]"
+              title="Guardar en Mi Plan de viaje"
+            >
+              <span>{{ isPlaceInPlan(selectedPlace.place_id) ? '⭐ En Mi Plan' : '☆ Mi Plan' }}</span>
+            </button>
+          </div>
 
-          <div v-if="selectedPlace.formatted_address" class="bg-white p-3.5 rounded-2xl border border-slate-200/80 flex items-start gap-2.5 shadow-2xs">
-            <svg class="w-4 h-4 shrink-0 text-emerald-700 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
-            <span class="text-slate-700 text-xs sm:text-sm font-medium">{{ selectedPlace.formatted_address }}</span>
+          <!-- Píldoras de Especialidad, Horario y Rango de Precio -->
+          <div v-if="selectedPlace.specialty || selectedPlace.schedule || selectedPlace.price_range" class="flex flex-wrap gap-1.5">
+            <span v-if="selectedPlace.specialty" class="inline-flex items-center gap-1 text-xs font-bold bg-amber-50 text-emerald-950 border border-amber-200/90 px-3 py-1 rounded-xl">
+              ✨ {{ selectedPlace.specialty }}
+            </span>
+            <span v-if="selectedPlace.schedule" class="inline-flex items-center gap-1 text-xs font-semibold bg-white text-slate-700 border border-slate-200/80 px-2.5 py-1 rounded-xl">
+              🕒 {{ selectedPlace.schedule }}
+            </span>
+            <span v-if="selectedPlace.price_range" class="inline-flex items-center gap-1 text-xs font-extrabold bg-emerald-50 text-emerald-900 border border-emerald-200/70 px-2.5 py-1 rounded-xl">
+              💳 {{ selectedPlace.price_range }}
+            </span>
+          </div>
+
+          <!-- Tarjeta Troquelada de Beneficio / Cupón Exclusivo Zapatoqueando -->
+          <div
+            v-if="selectedPlace.offer_title || selectedPlace.is_partner"
+            class="bg-gradient-to-br from-amber-50 via-white to-amber-100/60 border-2 border-dashed border-amber-400 rounded-2xl p-4 shadow-xs space-y-2.5"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[10px] font-black uppercase tracking-wider text-amber-900 bg-amber-300/80 px-2.5 py-0.5 rounded-full">
+                🎁 Beneficio Exclusivo App
+              </span>
+              <span v-if="selectedPlace.offer_code" class="text-[11px] font-mono font-extrabold text-emerald-950 bg-white px-2 py-0.5 rounded border border-amber-300">
+                #{{ selectedPlace.offer_code }}
+              </span>
+            </div>
+            <p class="text-sm font-extrabold text-emerald-950 leading-snug">
+              {{ selectedPlace.offer_title || 'Atención preferencial y recomendación oficial del Pasaporte Zapatoqueando' }}
+            </p>
+            <div v-if="activeCouponTicketPlaceId === selectedPlace.place_id" class="bg-emerald-950 text-white p-3 rounded-xl space-y-1 border border-amber-400/50">
+              <div class="flex items-center justify-between text-[10px] text-amber-300 font-bold uppercase tracking-wider">
+                <span>🎟️ Ticket Activo en Caja</span>
+                <span class="tabular-metrics">{{ liveClockLabel }}</span>
+              </div>
+              <div class="text-xs font-extrabold">Muestra esta pantalla en {{ selectedPlace.name }}</div>
+              <div class="text-[11px] font-mono text-amber-400 font-black">
+                Código: {{ selectedPlace.offer_code || `ZPK-${selectedPlace.place_id}` }}
+              </div>
+            </div>
+            <button
+              v-else
+              @click="activateCouponInBox(selectedPlace)"
+              type="button"
+              class="w-full bg-emerald-950 hover:bg-emerald-900 text-amber-400 font-extrabold py-2 px-3 rounded-xl text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+            >
+              <span>🎟️ Activar Ticket para Mostrar en Caja</span>
+            </button>
+          </div>
+
+          <!-- Dirección y Audio-Guía -->
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-2.5 shadow-2xs">
+            <div class="flex items-start gap-2 min-w-0">
+              <svg class="w-4 h-4 shrink-0 text-emerald-700 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+              <span class="text-slate-700 text-xs sm:text-sm font-medium">{{ selectedPlace.formatted_address || 'Zapatoca, Santander' }}</span>
+            </div>
+            <button
+              @click="toggleAudioGuide(selectedPlace)"
+              type="button"
+              :class="[
+                'shrink-0 px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold transition-colors cursor-pointer flex items-center gap-1 border',
+                isSpeakingAudio
+                  ? 'bg-rose-100 text-rose-800 border-rose-300'
+                  : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border-emerald-200'
+              ]"
+              title="Escuchar historia y recomendación con voz"
+            >
+              <span>{{ isSpeakingAudio ? '⏹️ Detener' : '🔊 Escuchar' }}</span>
+            </button>
           </div>
 
           <div v-if="selectedPlace.description" class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
             <p class="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">{{ selectedPlace.description }}</p>
           </div>
 
-          <!-- Botones de Acción -->
-          <div class="mt-auto pt-4 flex flex-col sm:flex-row gap-2.5">
-            <button 
-              @click="openDirections(selectedPlace)" 
-              type="button"
-              class="flex-1 bg-amber-400 hover:bg-amber-300 text-emerald-950 font-extrabold py-3 px-4 rounded-xl shadow-sm transition-colors flex justify-center items-center gap-2 cursor-pointer text-sm"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
-              Ubicar en el mapa
-            </button>
+          <!-- Sellar Pasaporte Turístico Zapatoca -->
+          <div class="bg-white p-3.5 rounded-2xl border border-emerald-950/15 flex items-center justify-between gap-3 shadow-2xs">
+            <div class="min-w-0">
+              <div class="text-xs font-extrabold text-emerald-950 flex items-center gap-1.5">
+                <span>🛂 Pasaporte Turístico Zapatoca</span>
+              </div>
+              <p class="text-[11px] text-slate-500 leading-snug">
+                {{ hasPassportStamp(selectedPlace.place_id) ? '¡Ya tienes el sello oficial de este lugar en tu Pasaporte!' : 'Registra tu visita y suma sellos para desbloquear beneficios.' }}
+              </p>
+            </div>
             <button
-              @click="sharePlaceItem(selectedPlace)"
+              @click="stampPlaceInPassport(selectedPlace)"
               type="button"
-              class="bg-emerald-950 hover:bg-emerald-900 text-white font-bold py-3 px-4 rounded-xl shadow-sm transition-colors flex justify-center items-center gap-2 cursor-pointer text-sm"
-              title="Compartir ubicación de este lugar"
+              :disabled="hasPassportStamp(selectedPlace.place_id)"
+              :class="[
+                'shrink-0 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer',
+                hasPassportStamp(selectedPlace.place_id)
+                  ? 'bg-emerald-100 text-emerald-900 border border-emerald-300 cursor-default'
+                  : 'bg-emerald-950 hover:bg-emerald-900 text-amber-400 shadow-sm'
+              ]"
             >
-              <span>📤 Compartir</span>
+              {{ hasPassportStamp(selectedPlace.place_id) ? '💮 Sellado ✓' : '💮 Sellar Visita' }}
             </button>
           </div>
+
+          <!-- Botones Principales de Conversión (WhatsApp B2B + Guía en Mapa + Compartir) -->
+          <div class="mt-auto pt-2 flex flex-col gap-2">
+            <button
+              v-if="selectedPlace.whatsapp || selectedPlace.is_partner || selectedPlace.offer_title"
+              @click="contactPlaceWhatsApp(selectedPlace)"
+              type="button"
+              class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-3 px-4 rounded-xl shadow-sm transition-colors flex justify-center items-center gap-2 cursor-pointer text-sm"
+            >
+              <span>💬 Reservar / Pedir con Beneficio por WhatsApp</span>
+            </button>
+
+            <div class="flex flex-col sm:flex-row gap-2">
+              <button 
+                @click="openDirections(selectedPlace)" 
+                type="button"
+                class="flex-1 bg-amber-400 hover:bg-amber-300 text-emerald-950 font-extrabold py-3 px-4 rounded-xl shadow-sm transition-colors flex justify-center items-center gap-2 cursor-pointer text-sm"
+              >
+                <span>🧭 Guiarme en el mapa</span>
+              </button>
+              <button
+                @click="sharePlaceItem(selectedPlace)"
+                type="button"
+                class="bg-emerald-950 hover:bg-emerald-900 text-white font-bold py-3 px-4 rounded-xl shadow-sm transition-colors flex justify-center items-center gap-2 cursor-pointer text-sm"
+                title="Compartir ubicación de este lugar"
+              >
+                <span>📤 Compartir</span>
+              </button>
+            </div>
+
+            <!-- CTA para que el dueño de un negocio aún no aliado quiera vincularse -->
+            <button
+              v-if="!selectedPlace.is_partner"
+              @click="openPartnerApplyForPlace(selectedPlace)"
+              type="button"
+              class="mt-1 w-full text-center text-[11px] font-bold text-emerald-900 hover:text-emerald-950 bg-amber-50/90 hover:bg-amber-100 border border-amber-200/80 py-2 px-3 rounded-xl transition-colors cursor-pointer"
+            >
+              🏪 ¿Eres el propietario de {{ selectedPlace.name }}? Vincúlate como Comercio Aliado aquí →
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Modal del Pasaporte Turístico Oficial Zapatoca -->
+    <transition name="slide-up">
+      <div v-if="showPassportModal" class="fixed inset-0 bg-emerald-950/65 backdrop-blur-xs z-[9999] flex items-center justify-center p-4">
+        <div class="bg-stone-50 rounded-3xl shadow-2xl w-full max-w-lg max-h-[88vh] flex flex-col overflow-hidden border border-amber-300/70">
+          <!-- Cabecera Editorial del Pasaporte -->
+          <div class="bg-emerald-950 text-white px-6 py-5 flex items-start justify-between gap-3 relative overflow-hidden">
+            <div>
+              <span class="text-[10px] font-black uppercase tracking-widest text-amber-400 block">República del Clima de Seda · Santander</span>
+              <h3 class="text-lg sm:text-xl font-extrabold text-white mt-0.5 flex items-center gap-2">
+                <span>🛂 Pasaporte Turístico Zapatoca</span>
+              </h3>
+              <p class="text-xs text-emerald-200 mt-1">
+                Nivel actual: <strong class="text-amber-300">{{ passportLevel.title }}</strong> ({{ passportStamps.length }} sellos)
+              </p>
+            </div>
+            <button @click="showPassportModal = false" type="button" class="text-emerald-200 hover:text-white p-1.5 rounded-full bg-white/10 cursor-pointer">
+              ✕
+            </button>
+          </div>
+
+          <div class="flex-1 overflow-y-auto p-5 space-y-4">
+            <!-- Barra de Progreso de Recompensas -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs space-y-2">
+              <div class="flex justify-between items-center text-xs font-extrabold text-emerald-950">
+                <span>{{ passportLevel.badge }} {{ passportLevel.title }}</span>
+                <span class="tabular-metrics text-amber-700">{{ passportStamps.length }} / {{ passportLevel.nextGoal }} sellos</span>
+              </div>
+              <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-gradient-to-r from-emerald-700 via-amber-500 to-amber-400 transition-all duration-500"
+                  :style="{ width: `${Math.min(100, Math.round((passportStamps.length / passportLevel.nextGoal) * 100))}%` }"
+                ></div>
+              </div>
+              <p class="text-[11px] text-slate-600 leading-snug">
+                {{ passportLevel.hint }}
+              </p>
+            </div>
+
+            <!-- Sellos Estampados -->
+            <div>
+              <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-500 mb-2">💮 Mis Sellos Coleccionados ({{ passportStamps.length }})</h4>
+              <div v-if="passportStamps.length === 0" class="bg-white p-4 rounded-2xl border border-dashed border-slate-300 text-center text-xs text-slate-500">
+                Aún no tienes sellos. Abre cualquier atractivo o comercio aliado en el mapa y pulsa <strong>"💮 Sellar Visita"</strong>.
+              </div>
+              <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                <div
+                  v-for="stamp in passportStamps"
+                  :key="stamp.place_id"
+                  class="bg-white p-3 rounded-2xl border-2 border-emerald-800/30 shadow-2xs flex flex-col justify-between relative overflow-hidden"
+                >
+                  <span class="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full self-start mb-1">
+                    💮 Sello Oficial
+                  </span>
+                  <div class="font-extrabold text-xs text-emerald-950 leading-tight truncate">{{ stamp.name }}</div>
+                  <div class="text-[10px] text-slate-400 mt-1 tabular-metrics">{{ stamp.date }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Beneficios Disponibles en Comercios Aliados -->
+            <div>
+              <h4 class="text-xs font-extrabold uppercase tracking-wider text-amber-800 mb-2">🎁 Beneficios Activos en Comercios Aliados ({{ partnerPlacesWithOffers.length }})</h4>
+              <div class="space-y-2">
+                <div
+                  v-for="partner in partnerPlacesWithOffers"
+                  :key="partner.place_id"
+                  @click="showPassportModal = false; selectSearchResult(partner)"
+                  class="bg-white hover:bg-amber-50/60 p-3 rounded-2xl border border-amber-300/80 shadow-2xs flex items-center justify-between gap-3 cursor-pointer transition-colors"
+                >
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <img :src="partner.image_url || '/logo.png'" class="w-10 h-10 rounded-xl object-cover shrink-0 border border-slate-200" />
+                    <div class="min-w-0">
+                      <div class="text-xs font-extrabold text-emerald-950 truncate">🤝 {{ partner.name }}</div>
+                      <div class="text-[11px] font-bold text-amber-800 truncate">
+                        🎁 {{ partner.offer_title || 'Beneficio exclusivo presentando tu Pasaporte' }}
+                      </div>
+                    </div>
+                  </div>
+                  <span class="shrink-0 text-[11px] font-extrabold bg-amber-400 text-emerald-950 px-2.5 py-1 rounded-xl">
+                    Ver →
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Modal B2B Express: "¿Tienes un negocio en Zapatoca? Vincúlate en 30 segundos" -->
+    <transition name="slide-up">
+      <div v-if="showPartnerApplyModal" class="fixed inset-0 bg-emerald-950/65 backdrop-blur-xs z-[9999] flex items-center justify-center p-4">
+        <div class="bg-stone-50 rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden border border-amber-300/80">
+          <div class="bg-emerald-950 text-white px-6 py-5 flex items-start justify-between gap-3">
+            <div>
+              <span class="text-[10px] font-black uppercase tracking-widest text-amber-400 block">Alianza Comercial B2B · Zapatoqueando</span>
+              <h3 class="text-lg font-extrabold text-white mt-0.5">🏪 Vincular mi Negocio a la Plataforma</h3>
+              <p class="text-xs text-emerald-200 mt-1">Atrae turistas y senderistas directo a tu WhatsApp y caja registradora.</p>
+            </div>
+            <button @click="showPartnerApplyModal = false" type="button" class="text-emerald-200 hover:text-white p-1.5 rounded-full bg-white/10 cursor-pointer">
+              ✕
+            </button>
+          </div>
+
+          <form @submit.prevent="submitPartnerApplication" class="flex-1 overflow-y-auto p-5 space-y-3.5">
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-xs text-emerald-950 space-y-1">
+              <div class="font-extrabold">¿Por qué vincular tu comercio a Zapatoqueando?</div>
+              <div>1. 📍 <strong>Pin Dorado Destacado</strong> en el mapa y en el filtro de Beneficios.</div>
+              <div>2. 🥾 <strong>Parada Recomendada</strong> para los turistas que terminan senderos cerca de tu local.</div>
+              <div>3. 📲 <strong>Reservas y pedidos directo a tu WhatsApp</strong> sin comisiones de intermediarios.</div>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600 mb-1">Nombre de tu Negocio</label>
+              <input v-model="partnerApplyForm.businessName" type="text" required placeholder="Ej: Restaurante El Solar / Café La Loma" class="w-full px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-sm text-emerald-950 font-semibold outline-none focus:border-emerald-700" />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600 mb-1">Categoría</label>
+                <select v-model="partnerApplyForm.category" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm font-bold text-emerald-950 outline-none">
+                  <option value="Restaurantes">🍽️ Restaurante</option>
+                  <option value="CafeBar">☕ Café / Bar</option>
+                  <option value="Hospedajes">🏨 Hotel / Hospedaje</option>
+                  <option value="Fuentes de soda">🥤 Fuente de soda / Postres</option>
+                  <option value="Puntos de interés">🛍️ Artesanías / Dulces / Experiencias</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600 mb-1">Tu WhatsApp Comercial</label>
+                <input v-model="partnerApplyForm.whatsapp" type="text" required placeholder="Ej: 3150000000" class="w-full px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-sm text-emerald-950 font-semibold outline-none" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600 mb-1">Especialidad de la Casa</label>
+              <input v-model="partnerApplyForm.specialty" type="text" required placeholder="Ej: Cabro santandereano, génovas, café orgánico, vino de naranja" class="w-full px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-sm text-emerald-950 outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600 mb-1">🎁 ¿Qué beneficio o cortesía darás a los turistas de la App?</label>
+              <input v-model="partnerApplyForm.offerTitle" type="text" required placeholder="Ej: 10% de descuento o bebida/postre de cortesía" class="w-full px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-sm text-emerald-950 font-semibold outline-none" />
+              <div class="flex flex-wrap gap-1.5 mt-1.5">
+                <button type="button" @click="partnerApplyForm.offerTitle = '10% de descuento mostrando la App Zapatoqueando'" class="text-[10px] font-bold bg-amber-100 text-emerald-950 px-2 py-0.5 rounded-lg cursor-pointer">+ 10% Dcto</button>
+                <button type="button" @click="partnerApplyForm.offerTitle = 'Café o postre típico de cortesía con tu almuerzo'" class="text-[10px] font-bold bg-amber-100 text-emerald-950 px-2 py-0.5 rounded-lg cursor-pointer">+ Cortesía</button>
+                <button type="button" @click="partnerApplyForm.offerTitle = 'Bebida refrescante 2x1 para senderistas'" class="text-[10px] font-bold bg-amber-100 text-emerald-950 px-2 py-0.5 rounded-lg cursor-pointer">+ 2x1 Senderistas</button>
+              </div>
+            </div>
+
+            <div class="pt-2 flex justify-end gap-2">
+              <button type="button" @click="showPartnerApplyModal = false" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200 cursor-pointer">Cancelar</button>
+              <button type="submit" class="bg-amber-400 hover:bg-amber-300 text-emerald-950 font-extrabold px-5 py-2.5 rounded-xl text-xs shadow-sm cursor-pointer">
+                📲 Enviar Solicitud de Alianza
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </transition>
@@ -380,41 +875,66 @@ import { useRoute } from 'vue-router'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-let routesLayer = null;
-let streetsLayer = null;
-let markersLayer = null;
-let sliderInterval = null;
-let zapatocaMarker = null;
-let laFuenteMarker = null;
-let userLocationMarker = null;
-let userAccuracyCircle = null;
-let geoWatchId = null;
-let locationNoticeTimeout = null;
-let zapatocaBounds = null;
+let routesLayer = null
+let activeRouteSegmentsLayer = null
+let guideLineLayer = null
+let planCircuitLayer = null
+let streetsLayer = null
+let markersLayer = null
+let zapatocaMarker = null
+let laFuenteMarker = null
+let userLocationMarker = null
+let userAccuracyCircle = null
+let geoWatchId = null
+let locationNoticeTimeout = null
+let liveClockInterval = null
+let zapatocaBounds = null
 
-let currentSelectedRouteId = null;
-let currentSelectedRouteName = null; // Guardar ruta activa
+let currentSelectedRouteId = null
+let currentSelectedRouteName = null
+
+const PARQUE_PRINCIPAL_COORDS = { lat: 6.816801, lng: -73.268689 }
+const DIFFICULTY_COLORS = {
+  'Fácil': '#eab308',
+  'Media': '#f97316',
+  'Difícil': '#ea580c',
+  'Experto': '#dc2626'
+}
 
 // El plugin leaflet-textpath requiere que L esté en window
 window.L = L
 import 'leaflet-textpath'
 
-// Fix for default marker icons in Vite/Vue
-// Using a minimalist modern design instead of default markers
-delete L.Icon.Default.prototype._getIconUrl;
+delete L.Icon.Default.prototype._getIconUrl
 
-// Helper to create a minimal colored dot icon
-const createMinimalDot = (colorHex) => {
+// Marcador diferenciado: los Comercios Aliados tienen halo dorado e insignia estrella
+const createMinimalDot = (colorHex, isPartner = false) => {
+  if (isPartner) {
+    return L.divIcon({
+      className: 'minimal-marker partner-marker',
+      html: `
+        <div style="position:relative;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.25)'" onmouseout="this.style.transform='scale(1)'">
+          <svg viewBox="0 0 28 28" width="26" height="26" style="filter: drop-shadow(0px 3px 5px rgba(5,46,22,0.55));">
+            <circle cx="14" cy="14" r="12" fill="#fbbf24" stroke="#ffffff" stroke-width="2"/>
+            <circle cx="14" cy="14" r="8.5" fill="${colorHex}"/>
+          </svg>
+          <span style="position:absolute;top:-4px;right:-4px;background:#052e16;color:#fbbf24;font-size:9px;font-weight:900;line-height:1;padding:2px 3px;border-radius:9999px;border:1.5px solid #fbbf24;">★</span>
+        </div>
+      `,
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+      popupAnchor: [0, -14]
+    })
+  }
   return L.divIcon({
     className: 'minimal-marker',
     html: `<svg viewBox="0 0 24 24" width="20" height="20" style="filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.5)); transform-origin: center; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.3)'" onmouseout="this.style.transform='scale(1)'"><circle cx="12" cy="12" r="10" fill="${colorHex}" stroke="white" stroke-width="2"/></svg>`,
     iconSize: [22, 22],
     iconAnchor: [11, 11],
     popupAnchor: [0, -11]
-  });
-};
+  })
+}
 
-// Icono pulsante para la ubicación GPS del usuario
 const createUserLocationIcon = () => {
   return L.divIcon({
     className: 'user-gps-marker',
@@ -432,6 +952,7 @@ const createUserLocationIcon = () => {
 
 const places = ref([])
 const posters = ref([])
+const allRoutesFeatures = ref([])
 const loading = ref(true)
 const error = ref(null)
 const selectedPlace = ref(null)
@@ -449,7 +970,276 @@ const isLocating = ref(false)
 const isTrackingLocation = ref(false)
 const isUserOutsideZapatoca = ref(false)
 const locationNotice = ref(null)
+
+// Estados B2B2C: Filtros de Beneficios, Planes Curados, Senderos, Mi Plan, Pasaporte, Audio-Guía y Guía Peatonal
+const onlyWithBenefits = ref(false)
+const showPlansPicker = ref(false)
+const activeCuratedPlanId = ref(null)
+const showAllTrails = ref(false)
+const onlySavedPlan = ref(false)
+const savedPlaceIds = ref([])
+const passportStamps = ref([])
+const showPassportModal = ref(false)
+const showPartnerApplyModal = ref(false)
+const activeCouponTicketPlaceId = ref(null)
+const liveClockLabel = ref('')
+const isSpeakingAudio = ref(false)
+const activeGuide = ref(null)
+
+const partnerApplyForm = ref({
+  businessName: '',
+  category: 'Restaurantes',
+  whatsapp: '',
+  specialty: '',
+  offerTitle: '10% de descuento mostrando la App Zapatoqueando'
+})
+
+const curatedPlans = [
+  {
+    id: 'cafe-sabores',
+    icon: '☕',
+    shortTitle: 'Plan Café y Sabores',
+    title: 'Ruta del Café, Génova y Sabores',
+    subtitle: 'Cafés especiales, restaurantes típicos y dulces tradicionales',
+    categories: ['CafeBar', 'Restaurantes', 'Fuentes de soda']
+  },
+  {
+    id: 'romantico-miradores',
+    icon: '💑',
+    shortTitle: 'Plan Miradores',
+    title: 'Fin de Semana Romántico y Miradores',
+    subtitle: 'Atractivos panorámicos, hospedajes con encanto y buena mesa',
+    categories: ['Lugares turísticos', 'Hospedajes', 'CafeBar']
+  },
+  {
+    id: 'familia-tradicion',
+    icon: '👨‍👩‍👧‍👦',
+    shortTitle: 'Plan Familia',
+    title: 'Plan Familia, Historia y Tradición',
+    subtitle: 'Puntos históricos, postres, parques y gastronomía familiar',
+    categories: ['Puntos de interés', 'Lugares turísticos', 'Fuentes de soda', 'Restaurantes']
+  },
+  {
+    id: 'senderista',
+    icon: '🥾',
+    shortTitle: 'Plan Senderista',
+    title: 'Aventura Senderista + Hidratación',
+    subtitle: 'Activa la red de senderos y los puntos de hidratación cercanos',
+    categories: ['Lugares turísticos', 'Fuentes de soda', 'CafeBar'],
+    enableTrails: true
+  }
+]
+
+const activeCuratedPlan = computed(() => {
+  return curatedPlans.find(p => p.id === activeCuratedPlanId.value) || null
+})
+
 let map = null
+
+const updateLiveClock = () => {
+  const now = new Date()
+  liveClockLabel.value = now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+}
+
+const loadLocalTouristState = () => {
+  try {
+    const rawPlan = localStorage.getItem('zapatoqueando_mi_plan_v1')
+    savedPlaceIds.value = rawPlan ? JSON.parse(rawPlan) : []
+  } catch {
+    savedPlaceIds.value = []
+  }
+  try {
+    const rawPassport = localStorage.getItem('zapatoqueando_passport_v1')
+    passportStamps.value = rawPassport ? JSON.parse(rawPassport) : []
+  } catch {
+    passportStamps.value = []
+  }
+}
+
+const isPlaceInPlan = (placeId) => {
+  return savedPlaceIds.value.includes(String(placeId))
+}
+
+const toggleSavePlace = (place) => {
+  if (!place) return
+  const id = String(place.place_id)
+  const idx = savedPlaceIds.value.indexOf(id)
+  if (idx === -1) {
+    savedPlaceIds.value.push(id)
+    showLocationNotice(`⭐ "${place.name}" guardado en Mi Plan de viaje.`, 3200)
+  } else {
+    savedPlaceIds.value.splice(idx, 1)
+    if (savedPlaceIds.value.length === 0) {
+      onlySavedPlan.value = false
+    }
+  }
+  localStorage.setItem('zapatoqueando_mi_plan_v1', JSON.stringify(savedPlaceIds.value))
+  updateMarkers()
+  syncMarkersVisibility()
+}
+
+const hasPassportStamp = (placeId) => {
+  return passportStamps.value.some(s => String(s.place_id) === String(placeId))
+}
+
+const passportLevel = computed(() => {
+  const count = passportStamps.value.length
+  if (count >= 5) {
+    return {
+      badge: '👑',
+      title: 'Embajador del Clima de Seda',
+      nextGoal: Math.max(count, 8),
+      hint: '¡Nivel máximo alcanzado! Presenta tu Pasaporte en cualquier Comercio Aliado para redimir tus beneficios VIP.'
+    }
+  }
+  if (count >= 2) {
+    return {
+      badge: '🥾',
+      title: 'Caminante de Lengerke',
+      nextGoal: 5,
+      hint: `Te faltan ${5 - count} sellos para convertirte en Embajador del Clima de Seda.`
+    }
+  }
+  return {
+    badge: '🌱',
+    title: 'Visitante Curioso',
+    nextGoal: 2,
+    hint: 'Sella tus primeros 2 lugares o comercios aliados en Zapatoca para subir al nivel Caminante de Lengerke.'
+  }
+})
+
+const partnerPlacesWithOffers = computed(() => {
+  return places.value.filter(p => p.is_partner || p.offer_title)
+})
+
+const partnerBenefitsCount = computed(() => {
+  return partnerPlacesWithOffers.value.length
+})
+
+const trackPlaceMetric = async (placeId, type) => {
+  if (!placeId) return
+  try {
+    const res = await fetch(`/api/places/${encodeURIComponent(placeId)}/track`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type })
+    })
+    if (res.ok) {
+      const json = await res.json().catch(() => null)
+      if (json?.data) {
+        const idx = places.value.findIndex(p => String(p.place_id) === String(placeId))
+        if (idx !== -1) {
+          places.value[idx] = { ...places.value[idx], ...json.data }
+        }
+        if (selectedPlace.value && String(selectedPlace.value.place_id) === String(placeId)) {
+          selectedPlace.value = { ...selectedPlace.value, ...json.data }
+        }
+      }
+    }
+  } catch {
+    // Silencioso si está offline
+  }
+}
+
+const stampPlaceInPassport = (place) => {
+  if (!place || hasPassportStamp(place.place_id)) return
+  const now = new Date()
+  const stamp = {
+    place_id: String(place.place_id),
+    name: place.name,
+    category: place.category,
+    date: now.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })
+  }
+  passportStamps.value.unshift(stamp)
+  localStorage.setItem('zapatoqueando_passport_v1', JSON.stringify(passportStamps.value))
+  window.dispatchEvent(new CustomEvent('passport-updated'))
+  trackPlaceMetric(place.place_id, 'checkin')
+  showLocationNotice(`💮 ¡Sello de "${place.name}" añadido a tu Pasaporte Turístico!`, 4000)
+}
+
+const activateCouponInBox = (place) => {
+  if (!place) return
+  updateLiveClock()
+  activeCouponTicketPlaceId.value = place.place_id
+  trackPlaceMetric(place.place_id, 'checkin')
+  if (!hasPassportStamp(place.place_id)) {
+    stampPlaceInPassport(place)
+  }
+}
+
+const contactPlaceWhatsApp = (place) => {
+  if (!place) return
+  trackPlaceMetric(place.place_id, 'whatsapp')
+  const rawPhone = String(place.whatsapp || '573000000000').replace(/[^0-9]/g, '')
+  const phone = rawPhone.startsWith('57') ? rawPhone : `57${rawPhone}`
+  const benefitPart = place.offer_title
+    ? ` y redimir el beneficio exclusivo: "${place.offer_title}" (Código: ${place.offer_code || 'ZPK-' + place.place_id})`
+    : ''
+  const text = `¡Hola ${place.name}! 👋 Los vi en la plataforma oficial *Zapatoqueando* 🥾✨ y me gustaría consultar disponibilidad / hacer un pedido${benefitPart}.`
+  window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(text)}`, '_blank', 'noopener')
+}
+
+const toggleAudioGuide = (place) => {
+  if (!('speechSynthesis' in window) || !place) {
+    showLocationNotice('Tu navegador no soporta narración de voz.', 3500)
+    return
+  }
+  if (isSpeakingAudio.value) {
+    window.speechSynthesis.cancel()
+    isSpeakingAudio.value = false
+    return
+  }
+  window.speechSynthesis.cancel()
+  const parts = [
+    `${place.name}.`,
+    place.Category ? `Categoría: ${place.category}.` : '',
+    place.specialty ? `Especialidad recomendada: ${place.specialty}.` : '',
+    place.description || '',
+    place.offer_title ? `Beneficio exclusivo en Zapatoqueando: ${place.offer_title}.` : ''
+  ].filter(Boolean)
+  const utterance = new SpeechSynthesisUtterance(parts.join(' '))
+  utterance.lang = 'es-CO'
+  utterance.rate = 1.0
+  utterance.onend = () => {
+    isSpeakingAudio.value = false
+  }
+  utterance.onerror = () => {
+    isSpeakingAudio.value = false
+  }
+  isSpeakingAudio.value = true
+  window.speechSynthesis.speak(utterance)
+}
+
+const stopAudioGuide = () => {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel()
+  }
+  isSpeakingAudio.value = false
+}
+
+const closePlaceDrawer = () => {
+  stopAudioGuide()
+  selectedPlace.value = null
+}
+
+const openPartnerApplyForPlace = (place) => {
+  partnerApplyForm.value = {
+    businessName: place?.name || '',
+    category: place?.category || 'Restaurantes',
+    whatsapp: place?.whatsapp || '',
+    specialty: place?.specialty || '',
+    offerTitle: place?.offer_title || '10% de descuento mostrando la App Zapatoqueando'
+  }
+  showPartnerApplyModal.value = true
+}
+
+const submitPartnerApplication = () => {
+  const f = partnerApplyForm.value
+  const msg = `🤝 *SOLICITUD DE ALIANZA COMERCIAL - ZAPATOQUEANDO*\n\n🏪 *Negocio:* ${f.businessName}\n📂 *Categoría:* ${f.category}\n📱 *WhatsApp:* ${f.whatsapp}\n✨ *Especialidad:* ${f.specialty}\n🎁 *Beneficio para Turistas:* ${f.offerTitle}`
+  showPartnerApplyModal.value = false
+  showLocationNotice('¡Solicitud lista! Te conectamos por WhatsApp para activar tu Sello de Comercio Aliado.', 5000)
+  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank', 'noopener')
+}
 
 const showLocationNotice = (msg, durationMs = 5000) => {
   locationNotice.value = msg
@@ -464,7 +1254,7 @@ const showLocationNotice = (msg, durationMs = 5000) => {
 // Fórmula Haversine para calcular distancia en metros entre dos coordenadas
 const calculateDistanceMeters = (lat1, lng1, lat2, lng2) => {
   const toRad = (deg) => (deg * Math.PI) / 180
-  const R = 6371000 // Radio de la Tierra en metros
+  const R = 6371000
   const dLat = toRad(lat2 - lat1)
   const dLng = toRad(lng2 - lng1)
   const a =
@@ -472,6 +1262,12 @@ const calculateDistanceMeters = (lat1, lng1, lat2, lng2) => {
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2)
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
   return R * c
+}
+
+const formatDistanceFromMeters = (meters) => {
+  if (!Number.isFinite(meters) || meters <= 0) return '0 m'
+  if (meters < 1000) return `${Math.round(meters)} m`
+  return `${(meters / 1000).toFixed(1)} km`
 }
 
 const getDistanceFromUser = (place) => {
@@ -483,10 +1279,101 @@ const getDistanceFromUser = (place) => {
     Number(place.location.lng)
   )
   if (!Number.isFinite(meters)) return null
-  if (meters < 1000) {
-    return `${Math.round(meters)} m`
+  return formatDistanceFromMeters(meters)
+}
+
+// Motor de Guía Peatonal Interna (Reemplazo 100% dentro de nuestro mapa a Google Maps)
+const clearGuideLine = () => {
+  activeGuide.value = null
+  if (guideLineLayer && map) {
+    map.removeLayer(guideLineLayer)
+    guideLineLayer = null
   }
-  return `${(meters / 1000).toFixed(1)} km`
+}
+
+const renderGuideLineOnMap = (shouldFitBounds = false) => {
+  if (!map || !activeGuide.value) return
+  if (guideLineLayer) {
+    map.removeLayer(guideLineLayer)
+    guideLineLayer = null
+  }
+
+  const originLat = userCoords.value ? userCoords.value.lat : PARQUE_PRINCIPAL_COORDS.lat
+  const originLng = userCoords.value ? userCoords.value.lng : PARQUE_PRINCIPAL_COORDS.lng
+  const targetLat = Number(activeGuide.value.targetLat)
+  const targetLng = Number(activeGuide.value.targetLng)
+
+  const meters = calculateDistanceMeters(originLat, originLng, targetLat, targetLng)
+  const walkingMinutes = Math.max(1, Math.round(meters / 75))
+
+  activeGuide.value = {
+    ...activeGuide.value,
+    fromGps: Boolean(userCoords.value),
+    distanceLabel: formatDistanceFromMeters(meters),
+    walkingMinutes
+  }
+
+  guideLineLayer = L.layerGroup().addTo(map)
+
+  // Halo exterior oscuro para alto contraste sobre mapa satelital
+  L.polyline(
+    [
+      [originLat, originLng],
+      [targetLat, targetLng]
+    ],
+    {
+      color: '#052e16',
+      weight: 8,
+      opacity: 0.75,
+      lineCap: 'round'
+    }
+  ).addTo(guideLineLayer)
+
+  // Línea punteada ámbar de guía peatonal
+  L.polyline(
+    [
+      [originLat, originLng],
+      [targetLat, targetLng]
+    ],
+    {
+      color: '#fbbf24',
+      weight: 4,
+      opacity: 1,
+      dashArray: '8, 10',
+      lineCap: 'round'
+    }
+  ).addTo(guideLineLayer)
+
+  if (!userCoords.value) {
+    const originIcon = L.divIcon({
+      className: 'guide-origin-marker',
+      html: `<div style="background:#052e16;color:#fbbf24;font-weight:800;font-size:10px;padding:2px 7px;border-radius:9999px;border:1.5px solid #fbbf24;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.4);">🏛️ Parque Principal</div>`,
+      iconSize: [110, 22],
+      iconAnchor: [55, 11]
+    })
+    L.marker([originLat, originLng], { icon: originIcon }).addTo(guideLineLayer)
+  }
+
+  if (shouldFitBounds) {
+    const bounds = L.latLngBounds([
+      [originLat, originLng],
+      [targetLat, targetLng]
+    ])
+    map.fitBounds(bounds, { padding: [70, 70], maxZoom: 18, duration: 1.0 })
+  }
+}
+
+const drawWalkingGuideTo = (targetLat, targetLng, targetName) => {
+  if (!Number.isFinite(Number(targetLat)) || !Number.isFinite(Number(targetLng))) return
+  activeGuide.value = {
+    targetLat: Number(targetLat),
+    targetLng: Number(targetLng),
+    targetName: targetName || 'Destino',
+    fromGps: Boolean(userCoords.value),
+    distanceLabel: '0 m',
+    walkingMinutes: 1
+  }
+  renderGuideLineOnMap(true)
 }
 
 const updateUserMapLayers = (lat, lng, accuracy, shouldCenter = false) => {
@@ -524,9 +1411,12 @@ const updateUserMapLayers = (lat, lng, accuracy, shouldCenter = false) => {
   const outsideBounds = zapatocaBounds ? !zapatocaBounds.contains(latLng) : distToZapatoca > 35000
   isUserOutsideZapatoca.value = outsideBounds
 
+  if (activeGuide.value) {
+    renderGuideLineOnMap(false)
+  }
+
   if (shouldCenter) {
     if (outsideBounds) {
-      // Salto directo (sin flyTo) para no descargar cientos de tiles intermedios fuera de Zapatoca
       map.setMaxBounds(null)
       map.setView(latLng, 15, { animate: false })
       const kmAway = (distToZapatoca / 1000).toFixed(1)
@@ -547,7 +1437,6 @@ const toggleUserLocation = () => {
     return
   }
 
-  // Si ya está activo y tenemos coordenadas, re-centrar en el usuario
   if (isTrackingLocation.value && userCoords.value) {
     updateUserMapLayers(userCoords.value.lat, userCoords.value.lng, userCoords.value.accuracy, true)
     return
@@ -562,16 +1451,17 @@ const toggleUserLocation = () => {
       isLocating.value = false
       isTrackingLocation.value = true
 
-      // Actualizar marcador y círculo en el mapa inmediatamente en tiempo real
       updateUserMapLayers(latitude, longitude, accuracy, isFirstFix)
 
-      // Actualizar estado reactivo de distancia cuando cambia >= 1 metro o en el primer fix
       if (
         isFirstFix ||
         !userCoords.value ||
         calculateDistanceMeters(userCoords.value.lat, userCoords.value.lng, latitude, longitude) >= 1
       ) {
         userCoords.value = { lat: latitude, lng: longitude, accuracy }
+        if (activeGuide.value) {
+          renderGuideLineOnMap(false)
+        }
       }
 
       isFirstFix = false
@@ -617,18 +1507,19 @@ const stopUserLocation = () => {
     }
   }
   isUserOutsideZapatoca.value = false
+  if (activeGuide.value) {
+    renderGuideLineOnMap(false)
+  }
 }
 
 const centerOnZapatoca = () => {
   if (!map) return
-  // Salto directo a Zapatoca sin descargar tiles intermedios y restaurando límites
   map.setView([6.816801, -73.268689], 16, { animate: false })
   if (zapatocaBounds) {
     map.setMaxBounds(zapatocaBounds)
   }
 }
 
-// Repetir posters para que cada mitad del marquee cubra pantallas grandes sin espacios vacíos
 const repeatedPosters = computed(() => {
   if (!posters.value || posters.value.length === 0) return []
   const list = posters.value
@@ -645,18 +1536,12 @@ const getPosterImage = (poster) => {
   return poster?.imageurl || poster?.image_url || '/hero-bg.jpeg'
 }
 
-const getWhatsAppUrl = (title) => {
-  const text = `Hola, vengo desde la App Zapatoqueando y quiero más información${title ? ' sobre: ' + title : ''}`
-  return `https://wa.me/573000000000?text=${encodeURIComponent(text)}`
-}
-
 const openDirections = (place) => {
   if (!place) return
+  stopAudioGuide()
   selectedPlace.value = null
   if (map && place.location && place.location.lat && place.location.lng) {
-    map.flyTo([place.location.lat, place.location.lng], 18, {
-      duration: 1.2
-    })
+    drawWalkingGuideTo(place.location.lat, place.location.lng, place.name)
     setTimeout(() => {
       syncMarkersVisibility()
       if (markersLayer) {
@@ -686,8 +1571,8 @@ const openPosterDirections = (poster) => {
         (titleQuery.includes((p.name || '').toLowerCase()) && (p.name || '').length > 3)
     )
     if (matchedPlace && matchedPlace.location?.lat && matchedPlace.location?.lng) {
-      selectedPlace.value = matchedPlace
-      focusPlace(matchedPlace)
+      openPlaceDrawer(matchedPlace)
+      drawWalkingGuideTo(matchedPlace.location.lat, matchedPlace.location.lng, matchedPlace.name)
       return
     }
   }
@@ -699,13 +1584,13 @@ const openPosterDirections = (poster) => {
 const sharePlaceItem = async (place) => {
   if (!place) return
   const shareUrl = `${window.location.origin}/?place=${encodeURIComponent(place.place_id)}`
-  const shareText = `📍 Mira "${place.name}" en Zapatoca (Zapatoqueando): ${place.formatted_address || ''}`.trim()
+  const shareText = `📍 Mira "${place.name}" en Zapatoca (Zapatoqueando): ${place.offer_title ? '🎁 ' + place.offer_title : place.formatted_address || ''}`.trim()
   if (navigator.share) {
     try {
       await navigator.share({ title: place.name, text: shareText, url: shareUrl })
       return
     } catch {
-      // Fallback a copiar o WhatsApp
+      // Fallback
     }
   }
   if (navigator.clipboard?.writeText) {
@@ -714,7 +1599,7 @@ const sharePlaceItem = async (place) => {
       showLocationNotice('Enlace del lugar copiado al portapapeles.', 3500)
       return
     } catch {
-      // Fallback a WhatsApp
+      // Fallback
     }
   }
   window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`, '_blank', 'noopener')
@@ -729,13 +1614,12 @@ const sharePosterItem = async (poster) => {
       await navigator.share({ title: poster.title, text: shareText, url: shareUrl })
       return
     } catch {
-      // Fallback a WhatsApp
+      // Fallback
     }
   }
   window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`, '_blank', 'noopener')
 }
 
-// Resultados filtrados para el autocompletado del buscador
 const searchResults = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
   if (!q) return []
@@ -744,7 +1628,9 @@ const searchResults = computed(() => {
     const matchCat = p.category && p.category.toLowerCase().includes(q)
     const matchAddr = p.formatted_address && p.formatted_address.toLowerCase().includes(q)
     const matchDesc = p.description && p.description.toLowerCase().includes(q)
-    return matchName || matchCat || matchAddr || matchDesc
+    const matchOffer = p.offer_title && p.offer_title.toLowerCase().includes(q)
+    const matchSpec = p.specialty && p.specialty.toLowerCase().includes(q)
+    return matchName || matchCat || matchAddr || matchDesc || matchOffer || matchSpec
   }).slice(0, 8)
 })
 
@@ -754,25 +1640,36 @@ const onSearchInput = () => {
   syncMarkersVisibility()
 }
 
-const selectSearchResult = (place) => {
-  isSearchFocused.value = false
+const openPlaceDrawer = (place) => {
+  if (!place) return
+  stopAudioGuide()
+  activeCouponTicketPlaceId.value = null
   selectedPlace.value = place
   selectedPoster.value = null
+  trackPlaceMetric(place.place_id, 'view')
+}
+
+const selectSearchResult = (place) => {
+  isSearchFocused.value = false
+  openPlaceDrawer(place)
   focusPlace(place)
 }
 
 const clearFilters = () => {
   searchQuery.value = ''
   activeCategories.value = []
+  onlyWithBenefits.value = false
+  activeCuratedPlanId.value = null
+  onlySavedPlan.value = false
+  showPlansPicker.value = false
   isSearchFocused.value = false
   updateMarkers()
   syncMarkersVisibility()
 }
 
-// Al navegar entre subrutas (/eventos, /rutas, /descargar), cerrar paneles laterales abiertos
 watch(() => route.path, (newPath, oldPath) => {
   if (newPath !== '/') {
-    selectedPlace.value = null
+    closePlaceDrawer()
     selectedPoster.value = null
     isSearchFocused.value = false
   }
@@ -783,6 +1680,8 @@ watch(() => route.path, (newPath, oldPath) => {
 
 const activeCategories = ref([])
 const activeRouteBanner = ref(null)
+const routeNearbyPlaces = ref([])
+
 const categories = [
   { name: 'Hospedajes', icon: '🏨', color: '#3b82f6' },
   { name: 'Restaurantes', icon: '🍽️', color: '#f97316' },
@@ -796,23 +1695,77 @@ const getCategoryCount = (catName) => {
   return places.value.filter(p => p.category === catName).length
 }
 
-const filteredPlacesCount = computed(() => {
+const filterPlacePredicates = (p) => {
   const q = searchQuery.value.trim().toLowerCase()
-  return places.value.filter(p => {
-    const matchesCategory = activeCategories.value.length === 0 || activeCategories.value.includes(p.category)
-    const matchesQuery = !q || (
-      (p.name && p.name.toLowerCase().includes(q)) ||
-      (p.category && p.category.toLowerCase().includes(q)) ||
-      (p.formatted_address && p.formatted_address.toLowerCase().includes(q)) ||
-      (p.description && p.description.toLowerCase().includes(q))
-    )
-    return matchesCategory && matchesQuery
-  }).length
+  const matchesCategory = activeCategories.value.length === 0 || activeCategories.value.includes(p.category)
+  const matchesBenefits = !onlyWithBenefits.value || Boolean(p.is_partner || p.offer_title)
+  const matchesSavedPlan = !onlySavedPlan.value || isPlaceInPlan(p.place_id)
+  const matchesCuratedPlan =
+    !activeCuratedPlan.value ||
+    activeCuratedPlan.value.categories.includes(p.category) ||
+    Boolean(p.is_partner)
+  const matchesQuery = !q || (
+    (p.name && p.name.toLowerCase().includes(q)) ||
+    (p.category && p.category.toLowerCase().includes(q)) ||
+    (p.formatted_address && p.formatted_address.toLowerCase().includes(q)) ||
+    (p.description && p.description.toLowerCase().includes(q)) ||
+    (p.offer_title && p.offer_title.toLowerCase().includes(q)) ||
+    (p.specialty && p.specialty.toLowerCase().includes(q))
+  )
+  return matchesCategory && matchesBenefits && matchesSavedPlan && matchesCuratedPlan && matchesQuery
+}
+
+const filteredPlacesCount = computed(() => {
+  return places.value.filter(filterPlacePredicates).length
 })
 
 const hasActiveFilter = computed(() => {
-  return activeCategories.value.length > 0 || searchQuery.value.trim().length > 0
+  return (
+    activeCategories.value.length > 0 ||
+    searchQuery.value.trim().length > 0 ||
+    onlyWithBenefits.value ||
+    Boolean(activeCuratedPlanId.value) ||
+    onlySavedPlan.value
+  )
 })
+
+const toggleBenefitsFilter = () => {
+  onlyWithBenefits.value = !onlyWithBenefits.value
+  updateMarkers()
+  syncMarkersVisibility()
+  if (onlyWithBenefits.value && map && map.getZoom() < 16) {
+    map.setView([6.816801, -73.268689], 16, { animate: true, duration: 0.8 })
+  }
+}
+
+const toggleOnlySavedPlan = () => {
+  onlySavedPlan.value = !onlySavedPlan.value
+  updateMarkers()
+  syncMarkersVisibility()
+  if (onlySavedPlan.value && map && map.getZoom() < 16) {
+    map.setView([6.816801, -73.268689], 16, { animate: true, duration: 0.8 })
+  }
+}
+
+const selectCuratedPlan = (planId) => {
+  activeCuratedPlanId.value = activeCuratedPlanId.value === planId ? null : planId
+  showPlansPicker.value = false
+  const chosen = curatedPlans.find(p => p.id === activeCuratedPlanId.value)
+  if (chosen?.enableTrails) {
+    showAllTrails.value = true
+    renderAllTrailsInMap()
+  }
+  updateMarkers()
+  syncMarkersVisibility()
+  if (activeCuratedPlanId.value && map) {
+    map.setView([6.816801, -73.268689], 16, { animate: true, duration: 0.8 })
+  }
+}
+
+const toggleShowAllTrails = () => {
+  showAllTrails.value = !showAllTrails.value
+  renderAllTrailsInMap()
+}
 
 const syncMarkersVisibility = () => {
   if (!map || !markersLayer) return
@@ -835,7 +1788,7 @@ const toggleCategory = (category) => {
   } else {
     activeCategories.value.splice(index, 1)
   }
-  updateMarkers() // Redibujar marcadores
+  updateMarkers()
   syncMarkersVisibility()
   if (activeCategories.value.length > 0 && map && map.getZoom() < 16) {
     map.setView([6.816801, -73.268689], 16, { animate: true, duration: 0.8 })
@@ -850,9 +1803,7 @@ const getCategoryColor = (category) => {
 window.openPlaceSidebar = (placeId) => {
   const found = places.value.find(p => String(p.place_id) === String(placeId))
   if (found) {
-    selectedPlace.value = found
-    selectedPoster.value = null
-    // Centrar suavemente el mapa sin modificar el nivel de zoom actual
+    openPlaceDrawer(found)
     if (map && found.location) {
       map.panTo([found.location.lat, found.location.lng], { animate: true, duration: 1 })
     }
@@ -868,41 +1819,59 @@ const escapeHtml = (value) => {
     .replace(/'/g, '&#39;')
 }
 
-// Función para actualizar y dibujar los marcadores
+const renderPlanCircuitLine = (filteredPlaces) => {
+  if (planCircuitLayer && map) {
+    map.removeLayer(planCircuitLayer)
+    planCircuitLayer = null
+  }
+  if (!map || (!onlySavedPlan.value && !activeCuratedPlanId.value)) return
+  const validCoords = filteredPlaces
+    .filter(p => p.location && Number.isFinite(Number(p.location.lat)) && Number.isFinite(Number(p.location.lng)))
+    .slice(0, 8)
+    .map(p => [Number(p.location.lat), Number(p.location.lng)])
+  if (validCoords.length < 2) return
+
+  planCircuitLayer = L.polyline(validCoords, {
+    color: '#f59e0b',
+    weight: 3,
+    opacity: 0.85,
+    dashArray: '6, 8'
+  }).addTo(map)
+}
+
 const updateMarkers = () => {
   if (markersLayer) {
     markersLayer.clearLayers()
   }
 
-  const q = searchQuery.value.trim().toLowerCase()
+  const filteredPlaces = places.value.filter(filterPlacePredicates)
+  renderPlanCircuitLine(filteredPlaces)
 
-  const filteredPlaces = places.value.filter(p => {
-    const matchesCategory = activeCategories.value.length === 0 || activeCategories.value.includes(p.category)
-    const matchesQuery = !q || (
-      (p.name && p.name.toLowerCase().includes(q)) ||
-      (p.category && p.category.toLowerCase().includes(q)) ||
-      (p.formatted_address && p.formatted_address.toLowerCase().includes(q)) ||
-      (p.description && p.description.toLowerCase().includes(q))
-    )
-    return matchesCategory && matchesQuery
-  })
-
-  // Agregar marcadores
   filteredPlaces.forEach(place => {
     if (place.location && place.location.lat && place.location.lng) {
       const markerColor = getCategoryColor(place.category)
-      const marker = L.marker([place.location.lat, place.location.lng], { icon: createMinimalDot(markerColor) }).addTo(markersLayer)
+      const isPartner = Boolean(place.is_partner || place.offer_title)
+      const marker = L.marker([place.location.lat, place.location.lng], {
+        icon: createMinimalDot(markerColor, isPartner),
+        zIndexOffset: isPartner ? 300 : 0
+      }).addTo(markersLayer)
 
-      // Mini-modal (Popup) minimalista estilo cápsula (sin 'X') con escape HTML seguro
       const safePlaceId = escapeHtml(place.place_id)
       const safeImageUrl = escapeHtml(place.image_url || '/logo.png')
       const safePlaceName = escapeHtml(place.name)
+      const safeOffer = place.offer_title ? `<div class="text-[10px] font-extrabold text-amber-700 truncate">🎁 ${escapeHtml(place.offer_title)}</div>` : ''
       const popupContent = `
-        <div onclick="window.openPlaceSidebar('${safePlaceId}')" class="flex items-center gap-3 pr-3 cursor-pointer">
-          <div class="w-10 h-10 shrink-0 rounded-full overflow-hidden border-2 border-white shadow-sm bg-gray-100">
+        <div onclick="window.openPlaceSidebar('${safePlaceId}')" class="flex items-center gap-2.5 pr-3 cursor-pointer">
+          <div class="w-9 h-9 shrink-0 rounded-full overflow-hidden border-2 ${isPartner ? 'border-amber-400' : 'border-white'} shadow-sm bg-gray-100">
             <img src="${safeImageUrl}" alt="${safePlaceName}" class="w-full h-full object-cover" />
           </div>
-          <span class="font-bold text-gray-800 text-sm whitespace-nowrap">${safePlaceName}</span>
+          <div class="min-w-0">
+            <div class="font-extrabold text-emerald-950 text-xs whitespace-nowrap flex items-center gap-1">
+              ${isPartner ? '<span class="text-amber-500">★</span>' : ''}
+              <span>${safePlaceName}</span>
+            </div>
+            ${safeOffer}
+          </div>
         </div>
       `
       marker.bindPopup(popupContent, {
@@ -911,15 +1880,12 @@ const updateMarkers = () => {
         offset: [0, -5]
       })
 
-      // Abrir popup al pasar el cursor (hover)
       marker.on('mouseover', function () {
         this.openPopup()
       })
-      // Cerrar popup al quitar el cursor
       marker.on('mouseout', function () {
         this.closePopup()
       })
-      // Abrir sidebar al hacer clic en el marcador
       marker.on('click', () => {
         window.openPlaceSidebar(place.place_id)
       })
@@ -927,20 +1893,17 @@ const updateMarkers = () => {
   })
 }
 
-// Inicializar y Centrar Mapa (Versión Moderna Sin Textos y Sin Iconos default)
 const initMap = () => {
   if (map) {
     map.remove()
   }
 
-  // Límites de movimiento (maxBounds) restaurados pero muy amplios para evitar que se pierdan en el mundo
   const bounds = L.latLngBounds(
-    [6.50, -73.60], // Suroeste (mucho margen hacia abajo y la izquierda)
-    [7.10, -72.90]  // Noreste (mucho margen hacia arriba y la derecha)
+    [6.50, -73.60],
+    [7.10, -72.90]
   )
   zapatocaBounds = bounds
 
-  // PARCHE MANUAL: Forzar a Leaflet a cargar tiles fuera del viewport real
   if (!L.GridLayer.prototype._patchedEdgeBuffer) {
     const originalGetBounds = L.GridLayer.prototype._getTiledPixelBounds
     L.GridLayer.include({
@@ -960,24 +1923,21 @@ const initMap = () => {
     })
   }
 
-  // Inicializar mapa centrado en Zapatoca
   map = L.map('osm-map', {
     zoomControl: false,
     maxBounds: bounds,
     maxBoundsViscosity: 0.8,
     minZoom: 10,
     maxZoom: 22,
-    fadeAnimation: false, // Evita el efecto de "cuadro blanco que se pinta"
+    fadeAnimation: false,
     zoomAnimation: true,
     markerZoomAnimation: true
   }).setView([6.816801, -73.268689], 15)
 
-  // Añadir controles de zoom en la parte superior derecha
   L.control.zoom({
     position: 'topright'
   }).addTo(map)
 
-  // Capa Base del Mapa: Usamos nuestro servidor local con Precarga Balanceada
   L.tileLayer('/map-cache/{z}/{x}/{y}.jpg', {
     maxZoom: 22,
     maxNativeZoom: 19,
@@ -995,13 +1955,11 @@ const initMap = () => {
     isMapMoving.value = false
   })
 
-  // Capa para marcadores (NO se añade al mapa de inmediato si el zoom es lejano)
   markersLayer = L.featureGroup()
   if (map.getZoom() >= 16 || hasActiveFilter.value) {
     markersLayer.addTo(map)
   }
 
-  // Marcador principal de Zapatoca para el zoom lejano (Punto pequeño con texto discreto)
   const customIcon = L.divIcon({
     className: 'zapatoca-main-marker',
     html: `<div style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
@@ -1009,7 +1967,7 @@ const initMap = () => {
              <div style="background-color: rgba(255,255,255,0.95); color: #052e16; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 12px; margin-top: 2px; white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">Zapatoca</div>
            </div>`,
     iconSize: [80, 60], 
-    iconAnchor: [40, 30] // Ajustado para centrar el icono y texto
+    iconAnchor: [40, 30]
   })
   zapatocaMarker = L.marker([6.816801, -73.268689], { icon: customIcon })
   
@@ -1017,7 +1975,6 @@ const initMap = () => {
     map.setView([6.816801, -73.268689], 16, { animate: true, duration: 1 })
   })
 
-  // Marcador principal de La Fuente para el zoom lejano (Punto pequeño con texto discreto)
   const laFuenteIcon = L.divIcon({
     className: 'la-fuente-main-marker',
     html: `<div style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
@@ -1025,11 +1982,10 @@ const initMap = () => {
              <div style="background-color: rgba(255,255,255,0.95); color: #064e3b; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 12px; margin-top: 2px; white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">La Fuente</div>
            </div>`,
     iconSize: [80, 60],
-    iconAnchor: [40, 30] // Ajustado para centrar el icono y texto
+    iconAnchor: [40, 30]
   })
   laFuenteMarker = L.marker([6.7075, -73.2804], { icon: laFuenteIcon })
   
-  // Al hacer clic en el marcador general, hacer zoom hacia La Fuente
   laFuenteMarker.on('click', () => {
     map.setView([6.7075, -73.2804], 16, { animate: true, duration: 1 })
   })
@@ -1039,12 +1995,10 @@ const initMap = () => {
     laFuenteMarker.addTo(map)
   }
 
-  // Evento para ocultar textos de las calles al alejar el zoom y adelgazar las vías
   map.on('zoomend', () => {
     const zoom = map.getZoom()
     const mapContainer = document.getElementById('osm-map')
     
-    // Adelgazar dinámicamente las vías al alejar
     if (streetsLayer) {
       streetsLayer.eachLayer(layer => {
         layer.setStyle({
@@ -1053,20 +2007,6 @@ const initMap = () => {
       })
     }
     
-    if (routesLayer) {
-      routesLayer.eachLayer((layer) => {
-        const props = layer.feature?.properties || {}
-        const isSelected = (currentSelectedRouteId && props.id === currentSelectedRouteId) ||
-                           (currentSelectedRouteName && props.name === currentSelectedRouteName)
-        if (isSelected) {
-          layer.setStyle({
-            weight: zoom >= 17 ? 6 : 4
-          })
-        }
-      })
-    }
-    
-    // Transición entre marcador general y marcadores detallados
     syncMarkersVisibility()
 
     if (mapContainer) {
@@ -1085,8 +2025,6 @@ const initMap = () => {
 
 const addMarkers = () => {
   if (!map || !markersLayer) return
-
-  // Llamar la funcion que dibuja los marcadores
   updateMarkers()
 }
 
@@ -1099,135 +2037,200 @@ const focusPlace = (place) => {
 }
 
 const loadStreets = async () => {
-  if (!map) return;
+  if (!map) return
   try {
-    const response = await fetch('/api/streets');
-    const data = await response.json();
+    const response = await fetch('/api/streets')
+    const data = await response.json()
 
     if (data.type === 'FeatureCollection' && data.features.length > 0) {
       streetsLayer = L.geoJSON(data, {
-        style: function (feature) {
-          const currentZoom = map ? map.getZoom() : 17;
+        style: function () {
+          const currentZoom = map ? map.getZoom() : 17
           return {
-            color: '#e5e7eb', // gray-200 for a thin clear street line
+            color: '#e5e7eb',
             weight: currentZoom >= 17 ? 4 : (currentZoom >= 15 ? 2 : 1),
             opacity: 0.7
-          };
+          }
         }
-      }).addTo(map);
+      }).addTo(map)
 
-      // Aplicar texto a las líneas una vez que ya están en el mapa (requisito de leaflet-textpath)
       streetsLayer.eachLayer((layer) => {
         if (layer.feature && layer.feature.properties && layer.feature.properties.name) {
-          
-          // Lógica para evitar textos al revés: revertir las coordenadas si van de derecha a izquierda o de arriba a abajo
           if (typeof layer.getLatLngs === 'function') {
-            let latlngs = layer.getLatLngs();
+            let latlngs = layer.getLatLngs()
             const reverseSegment = (pts) => {
               if (pts.length > 0 && pts[0].lat !== undefined) {
-                const start = pts[0];
-                const end = pts[pts.length - 1];
-                // Si va de Este a Oeste, o Norte a Sur verticalmente, revertimos la línea
+                const start = pts[0]
+                const end = pts[pts.length - 1]
                 if (start.lng > end.lng || (start.lng === end.lng && start.lat > end.lat)) {
-                  pts.reverse();
+                  pts.reverse()
                 }
               }
-            };
+            }
             if (latlngs.length > 0) {
               if (latlngs[0].lat !== undefined) {
-                reverseSegment(latlngs);
+                reverseSegment(latlngs)
               } else {
-                latlngs.forEach(segment => reverseSegment(segment));
+                latlngs.forEach(segment => reverseSegment(segment))
               }
-              layer.setLatLngs(latlngs);
+              layer.setLatLngs(latlngs)
             }
           }
 
           if (typeof layer.setText === 'function') {
             layer.setText(layer.feature.properties.name, {
               center: true,
-              offset: 3, // Offset positivo baja el texto para que quede dentro del centro de la línea
+              offset: 3,
               attributes: {
                 class: 'street-svg-text'
               }
-            });
+            })
           }
         }
-      });
+      })
       
-      // Aplicar estado de zoom inicial
-      const mapEl = document.getElementById('osm-map');
+      const mapEl = document.getElementById('osm-map')
       if (map && mapEl && map.getZoom() < 16) {
-        mapEl.classList.add('map-zoomed-out');
+        mapEl.classList.add('map-zoomed-out')
       }
     }
   } catch (err) {
-    console.error('Error fetching streets:', err);
+    console.error('Error fetching streets:', err)
+  }
+}
+
+// Renderizado Multicolor Tramo por Tramo de Senderos Ecológicos
+const clearActiveRouteSegmentsLayer = () => {
+  if (activeRouteSegmentsLayer && map) {
+    map.removeLayer(activeRouteSegmentsLayer)
+    activeRouteSegmentsLayer = null
+  }
+}
+
+const drawMultiColorRouteFeature = (coords, segments, routeName, targetLayerGroup) => {
+  if (!Array.isArray(coords) || coords.length < 2 || !targetLayerGroup) return
+  for (let i = 0; i < coords.length - 1; i++) {
+    const [lng1, lat1] = coords[i]
+    const [lng2, lat2] = coords[i + 1]
+    const segMeta = Array.isArray(segments) && segments[i] ? segments[i] : null
+    const segDiff = segMeta?.difficulty || 'Fácil'
+    const segColor = segMeta?.color || DIFFICULTY_COLORS[segDiff] || '#eab308'
+    const segMeters = calculateDistanceMeters(lat1, lng1, lat2, lng2)
+
+    // Casing oscuro para legibilidad de montaña
+    L.polyline(
+      [
+        [lat1, lng1],
+        [lat2, lng2]
+      ],
+      {
+        color: '#052e16',
+        weight: 9,
+        opacity: 0.85,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }
+    ).addTo(targetLayerGroup)
+
+    // Línea del color de dificultad del tramo
+    const segLine = L.polyline(
+      [
+        [lat1, lng1],
+        [lat2, lng2]
+      ],
+      {
+        color: segColor,
+        weight: 5.5,
+        opacity: 1,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }
+    ).addTo(targetLayerGroup)
+
+    segLine.bindPopup(
+      `<div class="px-3 py-1 text-xs font-extrabold text-emerald-950 whitespace-nowrap">🥾 ${escapeHtml(routeName || 'Sendero')} · Tramo #${i + 1}: <span style="color:${segColor}">${escapeHtml(segDiff)}</span> (${formatDistanceFromMeters(segMeters)})</div>`,
+      { closeButton: false, className: 'custom-minimal-popup' }
+    )
+  }
+}
+
+const renderAllTrailsInMap = () => {
+  clearActiveRouteSegmentsLayer()
+  if (!map) return
+  activeRouteSegmentsLayer = L.layerGroup().addTo(map)
+
+  if (currentSelectedRouteId || currentSelectedRouteName) {
+    const feature = allRoutesFeatures.value.find(f => {
+      const props = f.properties || {}
+      return (
+        (currentSelectedRouteId && props.id === currentSelectedRouteId) ||
+        (currentSelectedRouteName && props.name === currentSelectedRouteName)
+      )
+    })
+    if (feature) {
+      const coords = feature.geometry?.coordinates || []
+      const segments = feature.properties?.segments || feature.geometry?.segments || []
+      drawMultiColorRouteFeature(coords, segments, feature.properties?.name, activeRouteSegmentsLayer)
+      return
+    }
+  }
+
+  if (showAllTrails.value) {
+    allRoutesFeatures.value.forEach(f => {
+      const coords = f.geometry?.coordinates || []
+      const segments = f.properties?.segments || f.geometry?.segments || []
+      drawMultiColorRouteFeature(coords, segments, f.properties?.name, activeRouteSegmentsLayer)
+    })
   }
 }
 
 const applyRoutesGeoJson = (data) => {
   if (!map || data?.type !== 'FeatureCollection') return
+  allRoutesFeatures.value = Array.isArray(data.features) ? data.features : []
   if (routesLayer) {
     map.removeLayer(routesLayer)
     routesLayer = null
   }
-  if (!Array.isArray(data.features) || data.features.length === 0) return
-
-  routesLayer = L.geoJSON(data, {
-    style: function (feature) {
-      const props = feature?.properties || {}
-      const isSelected = (currentSelectedRouteId && props.id === currentSelectedRouteId) ||
-                         (currentSelectedRouteName && props.name === currentSelectedRouteName)
-      return {
-        color: props.color || '#fbbf24',
-        weight: isSelected ? (map.getZoom() >= 17 ? 6 : 5) : 4,
-        opacity: isSelected ? 1 : 0, // Ocultas por defecto salvo la ruta activa
-        dashArray: 'none',
-        className: ''
-      }
-    }
-  }).addTo(map)
+  renderAllTrailsInMap()
 }
 
 const loadRoutes = async () => {
-  if (!map) return;
+  if (!map) return
   try {
-    const response = await fetch('/api/routes', { cache: 'no-store' });
-    const data = await response.json();
-    lastRoutesSnapshot = JSON.stringify(data.features || []);
-    applyRoutesGeoJson(data);
+    const response = await fetch('/api/routes', { cache: 'no-store' })
+    const data = await response.json()
+    lastRoutesSnapshot = JSON.stringify(data.features || [])
+    applyRoutesGeoJson(data)
   } catch (err) {
-    console.error('Error fetching routes:', err);
+    console.error('Error fetching routes:', err)
   }
 }
 
 const loadBoundary = async () => {
-  if (!map) return;
+  if (!map) return
   try {
-    const response = await fetch('/zapatoca_boundary.geojson');
-    if (!response.ok) throw new Error('No boundary data found');
-    const data = await response.json();
+    const response = await fetch('/zapatoca_boundary.geojson')
+    if (!response.ok) throw new Error('No boundary data found')
+    const data = await response.json()
 
     if (map && data.type === 'FeatureCollection' && data.features.length > 0) {
       L.geoJSON(data, {
         filter: function(feature) {
-          // No renderizar los "Point" del geojson (que son los que generan el punto azul no deseado)
-          return feature.geometry.type !== 'Point' && feature.geometry.type !== 'MultiPoint';
+          return feature.geometry.type !== 'Point' && feature.geometry.type !== 'MultiPoint'
         },
-        style: function (feature) {
+        style: function () {
           return {
-            color: '#3b82f6', // blue-500
+            color: '#3b82f6',
             weight: 4,
             opacity: 0.6,
             fillColor: '#3b82f6',
-            fillOpacity: 0.05 // Sombreado azul muy sutil
-          };
+            fillOpacity: 0.05
+          }
         }
-      }).addTo(map);
+      }).addTo(map)
     }
   } catch (err) {
-    console.error('Error fetching boundary:', err);
+    console.error('Error fetching boundary:', err)
   }
 }
 
@@ -1289,7 +2292,7 @@ const refreshMapData = async () => {
         }
       }
     }
-  } catch (err) {
+  } catch {
     // Silencioso en sincronización de fondo
   }
 }
@@ -1297,26 +2300,36 @@ const refreshMapData = async () => {
 let routeEndpointsLayer = null
 let activeRouteBounds = null
 
+const handleOpenPassportEvent = () => {
+  showPassportModal.value = true
+}
+
+const handleOpenPartnerApplyEvent = () => {
+  showPartnerApplyModal.value = true
+}
+
 onMounted(async () => {
+  loadLocalTouristState()
+  updateLiveClock()
+  liveClockInterval = setInterval(updateLiveClock, 1000)
+
   await nextTick()
   initMap()
 
   try {
     await refreshMapData()
 
-    // Cargar capas del mapa
     await Promise.all([
       loadStreets(),
       loadRoutes(),
       loadBoundary()
     ])
 
-    // Si viene un deep link ?place=ID, enfocar y abrir el lugar automáticamente
     const placeQueryId = route.query?.place
     if (placeQueryId) {
       const targetPlace = places.value.find(p => String(p.place_id) === String(placeQueryId))
       if (targetPlace) {
-        selectedPlace.value = targetPlace
+        openPlaceDrawer(targetPlace)
         focusPlace(targetPlace)
       }
     }
@@ -1327,11 +2340,12 @@ onMounted(async () => {
     loading.value = false
   }
   
-  // Escuchar eventos de selección de rutas desde el panel lateral
   window.addEventListener('route-selected', handleRouteSelected)
   window.addEventListener('route-unselected', handleRouteUnselected)
   window.addEventListener('route-focus-start', handleRouteFocusStart)
   window.addEventListener('poster-locate-on-map', handlePosterLocateOnMap)
+  window.addEventListener('open-passport-modal', handleOpenPassportEvent)
+  window.addEventListener('open-partner-apply-modal', handleOpenPartnerApplyEvent)
   window.addEventListener('focus', refreshMapData)
   realtimeSyncInterval = setInterval(refreshMapData, 8000)
 })
@@ -1377,6 +2391,25 @@ const renderRouteEndpoints = (coords, routeName) => {
     .addTo(routeEndpointsLayer)
 }
 
+const computeNearbyPlacesForRoute = (coords) => {
+  if (!Array.isArray(coords) || coords.length === 0 || places.value.length === 0) {
+    routeNearbyPlaces.value = []
+    return
+  }
+  const start = coords[0]
+  const end = coords[coords.length - 1]
+  const matches = places.value.filter(p => {
+    const pLat = Number(p.location?.lat)
+    const pLng = Number(p.location?.lng)
+    if (!Number.isFinite(pLat) || !Number.isFinite(pLng)) return false
+    const dStart = calculateDistanceMeters(start[1], start[0], pLat, pLng)
+    const dEnd = calculateDistanceMeters(end[1], end[0], pLat, pLng)
+    return dStart <= 750 || dEnd <= 750
+  })
+  matches.sort((a, b) => Number(Boolean(b.is_partner || b.offer_title)) - Number(Boolean(a.is_partner || a.offer_title)))
+  routeNearbyPlaces.value = matches.slice(0, 6)
+}
+
 const centerActiveRoute = () => {
   if (map && activeRouteBounds) {
     map.fitBounds(activeRouteBounds, { padding: [60, 60], duration: 1.0 })
@@ -1386,7 +2419,7 @@ const centerActiveRoute = () => {
 const openActiveRouteStart = () => {
   if (!map || !activeRouteBanner.value?.startCoord) return
   const [lng, lat] = activeRouteBanner.value.startCoord
-  map.flyTo([lat, lng], 18, { duration: 1.0 })
+  drawWalkingGuideTo(lat, lng, `Inicio: ${activeRouteBanner.value.name || 'Sendero'}`)
   if (startEndpointMarker) {
     setTimeout(() => {
       if (startEndpointMarker) startEndpointMarker.openPopup()
@@ -1400,7 +2433,7 @@ const handleRouteFocusStart = (e) => {
   handleRouteSelected({ detail: ruta })
   if (map && Array.isArray(ruta.startCoord) && ruta.startCoord.length >= 2) {
     const [lng, lat] = ruta.startCoord
-    map.flyTo([lat, lng], 18, { duration: 1.0 })
+    drawWalkingGuideTo(lat, lng, `Inicio: ${ruta.name || 'Sendero'}`)
     if (startEndpointMarker) {
       setTimeout(() => {
         if (startEndpointMarker) startEndpointMarker.openPopup()
@@ -1424,40 +2457,46 @@ const handleRouteSelected = (e) => {
   if (!selectedRoute) return
   currentSelectedRouteId = selectedRoute.id || selectedRoute.route_id || null
   currentSelectedRouteName = selectedRoute.name || null
-  if (!map || !routesLayer) return
-  
-  routesLayer.eachLayer((layer) => {
-    const props = layer.feature?.properties || {}
-    const coords = layer.feature?.geometry?.coordinates || []
-    const isMatch = (currentSelectedRouteId && props.id === currentSelectedRouteId) ||
-                    (currentSelectedRouteName && props.name === currentSelectedRouteName)
-    if (isMatch) {
-      layer.setStyle({
-        color: props.color || '#facc15',
-        weight: map.getZoom() >= 17 ? 6 : 5,
-        opacity: 1,
-        dashArray: 'none',
-        className: ''
-      })
-      activeRouteBanner.value = {
-        id: props.id,
-        name: props.name || selectedRoute.name,
-        color: props.color || selectedRoute.color || '#eab308',
-        distance_label: selectedRoute.distance_label || props.distance_label || '',
-        duration: selectedRoute.duration || props.duration,
-        startCoord: coords.length > 0 ? coords[0] : (selectedRoute.startCoord || null)
-      }
-      renderRouteEndpoints(coords, props.name || selectedRoute.name)
-      if (typeof layer.getBounds === 'function') {
-        activeRouteBounds = layer.getBounds()
-        map.fitBounds(activeRouteBounds, { padding: [60, 60], duration: 1.2 })
-      }
-    } else {
-      layer.setStyle({
-        opacity: 0
-      })
-    }
+  if (!map) return
+
+  const matchedFeature = allRoutesFeatures.value.find(f => {
+    const props = f.properties || {}
+    return (
+      (currentSelectedRouteId && props.id === currentSelectedRouteId) ||
+      (currentSelectedRouteName && props.name === currentSelectedRouteName)
+    )
   })
+
+  const props = matchedFeature?.properties || selectedRoute
+  const coords = matchedFeature?.geometry?.coordinates || selectedRoute.coordinates || []
+  const segments = props.segments || matchedFeature?.geometry?.segments || selectedRoute.segments || []
+  const rawBreakdown = props.difficulty_breakdown || selectedRoute.difficulty_breakdown || []
+  const difficulty_breakdown = rawBreakdown.map(b => ({
+    ...b,
+    percent: b.percentage ?? b.percent ?? 100,
+    percentage: b.percentage ?? b.percent ?? 100
+  }))
+
+  activeRouteBanner.value = {
+    id: props.id,
+    name: props.name || selectedRoute.name,
+    difficulty: props.difficulty || selectedRoute.difficulty || 'Fácil',
+    color: props.color || selectedRoute.color || '#eab308',
+    distance_label: selectedRoute.distance_label || props.distance_label || '',
+    duration: selectedRoute.duration || props.duration,
+    difficulty_breakdown,
+    startCoord: coords.length > 0 ? coords[0] : (selectedRoute.startCoord || null)
+  }
+
+  renderAllTrailsInMap()
+  renderRouteEndpoints(coords, props.name || selectedRoute.name)
+  computeNearbyPlacesForRoute(coords)
+
+  if (coords.length >= 2) {
+    const latLngs = coords.map(([lng, lat]) => [lat, lng])
+    activeRouteBounds = L.latLngBounds(latLngs)
+    map.fitBounds(activeRouteBounds, { padding: [60, 60], duration: 1.2 })
+  }
 }
 
 const handleRouteUnselected = () => {
@@ -1465,23 +2504,28 @@ const handleRouteUnselected = () => {
   currentSelectedRouteName = null
   activeRouteBanner.value = null
   activeRouteBounds = null
+  routeNearbyPlaces.value = []
   clearRouteEndpoints()
-  if (!map || !routesLayer) return
-  routesLayer.eachLayer((layer) => {
-    layer.setStyle({
-      opacity: 0
-    })
-  })
+  renderAllTrailsInMap()
 }
 
 onBeforeUnmount(() => {
+  stopAudioGuide()
   window.removeEventListener('route-selected', handleRouteSelected)
   window.removeEventListener('route-unselected', handleRouteUnselected)
   window.removeEventListener('route-focus-start', handleRouteFocusStart)
   window.removeEventListener('poster-locate-on-map', handlePosterLocateOnMap)
+  window.removeEventListener('open-passport-modal', handleOpenPassportEvent)
+  window.removeEventListener('open-partner-apply-modal', handleOpenPartnerApplyEvent)
   window.removeEventListener('focus', refreshMapData)
   delete window.openPlaceSidebar
   clearRouteEndpoints()
+  clearGuideLine()
+  clearActiveRouteSegmentsLayer()
+  if (liveClockInterval) {
+    clearInterval(liveClockInterval)
+    liveClockInterval = null
+  }
   if (realtimeSyncInterval) {
     clearInterval(realtimeSyncInterval)
     realtimeSyncInterval = null

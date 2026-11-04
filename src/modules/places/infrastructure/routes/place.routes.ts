@@ -18,12 +18,14 @@ const placeController = new PlaceController(
   getPlacesUseCase,
   createPlaceUseCase,
   updatePlaceUseCase,
-  deletePlaceUseCase
+  deletePlaceUseCase,
+  placeRepository
 );
 
 export const placeRouter = Router();
 
 placeRouter.get('/', placeController.getPlaces);
+placeRouter.post('/:id/track', placeController.trackPlaceMetric);
 placeRouter.post('/', verifyToken, uploadImageMiddleware.single('image'), placeController.createPlace);
 placeRouter.put('/:id', verifyToken, uploadImageMiddleware.single('image'), placeController.updatePlace);
 placeRouter.delete('/:id', verifyToken, placeController.deletePlace);

@@ -2,6 +2,12 @@ import crypto from 'crypto';
 import { PlaceDto, PlaceRepositoryPort } from '../ports/repositories/place-repository.port';
 import { CoordinatesVO } from '../../domain/value-objects/coordinates.vo';
 
+const parseBool = (val: unknown): boolean => {
+  if (typeof val === 'boolean') return val;
+  if (typeof val === 'string') return val.toLowerCase() === 'true' || val === '1';
+  return false;
+};
+
 export class CreatePlaceUseCase {
   constructor(private readonly placeRepository: PlaceRepositoryPort) {}
 
@@ -21,6 +27,13 @@ export class CreatePlaceUseCase {
       lng: coords.lng,
       category: dto.category || 'Lugares turísticos',
       description: dto.description ?? null,
+      is_partner: parseBool(dto.is_partner),
+      whatsapp: dto.whatsapp?.trim() || null,
+      offer_title: dto.offer_title?.trim() || null,
+      offer_code: dto.offer_code?.trim().toUpperCase() || null,
+      specialty: dto.specialty?.trim() || null,
+      schedule: dto.schedule?.trim() || null,
+      price_range: dto.price_range?.trim() || null,
     });
     return created.toRawRecord();
   }
