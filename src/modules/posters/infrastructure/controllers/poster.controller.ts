@@ -38,6 +38,10 @@ export class PosterController {
   updatePoster = async (req: Request, res: Response): Promise<void> => {
     try {
       const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0) {
+        res.status(400).json({ error: 'Invalid poster ID' });
+        return;
+      }
       const data = await this.updatePosterUseCase.execute(id, req.body);
       res.json({ message: 'success', data });
     } catch (err: any) {
@@ -52,6 +56,10 @@ export class PosterController {
   deletePoster = async (req: Request, res: Response): Promise<void> => {
     try {
       const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0) {
+        res.status(400).json({ error: 'Invalid poster ID' });
+        return;
+      }
       const data = await this.deletePosterUseCase.execute(id);
       res.json({ message: 'success', data });
     } catch (err: any) {
@@ -63,3 +71,4 @@ export class PosterController {
     }
   };
 }
+

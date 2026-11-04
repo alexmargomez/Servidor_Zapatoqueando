@@ -1,99 +1,142 @@
 <template>
   <div class="space-y-6">
-    <!-- Header y Acción Principal -->
-    <div class="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-      <div>
-        <h3 class="text-lg font-bold text-gray-800">Tus Publicidades</h3>
-        <p class="text-sm text-gray-500">Administra los carteles que aparecen en el carrusel de inicio y en eventos.</p>
+    <!-- Tarjetas KPI de Resumen -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
+        <div>
+          <p class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Total Cartelera</p>
+          <p class="text-2xl font-extrabold text-emerald-950 mt-1 tabular-metrics">{{ posters.length }}</p>
+        </div>
+        <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-900 flex items-center justify-center text-xl">🖼️</div>
       </div>
-      <button 
-        @click="openModal()" 
-        class="bg-gray-900 hover:bg-black text-white font-medium py-2.5 px-5 rounded-xl shadow-sm transition-colors flex items-center gap-2 cursor-pointer"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-        Nueva Publicidad
-      </button>
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
+        <div>
+          <p class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Eventos Culturales</p>
+          <p class="text-2xl font-extrabold text-emerald-950 mt-1 tabular-metrics">{{ posters.filter(p => p.type === 'event').length }}</p>
+        </div>
+        <div class="w-11 h-11 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center text-xl">🎉</div>
+      </div>
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
+        <div>
+          <p class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Comercios Destacados</p>
+          <p class="text-2xl font-extrabold text-emerald-950 mt-1 tabular-metrics">{{ posters.filter(p => p.type === 'business').length }}</p>
+        </div>
+        <div class="w-11 h-11 rounded-2xl bg-emerald-100 text-emerald-900 flex items-center justify-center text-xl">⭐</div>
+      </div>
+    </div>
+
+    <!-- Header, Buscador y Acción Principal -->
+    <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 bg-white p-6 rounded-2xl shadow-2xs border border-slate-200/80">
+      <div>
+        <h3 class="text-lg font-extrabold text-emerald-950">Publicidades y Eventos</h3>
+        <p class="text-xs sm:text-sm text-slate-500">Administra los carteles del carrusel principal y la cartelera cultural.</p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5">
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Buscar por título..."
+          class="px-3.5 py-2 text-xs sm:text-sm bg-stone-50 border border-slate-300 rounded-xl outline-none focus:border-emerald-700 focus:bg-white text-emerald-950 font-medium"
+        />
+        <select
+          v-model="typeFilter"
+          class="px-3 py-2 text-xs sm:text-sm bg-stone-50 border border-slate-300 rounded-xl outline-none focus:border-emerald-700 text-emerald-950 font-bold"
+        >
+          <option value="all">Todos los tipos</option>
+          <option value="event">🎉 Eventos</option>
+          <option value="business">⭐ Negocios</option>
+        </select>
+        <button 
+          @click="openModal()" 
+          type="button"
+          class="bg-emerald-950 hover:bg-emerald-900 text-white font-extrabold py-2.5 px-5 rounded-xl shadow-sm transition-colors flex items-center gap-2 cursor-pointer text-xs sm:text-sm"
+        >
+          <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+          <span>Nueva Publicidad</span>
+        </button>
+      </div>
     </div>
 
     <!-- Tabla -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
-      <div v-if="loading" class="p-8 text-center text-gray-500 font-medium">Cargando...</div>
+    <div class="bg-white rounded-2xl shadow-2xs border border-slate-200/80 overflow-x-auto">
+      <div v-if="loading" class="p-8 text-center text-slate-500 font-medium">Cargando cartelera...</div>
       <table v-else class="w-full text-left border-collapse">
         <thead>
-          <tr class="bg-slate-50 border-b border-gray-100 text-gray-500 text-sm">
-            <th class="p-4 font-bold">Imagen</th>
-            <th class="p-4 font-bold">Título</th>
-            <th class="p-4 font-bold hidden md:table-cell">Descripción</th>
-            <th class="p-4 font-bold text-center">Tipo</th>
-            <th class="p-4 font-bold text-right">Acciones</th>
+          <tr class="bg-stone-50 border-b border-slate-200/80 text-slate-500 text-xs uppercase tracking-wider">
+            <th class="p-4 font-extrabold">Imagen</th>
+            <th class="p-4 font-extrabold">Título</th>
+            <th class="p-4 font-extrabold hidden md:table-cell">Descripción</th>
+            <th class="p-4 font-extrabold text-center">Tipo</th>
+            <th class="p-4 font-extrabold text-right">Acciones</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="poster in posters" :key="poster.id" class="border-b border-gray-50 hover:bg-slate-50 transition-colors">
+          <tr v-for="poster in filteredPosters" :key="poster.id" class="border-b border-slate-100 hover:bg-emerald-50/30 transition-colors">
             <td class="p-4">
-              <img :src="poster.imageurl || poster.image_url || '/hero-bg.jpeg'" :alt="poster.title" class="w-16 h-12 object-cover rounded shadow-sm bg-gray-200" />
+              <img :src="poster.imageurl || poster.image_url || '/hero-bg.jpeg'" :alt="poster.title" class="w-16 h-12 object-cover rounded-xl shadow-xs bg-slate-100 border border-slate-200" />
             </td>
-            <td class="p-4 font-bold text-gray-800">{{ poster.title }}</td>
-            <td class="p-4 text-sm text-gray-600 hidden md:table-cell max-w-xs truncate">{{ poster.description }}</td>
+            <td class="p-4 font-extrabold text-emerald-950">{{ poster.title }}</td>
+            <td class="p-4 text-sm text-slate-600 hidden md:table-cell max-w-xs truncate">{{ poster.description }}</td>
             <td class="p-4 text-center">
-              <span class="px-3 py-1 rounded-full text-xs font-bold" :class="poster.type === 'event' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'">
-                {{ poster.type === 'event' ? 'Evento' : 'Negocio' }}
+              <span class="px-3 py-1 rounded-full text-xs font-extrabold" :class="poster.type === 'event' ? 'bg-amber-100 text-amber-900' : 'bg-emerald-100 text-emerald-900'">
+                {{ poster.type === 'event' ? '🎉 Evento' : '⭐ Negocio' }}
               </span>
             </td>
-            <td class="p-4 text-right space-x-2">
-              <button @click="openModal(poster)" class="text-blue-600 hover:text-blue-800 font-medium text-sm px-2 py-1 bg-blue-50 hover:bg-blue-100 rounded transition-colors cursor-pointer">Editar</button>
-              <button @click="deleteItem(poster.id)" class="text-red-600 hover:text-red-800 font-medium text-sm px-2 py-1 bg-red-50 hover:bg-red-100 rounded transition-colors cursor-pointer">Eliminar</button>
+            <td class="p-4 text-right space-x-2 whitespace-nowrap">
+              <button @click="openModal(poster)" type="button" class="text-emerald-800 hover:text-emerald-950 font-bold text-xs px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors cursor-pointer">Editar</button>
+              <button @click="deleteItem(poster.id)" type="button" class="text-rose-600 hover:text-rose-800 font-bold text-xs px-3 py-1.5 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors cursor-pointer">Eliminar</button>
             </td>
           </tr>
-          <tr v-if="posters.length === 0">
-            <td colspan="5" class="p-8 text-center text-gray-500">No hay publicidades creadas aún.</td>
+          <tr v-if="filteredPosters.length === 0">
+            <td colspan="5" class="p-8 text-center text-slate-500 font-medium">No hay publicidades que coincidan con el filtro.</td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <!-- Modal Formulario -->
-    <div v-if="showModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-        <div class="bg-slate-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-          <h3 class="text-lg font-bold text-gray-800">{{ form.id ? 'Editar Publicidad' : 'Nueva Publicidad' }}</h3>
-          <button @click="showModal = false" class="text-gray-400 hover:text-gray-600 cursor-pointer">
+    <div v-if="showModal" class="fixed inset-0 bg-emerald-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200">
+        <div class="bg-stone-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+          <h3 class="text-lg font-extrabold text-emerald-950">{{ form.id ? 'Editar Publicidad' : 'Nueva Publicidad' }}</h3>
+          <button @click="showModal = false" type="button" class="text-slate-400 hover:text-slate-600 cursor-pointer">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
         </div>
         
-        <form @submit.prevent="saveItem" class="p-4 md:p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+        <form @submit.prevent="saveItem" class="p-5 md:p-6 space-y-4 max-h-[80vh] overflow-y-auto">
           <div>
-            <label class="block text-sm font-medium text-gray-500 mb-1">Título</label>
-            <input v-model="form.title" type="text" required class="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 rounded-xl outline-none transition-all">
+            <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-600 mb-1">Título</label>
+            <input v-model="form.title" type="text" required class="w-full px-4 py-2.5 bg-stone-50 border border-slate-300 focus:border-emerald-700 focus:bg-white focus:ring-4 focus:ring-emerald-600/10 rounded-xl outline-none transition-all text-emerald-950 font-medium">
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-500 mb-1">Descripción</label>
-            <textarea v-model="form.description" rows="3" class="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 rounded-xl outline-none transition-all"></textarea>
+            <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-600 mb-1">Descripción</label>
+            <textarea v-model="form.description" rows="3" class="w-full px-4 py-2.5 bg-stone-50 border border-slate-300 focus:border-emerald-700 focus:bg-white focus:ring-4 focus:ring-emerald-600/10 rounded-xl outline-none transition-all text-emerald-950"></textarea>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-500 mb-1">Imagen (Sube una foto o pega una URL)</label>
+            <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-600 mb-1">Imagen (Sube una foto o pega una URL)</label>
             <div class="flex gap-2 items-center mb-2">
-              <input type="file" @change="handleImageUpload" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 outline-none cursor-pointer"/>
-              <span v-if="uploadingImage" class="animate-spin h-5 w-5 border-2 border-green-700 border-t-transparent rounded-full shrink-0"></span>
+              <input type="file" @change="handleImageUpload" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-extrabold file:bg-emerald-950 file:text-white hover:file:bg-emerald-900 outline-none cursor-pointer"/>
+              <span v-if="uploadingImage" class="animate-spin h-5 w-5 border-2 border-emerald-700 border-t-transparent rounded-full shrink-0"></span>
             </div>
-            <input v-model="form.imageUrl" type="text" required class="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 rounded-xl outline-none transition-all text-sm text-gray-600" placeholder="https://... o sube un archivo arriba">
-            <div v-if="form.imageUrl" class="mt-2 rounded-xl overflow-hidden border border-gray-200 aspect-video bg-slate-100 max-h-40">
+            <input v-model="form.imageUrl" type="text" required class="w-full px-4 py-2.5 bg-stone-50 border border-slate-300 focus:border-emerald-700 focus:bg-white focus:ring-4 focus:ring-emerald-600/10 rounded-xl outline-none transition-all text-sm text-slate-700" placeholder="https://... o sube un archivo arriba">
+            <div v-if="form.imageUrl" class="mt-2 rounded-xl overflow-hidden border border-slate-200 aspect-video bg-slate-100 max-h-40">
               <img :src="form.imageUrl" alt="Vista previa" class="w-full h-full object-cover" />
             </div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-500 mb-1">Tipo</label>
-            <select v-model="form.type" required class="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 rounded-xl outline-none transition-all bg-white">
-              <option value="event">Evento</option>
-              <option value="business">Negocio</option>
+            <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-600 mb-1">Tipo</label>
+            <select v-model="form.type" required class="w-full px-4 py-2.5 bg-stone-50 border border-slate-300 focus:border-emerald-700 focus:bg-white focus:ring-4 focus:ring-emerald-600/10 rounded-xl outline-none transition-all font-bold text-emerald-950">
+              <option value="event">🎉 Evento Cultural</option>
+              <option value="business">⭐ Negocio / Destacado</option>
             </select>
           </div>
 
-          <div class="pt-4 flex justify-end gap-3 sticky bottom-0 bg-white pb-2">
-            <button type="button" @click="showModal = false" class="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">Cancelar</button>
-            <button type="submit" :disabled="saving || uploadingImage" class="bg-gray-900 hover:bg-black disabled:opacity-50 text-white font-medium py-2 px-6 rounded-xl shadow-sm transition-colors flex items-center cursor-pointer">
-              <span v-if="saving" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>
+          <div class="pt-4 flex justify-end gap-3 sticky bottom-0 bg-white pb-1 border-t border-slate-100">
+            <button type="button" @click="showModal = false" class="px-4 py-2.5 text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition-colors cursor-pointer text-sm">Cancelar</button>
+            <button type="submit" :disabled="saving || uploadingImage" class="bg-emerald-950 hover:bg-emerald-900 disabled:opacity-50 text-white font-extrabold py-2.5 px-6 rounded-xl shadow-sm transition-colors flex items-center cursor-pointer text-sm">
+              <span v-if="saving" class="animate-spin h-4 w-4 border-2 border-amber-400 border-t-transparent rounded-full mr-2"></span>
               Guardar
             </button>
           </div>
@@ -104,7 +147,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { apiFetch } from '../../utils/api'
 
 const posters = ref([])
@@ -112,7 +155,20 @@ const loading = ref(true)
 const saving = ref(false)
 const uploadingImage = ref(false)
 const showModal = ref(false)
+const searchQuery = ref('')
+const typeFilter = ref('all')
 const form = ref({ id: null, title: '', description: '', imageUrl: '', type: 'event' })
+
+const filteredPosters = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  return posters.value.filter(p => {
+    const matchesType = typeFilter.value === 'all' || (p.type || 'event') === typeFilter.value
+    const matchesQuery = !q ||
+      (p.title && p.title.toLowerCase().includes(q)) ||
+      (p.description && p.description.toLowerCase().includes(q))
+    return matchesType && matchesQuery
+  })
+})
 
 const loadData = async () => {
   try {

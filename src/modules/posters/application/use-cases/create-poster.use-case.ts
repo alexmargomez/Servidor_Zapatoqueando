@@ -1,6 +1,5 @@
-import { PosterRepositoryPort } from '../ports/repositories/poster-repository.port';
+import { PosterDto, PosterRepositoryPort } from '../ports/repositories/poster-repository.port';
 import { PosterTypeVO } from '../../domain/value-objects/poster-type.vo';
-import { PosterDto } from '../../infrastructure/dtos/poster.dto';
 
 export class CreatePosterUseCase {
   constructor(private readonly posterRepository: PosterRepositoryPort) {}

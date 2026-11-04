@@ -1,73 +1,88 @@
 <template>
-  <div class="min-h-screen bg-slate-50 flex">
+  <div class="min-h-screen bg-stone-50 flex">
     <!-- Mobile overlay -->
-    <div v-if="isSidebarOpen" @click="isSidebarOpen = false" class="fixed inset-0 bg-black/50 z-20 md:hidden"></div>
+    <div v-if="isSidebarOpen" @click="isSidebarOpen = false" class="fixed inset-0 bg-emerald-950/60 backdrop-blur-xs z-20 md:hidden"></div>
     
-    <!-- Sidebar -->
-    <aside :class="['w-64 bg-green-950 text-white flex flex-col shadow-xl z-30 fixed inset-y-0 left-0 transform transition duration-200 ease-in-out md:relative md:translate-x-0', isSidebarOpen ? 'translate-x-0' : '-translate-x-full']">
-      <div class="p-6 border-b border-green-900">
-        <h1 class="text-2xl font-black text-white">Zapatoqueando</h1>
-        <p class="text-green-400 text-sm mt-1">Admin Panel</p>
+    <!-- Sidebar Ejecutiva -->
+    <aside :class="['w-64 bg-emerald-950 text-white flex flex-col shadow-2xl z-30 fixed inset-y-0 left-0 transform transition duration-200 ease-in-out md:relative md:translate-x-0 border-r border-emerald-900', isSidebarOpen ? 'translate-x-0' : '-translate-x-full']">
+      <div class="p-6 border-b border-emerald-900/80 flex items-center gap-3">
+        <img src="/logo.png" alt="Logo" class="w-10 h-10 object-contain bg-white/95 rounded-xl p-1 shadow-sm" />
+        <div>
+          <h1 class="text-lg font-extrabold text-white leading-tight">Zapatoqueando</h1>
+          <p class="text-amber-400 text-[11px] font-bold uppercase tracking-wider">Estación Admin</p>
+        </div>
       </div>
 
-      <nav class="flex-1 p-4 space-y-2">
+      <nav class="flex-1 p-4 space-y-1.5">
         <router-link 
           to="/admin/posters" 
           @click="isSidebarOpen = false"
-          class="block px-4 py-3 rounded-lg text-green-100 hover:bg-green-800 transition-colors"
-          active-class="bg-green-800 font-bold text-white"
+          class="flex items-center gap-3 px-4 py-3 rounded-xl text-emerald-100/85 hover:bg-emerald-900 hover:text-white transition-all text-sm font-medium"
+          active-class="bg-emerald-900 font-extrabold text-white border-l-4 border-amber-400 shadow-xs"
         >
-          🖼️ Publicidades
+          <span>🖼️</span>
+          <span>Publicidades y Eventos</span>
         </router-link>
         
         <router-link 
           to="/admin/places" 
           @click="isSidebarOpen = false"
-          class="block px-4 py-3 rounded-lg text-green-100 hover:bg-green-800 transition-colors"
-          active-class="bg-green-800 font-bold text-white"
+          class="flex items-center gap-3 px-4 py-3 rounded-xl text-emerald-100/85 hover:bg-emerald-900 hover:text-white transition-all text-sm font-medium"
+          active-class="bg-emerald-900 font-extrabold text-white border-l-4 border-amber-400 shadow-xs"
         >
-          📍 Lugares
+          <span>📍</span>
+          <span>Directorio de Lugares</span>
         </router-link>
         
         <router-link 
           to="/admin/routes" 
           @click="isSidebarOpen = false"
-          class="block px-4 py-3 rounded-lg text-green-100 hover:bg-green-800 transition-colors"
-          active-class="bg-green-800 font-bold text-white"
+          class="flex items-center gap-3 px-4 py-3 rounded-xl text-emerald-100/85 hover:bg-emerald-900 hover:text-white transition-all text-sm font-medium"
+          active-class="bg-emerald-900 font-extrabold text-white border-l-4 border-amber-400 shadow-xs"
         >
-          🗺️ Rutas (Mapa)
+          <span>🥾</span>
+          <span>Senderos y Rutas</span>
         </router-link>
       </nav>
 
-      <div class="p-4 border-t border-green-900">
+      <div class="p-4 border-t border-emerald-900/80">
         <button 
           @click="logout" 
-          class="w-full text-left px-4 py-3 rounded-lg text-red-300 hover:bg-red-900/50 hover:text-red-200 transition-colors flex items-center gap-2"
+          type="button"
+          class="w-full text-left px-4 py-3 rounded-xl text-rose-300 hover:bg-rose-950/60 hover:text-rose-200 transition-colors flex items-center gap-2.5 text-sm font-bold cursor-pointer"
         >
-          <span>🚪</span> Cerrar Sesión
+          <span>🚪</span>
+          <span>Cerrar Sesión</span>
         </button>
       </div>
     </aside>
 
     <!-- Main Content -->
     <main class="flex-1 flex flex-col h-screen overflow-hidden w-full">
-      <!-- Topbar Navbar -->
-      <header class="bg-white shadow-sm px-4 md:px-8 py-4 flex justify-between items-center z-10">
+      <!-- Topbar Ejecutiva -->
+      <header class="bg-white border-b border-slate-200/80 px-4 md:px-8 py-3.5 flex justify-between items-center z-10">
         <div class="flex items-center gap-3">
-          <button @click="isSidebarOpen = true" class="md:hidden text-gray-500 hover:text-gray-700">
+          <button @click="isSidebarOpen = true" type="button" class="md:hidden text-slate-600 hover:text-emerald-950 p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
           </button>
-          <h2 class="text-lg md:text-xl font-bold text-gray-800 capitalize truncate">
-            {{ currentRouteName }}
-          </h2>
+          <div>
+            <h2 class="text-base md:text-xl font-extrabold text-emerald-950 capitalize truncate">
+              {{ currentRouteName }}
+            </h2>
+            <p class="hidden sm:flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span>Sincronización en tiempo real activa con el mapa público</span>
+            </p>
+          </div>
         </div>
-        <router-link to="/" class="text-xs md:text-sm font-bold text-green-700 hover:text-green-800 bg-green-50 px-3 py-2 rounded-lg whitespace-nowrap ml-2">
-          &larr; Ver Sitio
+        <router-link to="/" class="text-xs md:text-sm font-extrabold text-emerald-950 hover:bg-amber-300 bg-amber-400 px-4 py-2 rounded-xl whitespace-nowrap ml-2 shadow-xs transition-colors flex items-center gap-1.5">
+          <span>🗺️</span>
+          <span>Ver Mapa Público</span>
         </router-link>
       </header>
       
       <!-- Router View Container -->
-      <div class="flex-1 overflow-y-auto p-4 md:p-8 relative">
+      <div class="flex-1 overflow-y-auto p-4 md:p-8 relative bg-stone-50">
         <router-view />
       </div>
     </main>

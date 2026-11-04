@@ -1,5 +1,6 @@
 import { CoordinatesVO } from '../../../src/modules/places/domain/value-objects/coordinates.vo';
 import { PlaceEntity } from '../../../src/modules/places/domain/entities/place.entity';
+import { UpdatePlaceUseCase } from '../../../src/modules/places/application/use-cases/update-place.use-case';
 
 describe('CoordinatesVO & PlaceEntity', () => {
   describe('CoordinatesVO', () => {
@@ -83,4 +84,49 @@ describe('CoordinatesVO & PlaceEntity', () => {
       });
     });
   });
+
+  describe('UpdatePlaceUseCase', () => {
+    it('should preserve undefined image_url when updating a place without a new image field', async () => {
+      const updateSpy = jest.fn().mockResolvedValue(
+        new PlaceEntity({
+          id: 10,
+          placeId: 'uuid-10',
+          name: 'Cueva del Nitro Renovada',
+          rating: 4.9,
+          userRatingsTotal: 150,
+          formattedAddress: 'Zapatoca, Santander',
+          imageUrl: '/uploads/nitro.jpg',
+          lat: 6.81,
+          lng: -73.27,
+          category: 'Lugares turísticos',
+          description: 'Maravilla subterránea',
+        })
+      );
+
+      const useCase = new UpdatePlaceUseCase({
+        findAll: jest.fn(),
+        create: jest.fn(),
+        update: updateSpy,
+        delete: jest.fn(),
+      });
+
+      await useCase.execute(10, {
+        name: 'Cueva del Nitro Renovada',
+        formatted_address: 'Zapatoca, Santander',
+        lat: 6.81,
+        lng: -73.27,
+        category: 'Lugares turísticos',
+        description: 'Maravilla subterránea',
+      });
+
+      expect(updateSpy).toHaveBeenCalledWith(
+        10,
+        expect.objectContaining({
+          name: 'Cueva del Nitro Renovada',
+          image_url: undefined,
+        })
+      );
+    });
+  });
 });
+

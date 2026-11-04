@@ -1,9 +1,2 @@
-export interface RouteDto {
-  name: string;
-  description?: string | null;
-  duration?: string | number | null;
-  difficulty?: string | null;
-  color?: string | null;
-  geojson?: unknown;
-  coordinates?: unknown;
-}
+export { RouteDto } from '../../application/ports/repositories/route-repository.port';
+

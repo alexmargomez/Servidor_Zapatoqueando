@@ -41,6 +41,10 @@ export class RouteController {
   updateRoute = async (req: Request, res: Response): Promise<void> => {
     try {
       const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0) {
+        res.status(400).json({ error: 'Invalid route ID' });
+        return;
+      }
       const data = await this.updateRouteUseCase.execute(id, req.body);
       res.json({ message: 'success', data });
     } catch (err: any) {
@@ -55,6 +59,10 @@ export class RouteController {
   deleteRoute = async (req: Request, res: Response): Promise<void> => {
     try {
       const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0) {
+        res.status(400).json({ error: 'Invalid route ID' });
+        return;
+      }
       const data = await this.deleteRouteUseCase.execute(id);
       res.json({ message: 'success', data });
     } catch (err: any) {
@@ -66,3 +74,4 @@ export class RouteController {
     }
   };
 }
+
