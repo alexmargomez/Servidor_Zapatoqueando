@@ -1,16 +1,16 @@
 <template>
   <header 
-    class="fixed top-0 left-0 w-full z-[1010] px-3 sm:px-6 py-3 md:py-4 flex justify-between items-center bg-transparent pointer-events-none"
+    class="fixed top-0 left-0 w-full z-[1010] px-2.5 sm:px-6 py-2 md:py-4 flex justify-between items-center bg-transparent pointer-events-none"
   >
     <!-- Píldora de Marca -->
     <router-link 
       to="/" 
       @click="isMobileMenuOpen = false"
-      class="flex items-center gap-2.5 sm:gap-3 group cursor-pointer pointer-events-auto bg-white/92 backdrop-blur-xl px-3.5 py-1.5 sm:py-2 rounded-full shadow-[0_8px_28px_rgba(5,46,22,0.14)] border border-white/80 transition-all duration-300 hover:shadow-[0_12px_32px_rgba(5,46,22,0.2)] hover:bg-white"
+      class="flex items-center gap-2 sm:gap-3 group cursor-pointer pointer-events-auto bg-white/92 backdrop-blur-xl px-3 sm:px-3.5 py-1 sm:py-2 rounded-full shadow-[0_8px_28px_rgba(5,46,22,0.14)] border border-white/80 transition-all duration-300 hover:shadow-[0_12px_32px_rgba(5,46,22,0.2)] hover:bg-white"
     >
-      <img src="/logo.png" alt="Zapatoqueando Logo" class="h-9 sm:h-11 w-auto object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-sm" />
-      <div class="pr-2">
-        <h1 class="text-base sm:text-xl font-extrabold tracking-tight text-emerald-950 leading-none">ZAPATOQUEANDO</h1>
+      <img src="/logo.png" alt="Zapatoqueando Logo" class="h-7 sm:h-11 w-auto object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-sm" />
+      <div class="pr-1.5 sm:pr-2">
+        <h1 class="text-sm sm:text-xl font-extrabold tracking-tight text-emerald-950 leading-none">ZAPATOQUEANDO</h1>
         <span class="hidden sm:block text-[10px] font-bold uppercase tracking-widest text-emerald-700/85 mt-0.5">Zapatoca · Clima de Seda</span>
       </div>
     </router-link>
@@ -20,7 +20,7 @@
       @click="isMobileMenuOpen = !isMobileMenuOpen" 
       type="button"
       aria-label="Abrir menú de navegación"
-      class="md:hidden p-2.5 text-emerald-950 focus:outline-none pointer-events-auto bg-white/92 backdrop-blur-xl rounded-full shadow-[0_8px_24px_rgba(5,46,22,0.14)] border border-white/80 transition-all duration-200 active:scale-95 cursor-pointer"
+      class="md:hidden p-2 text-emerald-950 focus:outline-none pointer-events-auto bg-white/92 backdrop-blur-xl rounded-full shadow-[0_8px_24px_rgba(5,46,22,0.14)] border border-white/80 transition-all duration-200 active:scale-95 cursor-pointer"
     >
       <svg v-if="!isMobileMenuOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 12h16M4 18h16"></path>

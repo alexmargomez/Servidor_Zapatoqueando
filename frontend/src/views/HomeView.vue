@@ -4,12 +4,12 @@
     <div id="osm-map" class="absolute inset-0 w-full h-full z-0" @click="isSearchFocused = false"></div>
     
     <!-- Buscador Flotante Estilo Plataforma (Search / Filtros / Ruta Activa) -->
-    <div class="absolute top-[72px] md:top-24 left-3 right-3 md:left-6 md:right-auto md:w-[440px] z-[1000] pointer-events-none flex flex-col gap-2">
+    <div class="absolute top-[54px] sm:top-[68px] md:top-24 left-2.5 right-2.5 sm:left-3 sm:right-3 md:left-6 md:right-auto md:w-[440px] z-[1000] pointer-events-none flex flex-col gap-1.5">
       
       <!-- Input de Búsqueda Principal -->
       <div class="relative pointer-events-auto">
-        <div class="bg-white/95 backdrop-blur-xl rounded-full shadow-[0_10px_30px_rgba(5,46,22,0.15)] border border-white/80 flex items-center px-4 py-2.5 transition-all focus-within:ring-2 ring-amber-400">
-          <svg class="w-5 h-5 text-emerald-800/60 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <div class="bg-white/95 backdrop-blur-xl rounded-full shadow-[0_8px_24px_rgba(5,46,22,0.15)] border border-white/80 flex items-center px-3.5 py-1.5 md:px-4 md:py-2.5 transition-all focus-within:ring-2 ring-amber-400">
+          <svg class="w-4 h-4 md:w-5 md:h-5 text-emerald-800/60 mr-2.5 md:mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
           <input 
             ref="searchInputRef"
             v-model="searchQuery" 
@@ -17,14 +17,14 @@
             @input="onSearchInput"
             type="text" 
             placeholder="Buscar hoteles, cafés, atractivos..." 
-            class="bg-transparent border-none outline-none w-full text-emerald-950 font-semibold placeholder-slate-400 text-sm md:text-base" 
+            class="bg-transparent border-none outline-none w-full text-emerald-950 font-semibold placeholder-slate-400 text-xs sm:text-sm md:text-base" 
           />
           <button 
             v-if="searchQuery || activeCategories.length > 0" 
             @click="clearFilters" 
             type="button"
             title="Limpiar filtros"
-            class="text-slate-400 hover:text-rose-600 p-1.5 rounded-full hover:bg-rose-50 transition-colors shrink-0 mr-1 cursor-pointer"
+            class="text-slate-400 hover:text-rose-600 p-1 rounded-full hover:bg-rose-50 transition-colors shrink-0 mr-1 cursor-pointer"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
@@ -33,19 +33,19 @@
             type="button"
             :title="showCategoryChips ? 'Ocultar categorías' : 'Mostrar categorías'"
             :class="[
-              'rounded-full p-2 transition-all shrink-0 ml-1 shadow-sm cursor-pointer flex items-center gap-1',
-              activeCategories.length > 0 ? 'bg-amber-400 text-emerald-950 hover:bg-amber-300 font-extrabold px-2.5' : 'bg-emerald-950 text-white hover:bg-emerald-900'
+              'rounded-full p-1.5 md:p-2 transition-all shrink-0 ml-1 shadow-sm cursor-pointer flex items-center gap-1',
+              activeCategories.length > 0 ? 'bg-amber-400 text-emerald-950 hover:bg-amber-300 font-extrabold px-2' : 'bg-emerald-950 text-white hover:bg-emerald-900'
             ]"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
-            <span v-if="activeCategories.length > 0" class="text-[11px] tabular-metrics">{{ activeCategories.length }}</span>
+            <svg class="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+            <span v-if="activeCategories.length > 0" class="text-[10px] tabular-metrics">{{ activeCategories.length }}</span>
           </button>
         </div>
 
         <!-- Dropdown de Resultados de Búsqueda -->
         <div 
           v-if="isSearchFocused && searchQuery.trim().length > 0" 
-          class="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_20px_40px_rgba(5,46,22,0.18)] border border-emerald-950/10 max-h-72 overflow-y-auto z-50 divide-y divide-slate-100"
+          class="absolute top-full left-0 right-0 mt-1.5 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_20px_40px_rgba(5,46,22,0.18)] border border-emerald-950/10 max-h-64 overflow-y-auto z-50 divide-y divide-slate-100"
         >
           <div v-if="searchResults.length === 0" class="p-4 text-center text-sm text-slate-500">
             No encontramos lugares para "<span class="font-bold text-emerald-950">{{ searchQuery }}</span>"
@@ -55,18 +55,18 @@
             :key="place.place_id"
             type="button"
             @click="selectSearchResult(place)"
-            class="w-full px-4 py-3 text-left hover:bg-emerald-50/70 transition-colors flex items-center gap-3 cursor-pointer"
+            class="w-full px-4 py-2.5 text-left hover:bg-emerald-50/70 transition-colors flex items-center gap-3 cursor-pointer"
           >
-            <img :src="place.image_url || '/logo.png'" :alt="place.name" class="w-10 h-10 rounded-xl object-cover shrink-0 bg-slate-100 border border-slate-200" />
+            <img :src="place.image_url || '/logo.png'" :alt="place.name" class="w-9 h-9 rounded-xl object-cover shrink-0 bg-slate-100 border border-slate-200" />
             <div class="min-w-0 flex-1">
               <div class="flex items-center justify-between gap-2">
-                <div class="font-extrabold text-sm text-emerald-950 truncate">{{ place.name }}</div>
-                <span v-if="getDistanceFromUser(place)" class="text-[11px] font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full shrink-0 tabular-metrics">
+                <div class="font-extrabold text-xs sm:text-sm text-emerald-950 truncate">{{ place.name }}</div>
+                <span v-if="getDistanceFromUser(place)" class="text-[10px] font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full shrink-0 tabular-metrics">
                   {{ getDistanceFromUser(place) }}
                 </span>
               </div>
-              <div class="text-xs text-slate-500 truncate flex items-center gap-1.5 mt-0.5">
-                <span class="inline-block w-2.5 h-2.5 rounded-full shrink-0" :style="{ backgroundColor: getCategoryColor(place.category) }"></span>
+              <div class="text-[11px] text-slate-500 truncate flex items-center gap-1.5 mt-0.5">
+                <span class="inline-block w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: getCategoryColor(place.category) }"></span>
                 <span class="font-medium text-slate-600">{{ place.category || 'Lugar' }}</span>
                 <span v-if="place.formatted_address" class="text-slate-400">· {{ place.formatted_address }}</span>
               </div>
@@ -75,22 +75,22 @@
         </div>
       </div>
 
-      <!-- Chips de Herramientas Diferenciales + Categorías -->
-      <div v-show="showCategoryChips" class="flex flex-wrap items-center gap-1.5 pointer-events-auto pb-0.5">
+      <!-- Chips de Herramientas + Categorías (1 sola fila deslizable en celular para no tapar el mapa) -->
+      <div v-show="showCategoryChips" class="flex flex-nowrap md:flex-wrap overflow-x-auto hide-scrollbar items-center gap-1.5 pointer-events-auto py-0.5">
         <!-- Chip Estrella: Comercios con Beneficio / Cupón -->
         <button
           @click="toggleBenefitsFilter"
           type="button"
           :class="[
-            'px-3 py-1.5 rounded-full shadow-sm text-xs font-extrabold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer border',
+            'shrink-0 px-2.5 py-1 md:px-3 md:py-1.5 rounded-full shadow-sm text-[11px] md:text-xs font-extrabold transition-all whitespace-nowrap flex items-center gap-1 cursor-pointer border',
             onlyWithBenefits
-              ? 'bg-amber-400 text-emerald-950 border-amber-500 shadow-md scale-[1.03]'
+              ? 'bg-amber-400 text-emerald-950 border-amber-500 shadow-md'
               : 'bg-amber-50/95 backdrop-blur-md text-emerald-950 hover:bg-amber-100 border-amber-300/90'
           ]"
           title="Ver comercios aliados que dan descuentos o cortesías por usar Zapatoqueando"
         >
           <span>🎁 Beneficios</span>
-          <span class="text-[10px] px-1.5 py-0.2 rounded-full tabular-metrics bg-emerald-950 text-amber-300">
+          <span class="text-[9px] px-1.5 py-0.2 rounded-full tabular-metrics bg-emerald-950 text-amber-300">
             {{ partnerBenefitsCount }}
           </span>
         </button>
@@ -100,9 +100,9 @@
           @click="showPlansPicker = !showPlansPicker"
           type="button"
           :class="[
-            'px-3 py-1.5 rounded-full shadow-sm text-xs font-extrabold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer border',
+            'shrink-0 px-2.5 py-1 md:px-3 md:py-1.5 rounded-full shadow-sm text-[11px] md:text-xs font-extrabold transition-all whitespace-nowrap flex items-center gap-1 cursor-pointer border',
             activeCuratedPlanId
-              ? 'bg-emerald-950 text-amber-400 border-emerald-900 shadow-md scale-[1.03]'
+              ? 'bg-emerald-950 text-amber-400 border-emerald-900 shadow-md'
               : 'bg-white/95 backdrop-blur-md text-emerald-950 hover:bg-emerald-50 border-emerald-200'
           ]"
           title="Armar plan de recorrido temático en 1 clic"
@@ -115,9 +115,9 @@
           @click="toggleShowAllTrails"
           type="button"
           :class="[
-            'px-3 py-1.5 rounded-full shadow-sm text-xs font-extrabold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer border',
+            'shrink-0 px-2.5 py-1 md:px-3 md:py-1.5 rounded-full shadow-sm text-[11px] md:text-xs font-extrabold transition-all whitespace-nowrap flex items-center gap-1 cursor-pointer border',
             showAllTrails
-              ? 'bg-emerald-950 text-amber-400 border-emerald-900 shadow-md scale-[1.03]'
+              ? 'bg-emerald-950 text-amber-400 border-emerald-900 shadow-md'
               : 'bg-white/95 backdrop-blur-md text-emerald-950 hover:bg-emerald-50 border-emerald-200'
           ]"
           title="Superponer todos los senderos ecológicos por color de dificultad en el mapa"
@@ -131,15 +131,15 @@
           @click="toggleOnlySavedPlan"
           type="button"
           :class="[
-            'px-3 py-1.5 rounded-full shadow-sm text-xs font-extrabold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer border',
+            'shrink-0 px-2.5 py-1 md:px-3 md:py-1.5 rounded-full shadow-sm text-[11px] md:text-xs font-extrabold transition-all whitespace-nowrap flex items-center gap-1 cursor-pointer border',
             onlySavedPlan
-              ? 'bg-amber-400 text-emerald-950 border-amber-500 shadow-md scale-[1.03]'
+              ? 'bg-amber-400 text-emerald-950 border-amber-500 shadow-md'
               : 'bg-white/95 backdrop-blur-md text-emerald-950 hover:bg-amber-50 border-amber-300'
           ]"
           title="Ver lugares guardados en Mi Plan"
         >
           <span>⭐ Mi Plan</span>
-          <span class="text-[10px] px-1.5 py-0.2 rounded-full tabular-metrics bg-emerald-950 text-amber-300">
+          <span class="text-[9px] px-1.5 py-0.2 rounded-full tabular-metrics bg-emerald-950 text-amber-300">
             {{ savedPlaceIds.length }}
           </span>
         </button>
@@ -148,14 +148,14 @@
         <button v-for="cat in categories" :key="cat.name" @click="toggleCategory(cat.name)"
           type="button"
           :class="[
-            'px-3 py-1.5 rounded-full shadow-sm text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer border',
+            'shrink-0 px-2.5 py-1 md:px-3 md:py-1.5 rounded-full shadow-sm text-[11px] md:text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1 cursor-pointer border',
             activeCategories.includes(cat.name) 
-              ? 'bg-emerald-950 text-white border-emerald-900 shadow-md scale-[1.03]' 
+              ? 'bg-emerald-950 text-white border-emerald-900 shadow-md' 
               : 'bg-white/92 backdrop-blur-md text-slate-700 hover:bg-white border-white/80'
           ]">
-          <span class="w-2.5 h-2.5 rounded-full shrink-0" :style="{ backgroundColor: cat.color }"></span>
+          <span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: cat.color }"></span>
           <span>{{ cat.icon }} {{ cat.name }}</span>
-          <span v-if="getCategoryCount(cat.name) > 0" :class="['text-[10px] px-1.5 py-0.2 rounded-full tabular-metrics', activeCategories.includes(cat.name) ? 'bg-white/20 text-amber-300' : 'bg-slate-100 text-slate-500']">
+          <span v-if="getCategoryCount(cat.name) > 0" :class="['text-[9px] px-1.5 py-0.2 rounded-full tabular-metrics', activeCategories.includes(cat.name) ? 'bg-white/20 text-amber-300' : 'bg-slate-100 text-slate-500']">
             {{ getCategoryCount(cat.name) }}
           </span>
         </button>
@@ -164,7 +164,7 @@
       <!-- Selector Desplegable de Planes Curados en 1 Clic -->
       <div
         v-if="showPlansPicker"
-        class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-emerald-950/10 p-3 pointer-events-auto space-y-2"
+        class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-emerald-950/10 p-2.5 pointer-events-auto space-y-2"
       >
         <div class="flex items-center justify-between">
           <span class="text-xs font-extrabold text-emerald-950">🧭 ¿Qué plan quieres hacer hoy en Zapatoca?</span>
@@ -177,7 +177,7 @@
             type="button"
             @click="selectCuratedPlan(plan.id)"
             :class="[
-              'text-left p-2.5 rounded-xl border transition-all cursor-pointer flex items-start gap-2',
+              'text-left p-2 rounded-xl border transition-all cursor-pointer flex items-start gap-2',
               activeCuratedPlanId === plan.id
                 ? 'bg-emerald-950 text-white border-emerald-900 shadow-sm'
                 : 'bg-stone-50 hover:bg-amber-50/70 text-emerald-950 border-slate-200/80'
@@ -199,97 +199,119 @@
         </div>
       </div>
 
-      <!-- Píldoras de Estado: Filtro Activo, Guía Peatonal o HUD de Ruta Seleccionada -->
-      <div v-if="hasActiveFilter || activeRouteBanner || activeGuide" class="flex flex-col gap-2 pointer-events-auto">
-        <div class="flex flex-wrap items-center gap-2">
-          <div v-if="hasActiveFilter" class="bg-emerald-950/90 backdrop-blur-md text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-2 border border-white/15">
-            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+      <!-- Píldoras de Estado: Filtro Activo, Guía Peatonal o HUD Compacto de Ruta -->
+      <div v-if="hasActiveFilter || activeRouteBanner || activeGuide" class="flex flex-col gap-1.5 pointer-events-auto">
+        <div v-if="hasActiveFilter" class="flex flex-wrap items-center gap-1.5">
+          <div class="bg-emerald-950/90 backdrop-blur-md text-white text-[10px] sm:text-[11px] font-bold px-2.5 py-1 rounded-full shadow-md flex items-center gap-1.5 border border-white/15">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
             <span class="tabular-metrics">{{ filteredPlacesCount }} lugares en el mapa</span>
             <button @click="clearFilters" type="button" class="text-amber-300 hover:text-amber-200 underline ml-1 cursor-pointer">Ver todos</button>
           </div>
         </div>
 
-        <!-- HUD de Guía Peatonal Interna (Reemplazo total a Google Maps) -->
+        <!-- HUD Compacto de Guía Peatonal Interna -->
         <div
           v-if="activeGuide"
-          class="bg-emerald-950/95 backdrop-blur-xl text-white text-xs font-bold px-3.5 py-2.5 rounded-2xl shadow-xl flex flex-wrap items-center justify-between gap-2 border border-amber-400/50"
+          class="bg-emerald-950/95 backdrop-blur-xl text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-lg flex items-center justify-between gap-2 border border-amber-400/50"
         >
-          <div class="flex items-center gap-2 min-w-0">
-            <span class="w-6 h-6 rounded-full bg-amber-400 text-emerald-950 flex items-center justify-center text-xs font-black shrink-0">🧭</span>
-            <div class="min-w-0">
-              <div class="text-[10px] uppercase tracking-wider text-amber-300 font-extrabold">
-                {{ activeGuide.fromGps ? 'Guía en vivo desde tu GPS' : 'Desde Parque Principal' }}
-              </div>
-              <div class="truncate font-extrabold text-white text-xs">
-                Hacia: {{ activeGuide.targetName }}
-              </div>
+          <div class="flex items-center gap-1.5 min-w-0">
+            <span class="w-5 h-5 rounded-full bg-amber-400 text-emerald-950 flex items-center justify-center text-[11px] font-black shrink-0">🧭</span>
+            <div class="truncate font-extrabold text-white text-[11px] sm:text-xs">
+              {{ activeGuide.targetName }}
             </div>
           </div>
           <div class="flex items-center gap-1.5 shrink-0">
-            <span class="bg-white/15 text-amber-300 px-2 py-0.5 rounded-lg text-[11px] font-extrabold tabular-metrics">
-              📏 {{ activeGuide.distanceLabel }} · 🚶 ~{{ activeGuide.walkingMinutes }} min
+            <span class="bg-white/15 text-amber-300 px-1.5 py-0.5 rounded-md text-[10px] font-extrabold tabular-metrics whitespace-nowrap">
+              {{ activeGuide.distanceLabel }} · ~{{ activeGuide.walkingMinutes }}m
             </span>
             <button
               v-if="!isTrackingLocation"
               @click="toggleUserLocation"
               type="button"
-              class="bg-amber-400 hover:bg-amber-300 text-emerald-950 px-2 py-0.5 rounded-lg text-[10px] font-extrabold cursor-pointer"
+              class="bg-amber-400 hover:bg-amber-300 text-emerald-950 px-1.5 py-0.5 rounded-md text-[10px] font-extrabold cursor-pointer"
               title="Activar mi ubicación GPS real"
             >
-              📡 Usar GPS
+              📡 GPS
             </button>
             <button @click="clearGuideLine" type="button" title="Cerrar guía peatonal" class="text-slate-300 hover:text-rose-400 font-bold px-1 cursor-pointer">✕</button>
           </div>
         </div>
 
-        <!-- HUD de Ruta Ecológica Seleccionada + Termómetro Multicolor + Paradas Aliadas -->
-        <div v-if="activeRouteBanner" class="bg-white/95 backdrop-blur-md text-emerald-950 text-xs font-bold p-3 rounded-2xl shadow-lg flex flex-col gap-2 border-2 border-amber-400">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-center gap-2 min-w-0">
-              <span class="w-3 h-3 rounded-full shrink-0" :style="{ backgroundColor: activeRouteBanner.color || '#eab308' }"></span>
-              <span class="truncate max-w-[150px] sm:max-w-[200px] font-extrabold">🥾 {{ activeRouteBanner.name }}</span>
-              <span v-if="activeRouteBanner.difficulty" class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+        <!-- HUD Ultra-Compacto de Ruta Seleccionada (No tapa el mapa en celular) -->
+        <div v-if="activeRouteBanner" class="bg-white/95 backdrop-blur-md text-emerald-950 text-xs font-bold rounded-xl shadow-lg overflow-hidden border border-amber-400">
+          <!-- Barra superior fina multicolor de dificultad -->
+          <div v-if="activeRouteBanner.difficulty_breakdown && activeRouteBanner.difficulty_breakdown.length > 0" class="w-full h-1 flex bg-slate-100">
+            <div
+              v-for="seg in activeRouteBanner.difficulty_breakdown"
+              :key="seg.difficulty"
+              class="h-full"
+              :style="{ width: `${seg.percent ?? seg.percentage ?? 100}%`, backgroundColor: seg.color }"
+              :title="`${seg.difficulty}: ${seg.percent ?? seg.percentage ?? 100}%`"
+            ></div>
+          </div>
+
+          <div class="px-2.5 py-1.5 flex items-center justify-between gap-1.5">
+            <!-- Nombre, dificultad y distancia en una sola línea -->
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span class="w-2.5 h-2.5 rounded-full shrink-0" :style="{ backgroundColor: activeRouteBanner.color || '#eab308' }"></span>
+              <span class="truncate font-extrabold text-[11px] sm:text-xs">🥾 {{ activeRouteBanner.name }}</span>
+              <span v-if="activeRouteBanner.difficulty" class="shrink-0 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
                 {{ activeRouteBanner.difficulty }}
               </span>
-            </div>
-            <div class="flex items-center gap-1.5 shrink-0">
-              <span v-if="activeRouteBanner.distance_label" class="text-[11px] bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-full tabular-metrics border border-emerald-200/60">
+              <span v-if="activeRouteBanner.distance_label" class="shrink-0 text-[10px] bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded-full tabular-metrics border border-emerald-200/60">
                 {{ activeRouteBanner.distance_label }}
               </span>
-              <button @click="centerActiveRoute" type="button" title="Ver ruta completa en el mapa" class="text-emerald-800 hover:text-emerald-950 bg-emerald-100/80 px-2 py-0.5 rounded-full text-[11px] cursor-pointer">
+            </div>
+
+            <!-- Botones compactos de acción -->
+            <div class="flex items-center gap-1 shrink-0">
+              <button @click="centerActiveRoute" type="button" title="Centrar ruta completa en el mapa" class="text-emerald-800 hover:text-emerald-950 bg-emerald-100/80 px-1.5 py-0.5 rounded-full text-[10px] font-bold cursor-pointer">
                 🎯
               </button>
-              <button v-if="activeRouteBanner.startCoord" @click="openActiveRouteStart" type="button" title="Guiarme al punto de inicio en el mapa" class="text-emerald-900 hover:bg-amber-300 bg-amber-200/80 px-2 py-0.5 rounded-full text-[11px] cursor-pointer">
+              <button v-if="activeRouteBanner.startCoord" @click="openActiveRouteStart" type="button" title="Guiarme al inicio" class="text-emerald-900 hover:bg-amber-300 bg-amber-200/80 px-1.5 py-0.5 rounded-full text-[10px] font-extrabold cursor-pointer">
                 🟢 Inicio
               </button>
-              <button @click="clearSelectedRoute" type="button" title="Salir de la ruta" class="text-slate-400 hover:text-rose-600 font-bold px-1 cursor-pointer">✕</button>
+              <router-link
+                to="/rutas"
+                title="Elegir otra ruta ecológica"
+                class="bg-slate-100 hover:bg-slate-200 text-emerald-950 px-1.5 py-0.5 rounded-full text-[10px] font-extrabold cursor-pointer"
+              >
+                🥾 Rutas
+              </router-link>
+              <button
+                v-if="routeNearbyPlaces.length > 0"
+                @click="showRouteStops = !showRouteStops"
+                type="button"
+                title="Ver paradas y recompensas cercanas al sendero"
+                :class="[
+                  'px-1.5 py-0.5 rounded-full text-[10px] font-extrabold cursor-pointer border transition-colors',
+                  showRouteStops
+                    ? 'bg-emerald-950 text-amber-300 border-emerald-900'
+                    : 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100'
+                ]"
+              >
+                🍹 {{ routeNearbyPlaces.length }}
+              </button>
+              <button @click="clearSelectedRoute" type="button" title="Salir de la ruta" class="text-slate-400 hover:text-rose-600 font-bold px-1 text-xs cursor-pointer">✕</button>
             </div>
           </div>
 
-          <!-- Barra de Esfuerzo Multicolor por Tramos -->
-          <div v-if="activeRouteBanner.difficulty_breakdown && activeRouteBanner.difficulty_breakdown.length > 0" class="space-y-1">
-            <div class="w-full h-2 rounded-full overflow-hidden flex bg-slate-100">
-              <div
-                v-for="seg in activeRouteBanner.difficulty_breakdown"
-                :key="seg.difficulty"
-                class="h-full"
-                :style="{ width: `${seg.percent ?? seg.percentage ?? 100}%`, backgroundColor: seg.color }"
-                :title="`${seg.difficulty}: ${seg.percent ?? seg.percentage ?? 100}%`"
-              ></div>
-            </div>
-            <div class="flex flex-wrap items-center gap-2 text-[10px] text-slate-600">
-              <span v-for="seg in activeRouteBanner.difficulty_breakdown" :key="seg.difficulty" class="inline-flex items-center gap-1 tabular-metrics">
-                <span class="w-2 h-2 rounded-full" :style="{ backgroundColor: seg.color }"></span>
-                <span>{{ seg.difficulty }} {{ seg.percent ?? seg.percentage ?? 100 }}%</span>
-              </span>
-            </div>
+          <!-- Desglose multicolor solo si tiene más de 1 tramo de dificultad distinta -->
+          <div
+            v-if="activeRouteBanner.difficulty_breakdown && activeRouteBanner.difficulty_breakdown.length > 1"
+            class="px-2.5 pb-1.5 flex flex-wrap items-center gap-2 text-[9px] text-slate-600"
+          >
+            <span v-for="seg in activeRouteBanner.difficulty_breakdown" :key="seg.difficulty" class="inline-flex items-center gap-1 tabular-metrics">
+              <span class="w-1.5 h-1.5 rounded-full" :style="{ backgroundColor: seg.color }"></span>
+              <span>{{ seg.difficulty }} {{ seg.percent ?? seg.percentage ?? 100 }}%</span>
+            </span>
           </div>
 
-          <!-- Paradas y Recompensas Comerciales cercanas al Sendero -->
-          <div v-if="routeNearbyPlaces.length > 0" class="pt-1.5 border-t border-slate-200/80">
-            <div class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-900 mb-1.5 flex items-center justify-between">
-              <span>🍹 Paradas y Recompensas cerca del sendero</span>
-              <span class="text-amber-700">{{ routeNearbyPlaces.length }} disponibles</span>
+          <!-- Paradas cercanas desplegables bajo demanda (para no tapar el mapa) -->
+          <div v-if="showRouteStops && routeNearbyPlaces.length > 0" class="px-2.5 py-1.5 border-t border-slate-200/80 bg-stone-50/90">
+            <div class="text-[9px] font-extrabold uppercase tracking-wider text-emerald-900 mb-1 flex items-center justify-between">
+              <span>🍹 Paradas cerca del sendero</span>
+              <button @click="showRouteStops = false" type="button" class="text-slate-400 hover:text-slate-600 font-bold cursor-pointer">Ocultar ▲</button>
             </div>
             <div class="flex gap-1.5 overflow-x-auto hide-scrollbar pb-0.5">
               <button
@@ -297,11 +319,11 @@
                 :key="stop.place_id"
                 type="button"
                 @click="selectSearchResult(stop)"
-                class="shrink-0 bg-stone-50 hover:bg-amber-50 border border-slate-200/90 hover:border-amber-300 rounded-xl px-2.5 py-1.5 text-left transition-all cursor-pointer flex items-center gap-2 max-w-[210px]"
+                class="shrink-0 bg-white hover:bg-amber-50 border border-slate-200/90 hover:border-amber-300 rounded-lg px-2 py-1 text-left transition-all cursor-pointer flex items-center gap-1.5 max-w-[185px]"
               >
-                <img :src="stop.image_url || '/logo.png'" class="w-7 h-7 rounded-lg object-cover shrink-0 border border-slate-200" />
+                <img :src="stop.image_url || '/logo.png'" class="w-6 h-6 rounded-md object-cover shrink-0 border border-slate-200" />
                 <div class="min-w-0">
-                  <div class="text-[11px] font-extrabold text-emerald-950 truncate flex items-center gap-1">
+                  <div class="text-[10px] font-extrabold text-emerald-950 truncate flex items-center gap-1">
                     <span v-if="stop.is_partner" class="text-amber-500">★</span>
                     <span>{{ stop.name }}</span>
                   </div>
@@ -960,7 +982,7 @@ const selectedPlace = ref(null)
 const selectedPoster = ref(null)
 const route = useRoute()
 const isHoveringSlider = ref(false)
-const isSliderCompact = ref(false)
+const isSliderCompact = ref(typeof window !== 'undefined' && window.innerWidth < 768)
 const searchQuery = ref('')
 const isSearchFocused = ref(false)
 const showCategoryChips = ref(true)
@@ -1682,6 +1704,7 @@ watch(() => route.path, (newPath, oldPath) => {
 const activeCategories = ref([])
 const activeRouteBanner = ref(null)
 const routeNearbyPlaces = ref([])
+const showRouteStops = ref(false)
 
 const categories = [
   { name: 'Hospedajes', icon: '🏨', color: '#3b82f6' },
@@ -2413,7 +2436,12 @@ const computeNearbyPlacesForRoute = (coords) => {
 
 const centerActiveRoute = () => {
   if (map && activeRouteBounds) {
-    map.fitBounds(activeRouteBounds, { padding: [60, 60], duration: 1.0 })
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+    map.fitBounds(activeRouteBounds, {
+      paddingTopLeft: isMobile ? [24, 150] : [60, 120],
+      paddingBottomRight: isMobile ? [24, 80] : [60, 80],
+      duration: 1.0
+    })
   }
 }
 
@@ -2470,13 +2498,17 @@ const handleRouteSelected = (e) => {
 
   const props = matchedFeature?.properties || selectedRoute
   const coords = matchedFeature?.geometry?.coordinates || selectedRoute.coordinates || []
-  const segments = props.segments || matchedFeature?.geometry?.segments || selectedRoute.segments || []
   const rawBreakdown = props.difficulty_breakdown || selectedRoute.difficulty_breakdown || []
   const difficulty_breakdown = rawBreakdown.map(b => ({
     ...b,
     percent: b.percentage ?? b.percent ?? 100,
     percentage: b.percentage ?? b.percent ?? 100
   }))
+
+  showRouteStops.value = false
+  if (typeof window !== 'undefined' && window.innerWidth < 768) {
+    showCategoryChips.value = false
+  }
 
   activeRouteBanner.value = {
     id: props.id,
@@ -2496,7 +2528,12 @@ const handleRouteSelected = (e) => {
   if (coords.length >= 2) {
     const latLngs = coords.map(([lng, lat]) => [lat, lng])
     activeRouteBounds = L.latLngBounds(latLngs)
-    map.fitBounds(activeRouteBounds, { padding: [60, 60], duration: 1.2 })
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+    map.fitBounds(activeRouteBounds, {
+      paddingTopLeft: isMobile ? [24, 150] : [60, 120],
+      paddingBottomRight: isMobile ? [24, 80] : [60, 80],
+      duration: 1.2
+    })
   }
 }
 
@@ -2506,6 +2543,7 @@ const handleRouteUnselected = () => {
   activeRouteBanner.value = null
   activeRouteBounds = null
   routeNearbyPlaces.value = []
+  showRouteStops.value = false
   clearRouteEndpoints()
   renderAllTrailsInMap()
 }
@@ -2683,10 +2721,15 @@ onBeforeUnmount(() => {
   opacity: 0;
 }
 
-/* Ajuste de controles de zoom de Leaflet */
+/* Ajuste de controles de zoom de Leaflet (ocultos en móvil donde se usa pinch-to-zoom) */
 :deep(.leaflet-top.leaflet-right) {
-  margin-top: 100px; /* Para que quede debajo del Navbar */
+  margin-top: 100px; /* Para que quede debajo del Navbar en Desktop */
   margin-right: 20px;
+}
+@media (max-width: 767px) {
+  :deep(.leaflet-control-zoom) {
+    display: none !important;
+  }
 }
 
 /* Animación Infinita para Carteles (Marquee) */

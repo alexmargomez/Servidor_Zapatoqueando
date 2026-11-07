@@ -3,15 +3,21 @@
     
     <!-- Contenedor Principal (Panel Inferior Estilo AllTrails) -->
     <div 
-      class="relative w-full bg-stone-50/95 backdrop-blur-xl shadow-[0_-12px_40px_rgba(5,46,22,0.18)] flex flex-col pointer-events-auto border-t border-emerald-950/10 rounded-t-3xl transition-transform pb-4 md:pb-6"
+      style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0.75rem));"
+      class="relative w-full bg-stone-50/95 backdrop-blur-xl shadow-[0_-12px_40px_rgba(5,46,22,0.18)] flex flex-col pointer-events-auto border-t border-emerald-950/10 rounded-t-3xl transition-transform pb-3 md:pb-5"
     >
+      <!-- Indicador visual de arrastre / minimizar -->
+      <div class="w-full flex justify-center pt-2 pb-0.5" @click="minimizeToMap">
+        <div class="w-10 h-1 rounded-full bg-slate-300 cursor-pointer"></div>
+      </div>
+
       <!-- Barra Superior del Panel de Senderos -->
-      <div class="px-4 sm:px-6 pt-3.5 pb-2.5 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/70">
-        <div class="flex items-center gap-2.5">
-          <span class="w-8 h-8 rounded-xl bg-emerald-950 text-amber-400 flex items-center justify-center text-sm shadow-xs">🥾</span>
+      <div class="px-3.5 sm:px-6 pt-1.5 pb-2 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/70">
+        <div class="flex items-center gap-2">
+          <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-950 text-amber-400 flex items-center justify-center text-xs sm:text-sm shadow-xs">🥾</span>
           <div>
-            <h2 class="text-sm sm:text-base font-extrabold text-emerald-950 leading-tight">Rutas y Senderos Ecológicos</h2>
-            <p class="text-[11px] text-slate-500 hidden sm:block">Selecciona un sendero para trazar su recorrido, inicio y meta en el mapa</p>
+            <h2 class="text-xs sm:text-base font-extrabold text-emerald-950 leading-tight">Rutas y Senderos Ecológicos</h2>
+            <p class="text-[10px] sm:text-[11px] text-slate-500">Toca una ruta para ver su trazado en el mapa</p>
           </div>
         </div>
 
@@ -33,38 +39,28 @@
           </div>
 
           <button 
-            v-if="selectedRutaId"
-            @click="exploreOnMap" 
+            @click="minimizeToMap" 
             type="button" 
-            class="bg-emerald-950 hover:bg-emerald-900 text-amber-400 py-1.5 px-3.5 rounded-full transition-colors flex items-center gap-1.5 text-xs font-extrabold shadow-sm cursor-pointer"
-            title="Minimizar panel y mantener la ruta activa en el mapa"
+            class="bg-emerald-950 hover:bg-emerald-900 text-amber-400 py-1.5 px-3 rounded-full transition-colors flex items-center gap-1 text-[11px] sm:text-xs font-extrabold shadow-sm cursor-pointer" 
+            title="Ocultar lista y ver el mapa completo"
           >
-            <span>🗺️ Explorar ruta</span>
-          </button>
-
-          <button 
-            @click="close" 
-            type="button" 
-            class="bg-slate-200/80 hover:bg-rose-100 text-slate-700 hover:text-rose-700 py-1.5 px-3.5 rounded-full transition-colors flex items-center gap-1.5 text-xs font-bold cursor-pointer" 
-            title="Cerrar panel de rutas"
-          >
-            <span>Cerrar</span>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M19 9l-7 7-7-7"></path>
+            <span>🗺️ Ver mapa</span>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M19 9l-7 7-7-7"></path>
             </svg>
           </button>
         </div>
       </div>
 
       <!-- Contenido Scrollable Horizontal -->
-      <div class="w-full overflow-x-auto px-4 sm:px-6 pt-3 pb-1 hide-scrollbar flex flex-row gap-4 items-stretch">
+      <div class="w-full overflow-x-auto px-3.5 sm:px-6 pt-2.5 pb-1 hide-scrollbar flex flex-row gap-3 sm:gap-4 items-stretch">
         
         <div v-if="loading" class="flex justify-center w-full py-6">
           <div class="w-8 h-8 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
         </div>
         
-        <div v-else-if="filteredRutas.length === 0" class="text-center p-5 w-full bg-white rounded-2xl border border-slate-200/80">
-          <p class="text-slate-500 font-semibold text-sm">No hay rutas disponibles para este filtro.</p>
+        <div v-else-if="filteredRutas.length === 0" class="text-center p-4 w-full bg-white rounded-2xl border border-slate-200/80">
+          <p class="text-slate-500 font-semibold text-xs sm:text-sm">No hay rutas disponibles para este filtro.</p>
         </div>
 
         <!-- Tarjetas de Ruta -->
@@ -72,11 +68,11 @@
           v-else
           v-for="(ruta, index) in filteredRutas" 
           :key="ruta.id || index"
-          @click="selectRuta(ruta)"
+          @click="selectAndExploreRuta(ruta)"
           :class="[
-            'shrink-0 w-72 md:w-80 bg-white rounded-2xl p-4 cursor-pointer transition-all duration-200 group flex flex-col justify-between relative overflow-hidden border',
+            'shrink-0 w-68 sm:w-72 md:w-80 bg-white rounded-2xl p-3.5 sm:p-4 cursor-pointer transition-all duration-200 group flex flex-col justify-between relative overflow-hidden border',
             selectedRutaId === (ruta.id || ruta.name)
-              ? 'border-amber-400 ring-2 ring-amber-400/40 bg-amber-50/15 shadow-lg -translate-y-0.5'
+              ? 'border-amber-400 ring-2 ring-amber-400/40 bg-amber-50/15 shadow-lg'
               : 'border-slate-200/80 hover:border-emerald-700/40 shadow-sm hover:shadow-md'
           ]"
         >
@@ -93,73 +89,57 @@
           <div v-else class="absolute top-0 inset-x-0 h-1.5" :style="{ backgroundColor: ruta.color || '#eab308' }"></div>
 
           <div class="pt-1">
-            <div class="flex justify-between items-start gap-2 mb-1.5">
-              <div class="flex items-center gap-2 min-w-0">
-                <span class="w-3 h-3 rounded-full shrink-0 ring-2 ring-offset-1 ring-slate-200" :style="{ backgroundColor: ruta.color || '#eab308' }"></span>
-                <h3 class="font-extrabold text-emerald-950 text-sm md:text-base leading-tight group-hover:text-emerald-800 transition-colors truncate">
+            <div class="flex justify-between items-start gap-2 mb-1">
+              <div class="flex items-center gap-1.5 min-w-0">
+                <span class="w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-offset-1 ring-slate-200" :style="{ backgroundColor: ruta.color || '#eab308' }"></span>
+                <h3 class="font-extrabold text-emerald-950 text-xs sm:text-sm md:text-base leading-tight group-hover:text-emerald-800 transition-colors truncate">
                   {{ ruta.name || `Ruta Ecológica ${index + 1}` }}
                 </h3>
               </div>
-              <span :class="['text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider shrink-0 border', getDifficultyBadgeClass(ruta.difficulty)]" title="Dificultad calculada automáticamente según los tramos del sendero">
+              <span :class="['text-[9px] sm:text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 border', getDifficultyBadgeClass(ruta.difficulty)]" title="Dificultad calculada automáticamente según los tramos del sendero">
                 {{ ruta.difficulty || 'Fácil' }}
               </span>
             </div>
-            <p class="text-xs text-slate-500 mb-2.5 line-clamp-2 leading-relaxed">
+            <p class="text-[11px] sm:text-xs text-slate-500 mb-2 line-clamp-2 leading-relaxed">
               {{ ruta.description || 'Explora los hermosos paisajes y senderos históricos de Zapatoca.' }}
             </p>
 
-            <!-- Termómetro de esfuerzo por tramos + Paradas Comerciales Cercanas -->
-            <div class="mb-2.5 flex flex-wrap items-center gap-1.5">
-              <template v-if="ruta.difficulty_breakdown && ruta.difficulty_breakdown.length > 0">
-                <span
-                  v-for="seg in ruta.difficulty_breakdown"
-                  :key="seg.difficulty"
-                  class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100/90 px-2 py-0.5 rounded-md border border-slate-200/70 tabular-metrics"
-                >
-                  <span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: seg.color }"></span>
-                  <span>{{ seg.difficulty }} {{ seg.percent ?? seg.percentage ?? 100 }}%</span>
-                </span>
-              </template>
+            <!-- Métricas de Distancia, Tiempo y Paradas Cercanas -->
+            <div class="mb-2.5 flex flex-wrap items-center gap-1.5 tabular-metrics">
+              <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-900 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                📏 {{ ruta.distance_label || '0 m' }}
+              </span>
+              <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+                ⏱️ {{ formatDuration(ruta.duration) }}
+              </span>
               <span
                 v-if="ruta.nearbyStopsCount > 0"
-                class="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-950 bg-amber-100/90 px-2 py-0.5 rounded-md border border-amber-300/80 tabular-metrics"
-                title="Negocios locales de hidratación, café y gastronomía cerca del sendero"
+                class="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-950 bg-amber-100/90 px-2 py-0.5 rounded-md border border-amber-300/80"
               >
-                🍹 {{ ruta.nearbyStopsCount }} {{ ruta.nearbyStopsCount === 1 ? 'parada aliada' : 'paradas aliadas' }}
+                🍹 {{ ruta.nearbyStopsCount }} {{ ruta.nearbyStopsCount === 1 ? 'parada' : 'paradas' }}
               </span>
             </div>
           </div>
 
-          <div class="flex items-center justify-between pt-2.5 border-t border-slate-100 gap-2">
-            <div class="flex items-center text-[11px] text-slate-600 font-semibold gap-2 flex-wrap tabular-metrics">
-              <span class="flex items-center gap-1 font-bold text-emerald-900 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200/60" title="Distancia calculada automáticamente">
-                📏 {{ ruta.distance_label || '0 m' }}
-              </span>
-              <span class="flex items-center gap-1 text-slate-600 bg-slate-100 px-2 py-0.5 rounded-lg" title="Tiempo estimado de caminata según pendiente de cada tramo">
-                ⏱️ {{ formatDuration(ruta.duration) }}
-              </span>
-            </div>
-            <div class="flex items-center gap-1.5 shrink-0">
-              <button
-                v-if="ruta.startCoord"
-                @click.stop="openStartDirections(ruta)"
-                type="button"
-                title="Guiarme al punto de inicio en el mapa"
-                class="text-[11px] font-bold px-2 py-1 rounded-full bg-slate-100 hover:bg-emerald-100 text-emerald-900 transition-colors cursor-pointer"
-              >
-                🟢 Inicio
-              </button>
-              <span 
-                :class="[
-                  'text-[11px] font-extrabold px-2.5 py-1 rounded-full transition-colors',
-                  selectedRutaId === (ruta.id || ruta.name)
-                    ? 'bg-emerald-950 text-amber-400 shadow-xs'
-                    : 'text-emerald-900 bg-amber-100/80 group-hover:bg-amber-400 group-hover:text-emerald-950'
-                ]"
-              >
-                {{ selectedRutaId === (ruta.id || ruta.name) ? 'En Mapa ✓' : 'Trazar →' }}
-              </span>
-            </div>
+          <!-- Botones de Acción Directos e Intuitivos -->
+          <div class="flex items-center justify-between pt-2 border-t border-slate-100 gap-2">
+            <button
+              v-if="ruta.startCoord"
+              @click.stop="openStartDirections(ruta)"
+              type="button"
+              title="Guiarme al punto de inicio en el mapa"
+              class="text-[11px] font-extrabold px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-emerald-100 text-emerald-950 transition-colors cursor-pointer shrink-0"
+            >
+              🟢 Ir al Inicio
+            </button>
+            <button
+              @click.stop="selectAndExploreRuta(ruta)"
+              type="button"
+              class="flex-1 text-[11px] font-extrabold px-3 py-1.5 rounded-xl bg-emerald-950 hover:bg-emerald-900 text-amber-400 shadow-xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
+            >
+              <span>🗺️ Ver en el mapa</span>
+              <span>→</span>
+            </button>
           </div>
         </div>
         
@@ -258,23 +238,18 @@ const openStartDirections = (ruta) => {
   if (!ruta?.startCoord) return
   selectedRutaId.value = ruta.id || ruta.name
   window.dispatchEvent(new CustomEvent('route-focus-start', { detail: ruta }))
-}
-
-const exploreOnMap = () => {
   router.push('/')
 }
 
-const close = () => {
-  selectedRutaId.value = null
-  const event = new CustomEvent('route-unselected')
-  window.dispatchEvent(event)
+const minimizeToMap = () => {
   router.push('/')
 }
 
-const selectRuta = (ruta) => {
+const selectAndExploreRuta = (ruta) => {
   selectedRutaId.value = ruta.id || ruta.name
   const event = new CustomEvent('route-selected', { detail: ruta })
   window.dispatchEvent(event)
+  router.push('/')
 }
 
 onMounted(async () => {
